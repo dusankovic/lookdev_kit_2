@@ -82,7 +82,10 @@ def createLDV(*args):
     cmds.setAttr(cam[0] + ".translateY", 195)
     cmds.setAttr(cam[0] + ".translateZ", 550)
     cmds.setAttr(cam[0] + ".rotateX", -10)
+    cmds.setAttr(cam[0] + ".locatorScale", 15)
+    cmds.setAttr(cam[0] + ".displayCameraFrustum", 1)
     cmds.parent(cam[0], "dk_Ldv:lookdev_ctrl_grp")
+
 
 
     #create global ctrl
@@ -519,6 +522,13 @@ def exposure_slider(self, *_):
         cmds.setAttr('dk_Ldv:aiSkydomeShape.exposure', value)
         cmds.undoInfo( swf=True)
 
+def rotOffset(self, *_):
+	if cmds.namespace(exists='dk_Ldv') == True:
+        cmds.undoInfo( swf=False )
+        value=cmds.floatSliderGrp("rotOff", query=True, value=True)
+        cmds.setAttr('dk_Ldv:aiSkydomeShape.rotateY', value)
+        cmds.undoInfo( swf=True)
+
 def sky_vis(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.undoInfo( swf=False )
@@ -713,6 +723,8 @@ def buildUI():
     else:
         skyVis = 1
 
+    #CREATE A COMMAND THAT READS ROTATION OFFSET
+
     if cmds.namespace(exists='dk_Ldv') == True:
         texChnl = cmds.getAttr('dk_Ldv:hdrTextures.startChannel')
         if texChnl == 0:
@@ -790,7 +802,7 @@ def buildUI():
     #Skydome Rotation offset
     tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
-    cmds.floatSliderGrp('exp',label='Rot Offset', columnWidth3=(tmpRowWidth), min=-10, max=10, value=skyExpo, step=0.001, fieldMinValue=-100,fieldMaxValue=100, field=True, changeCommand=exposure_slider, dragCommand=exposure_slider)
+    cmds.floatSliderGrp('rotOff',label='Rot Offset', columnWidth3=(tmpRowWidth), min=-10, max=10, value=skyExpo, step=0.001, fieldMinValue=-100,fieldMaxValue=100, field=True, changeCommand=rotOffset, dragCommand=rotOffset)
     cmds.setParent(mainCL)
 
     #Skydome camera visibility
