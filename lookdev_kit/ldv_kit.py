@@ -5,9 +5,10 @@ import mtoa.utils as mutils
 import mtoa.core as core
 import os
 
+LOOKDEV_KIT_FOLDER = os.path.dirname(os.path.abspath(__file__))
+MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "miniHdrs").replace("\\", "/")
+TEX_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages").replace("\\", "/")
 
-MINI_HDR_FOLDER = os.path.join(os.environ.get("MAYA_APP_DIR"), "lookdev_kit", "sourceimages", "miniHdrs").replace("\\", "/")
-TEX_FOLDER = os.path.join(os.environ.get("MAYA_APP_DIR"), "lookdev_kit", "sourceimages").replace("\\", "/")
 
 
 #COMMANDS
@@ -781,6 +782,7 @@ def color_mcc2b(*args):
 
 #UI
 def buildUI():
+    print LOOKDEV_KIT_FOLDER
     if cmds.namespace(exists='dk_Ldv') == True:
         skyExpo = cmds.getAttr('dk_Ldv:aiSkydome.exposure')
     else:
