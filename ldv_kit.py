@@ -523,7 +523,7 @@ def exposure_slider(self, *_):
         cmds.undoInfo( swf=True)
 
 def rotOffset(self, *_):
-	if cmds.namespace(exists='dk_Ldv') == True:
+    if cmds.namespace(exists='dk_Ldv') == True:
         cmds.undoInfo( swf=False )
         value=cmds.floatSliderGrp("rotOff", query=True, value=True)
         cmds.setAttr('dk_Ldv:aiSkydomeShape.rotateY', value)
