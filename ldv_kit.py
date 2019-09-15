@@ -7,6 +7,7 @@ import os
 
 
 MINI_HDR_FOLDER = os.path.join(os.environ.get("MAYA_APP_DIR"), "lookdev_kit", "sourceimages", "miniHdrs").replace("\\", "/")
+TEX_FOLDER = os.path.join(os.environ.get("MAYA_APP_DIR"), "lookdev_kit", "sourceimages").replace("\\", "/")
 
 
 #COMMANDS
@@ -27,8 +28,6 @@ def createLDV(*args):
     LDVgroup = cmds.group(name = 'lookdevkit_grp', empty=True)
     LDVctrlgroup = cmds.group(name = 'lookdev_ctrl_grp', empty=True)
     cmds.parent(LDVctrlgroup, LDVgroup)
-    mayadir = os.environ.get('MAYA_APP_DIR')
-    tex = (mayadir + '/lookdev_kit/sourceimages')
     skydome = mutils.createLocator('aiSkyDomeLight', asLight=True)
     sky_name = cmds.rename(skydome[1], 'aiSkydome')
     skydome_shape = cmds.listRelatives(sky_name, shapes=True)
@@ -38,13 +37,13 @@ def createLDV(*args):
     cmds.setAttr('dk_Ldv:aiSkydomeShape.skyRadius', 0)
     cmds.parent(sky_name, LDVctrlgroup)
     imageNode = core.createArnoldNode('aiImage', name = 'hdrTextures')
-    skydome_tex = (tex + '/' + 'lookdev_hdri_2k_01.tx' )
+    skydome_tex = (TEX_FOLDER + '/' + 'lookdev_hdri_2k_01.tx' )
     cmds.setAttr(imageNode + '.filename', skydome_tex, type = "string")
     cmds.setAttr(imageNode + '.autoTx',0)
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
     shCatch = cmds.polyPlane(n='shadowCatcher', w=900, h=900, sx=10, sy=10, cuv=2, ax=[0,1,0], ch=False)[0]
-    cmds.setAttr(shCatch + ".overrideEnabled", 1)
-    cmds.setAttr(shCatch + ".overrideDisplayType", 1)
+    # cmds.setAttr(shCatch + ".overrideEnabled", 1)
+    # cmds.setAttr(shCatch + ".overrideDisplayType", 1)
     shadowStr = cmds.shadingNode('aiShadowMatte', asShader=True)
     shadowMatte = cmds.rename(shadowStr, 'aiShadow')
     cmds.select( shCatch )
@@ -294,17 +293,6 @@ def createMAC(*args):
     chckBodyFlat = cmds.polyCube(name="checkerBodyFlat", width=28, height=19, depth=0.5,createUVs=4, ch=False)
     cmds.setAttr(chckBodyFlat[0] + ".translateZ",-0.25)
     cmds.setAttr(chckBodyFlat[0] + ".translateY",12)
-    cmds.setAttr(chckBodyFlat[0] + ".receiveShadows",0)
-    cmds.setAttr(chckBodyFlat[0] + ".motionBlur",0)
-    cmds.setAttr(chckBodyFlat[0] + ".castsShadows",0)
-    cmds.setAttr(chckBodyFlat[0] + ".visibleInRefractions",0)
-    cmds.setAttr(chckBodyFlat[0] + ".visibleInReflections",0)
-    cmds.setAttr(chckBodyFlat[0] + ".aiVisibleInDiffuseReflection",0)
-    cmds.setAttr(chckBodyFlat[0] + ".aiVisibleInSpecularReflection",0)
-    cmds.setAttr(chckBodyFlat[0] + ".aiVisibleInDiffuseTransmission",0)
-    cmds.setAttr(chckBodyFlat[0] + ".aiVisibleInSpecularTransmission",0)
-    cmds.setAttr(chckBodyFlat[0] + ".aiVisibleInVolume",0)
-    cmds.setAttr(chckBodyFlat[0] + ".aiSelfShadows",0)
     cmds.makeIdentity(chckBodyFlat[0], translate=True, apply=True)
     cmds.move(0,0,0, chckBodyFlat[0] + ".scalePivot", chckBodyFlat[0] + ".rotatePivot", absolute=True)
     cmds.parent(chckBodyFlat[0], MACflat)
@@ -318,17 +306,6 @@ def createMAC(*args):
     chckBodyShaded = cmds.polyCube(name="checkerBodyShaded", width=28, height=19, depth=0.5,createUVs=4, ch=False)
     cmds.setAttr(chckBodyShaded[0] + ".translateZ",-0.25)
     cmds.setAttr(chckBodyShaded[0] + ".translateY",32)
-    cmds.setAttr(chckBodyShaded[0] + ".receiveShadows",0)
-    cmds.setAttr(chckBodyShaded[0] + ".motionBlur",0)
-    cmds.setAttr(chckBodyShaded[0] + ".castsShadows",0)
-    cmds.setAttr(chckBodyShaded[0] + ".visibleInRefractions",0)
-    cmds.setAttr(chckBodyShaded[0] + ".visibleInReflections",0)
-    cmds.setAttr(chckBodyShaded[0] + ".aiVisibleInDiffuseReflection",0)
-    cmds.setAttr(chckBodyShaded[0] + ".aiVisibleInSpecularReflection",0)
-    cmds.setAttr(chckBodyShaded[0] + ".aiVisibleInDiffuseTransmission",0)
-    cmds.setAttr(chckBodyShaded[0] + ".aiVisibleInSpecularTransmission",0)
-    cmds.setAttr(chckBodyShaded[0] + ".aiVisibleInVolume",0)
-    cmds.setAttr(chckBodyShaded[0] + ".aiSelfShadows",0)
     cmds.makeIdentity(chckBodyShaded[0], translate=True, apply=True)
     cmds.move(0,0,0, chckBodyShaded[0] + ".scalePivot", chckBodyShaded[0] + ".rotatePivot", absolute=True)
     cmds.parent(chckBodyShaded[0], MACshaded)
@@ -346,17 +323,8 @@ def createMAC(*args):
     chrome = cmds.polySphere(name="chromeSphere", radius=6.6,createUVs=2,ch=False)
     cmds.setAttr(chrome[0] + ".translateX",-7.5)
     cmds.setAttr(chrome[0] + ".translateY",49)
-    cmds.setAttr(chrome[0] + ".receiveShadows",0)
-    cmds.setAttr(chrome[0] + ".motionBlur",0)
-    cmds.setAttr(chrome[0] + ".castsShadows",0)
-    cmds.setAttr(chrome[0] + ".visibleInRefractions",0)
-    cmds.setAttr(chrome[0] + ".visibleInReflections",0)
-    cmds.setAttr(chrome[0] + ".aiVisibleInDiffuseReflection",0)
-    cmds.setAttr(chrome[0] + ".aiVisibleInSpecularReflection",0)
-    cmds.setAttr(chrome[0] + ".aiVisibleInDiffuseTransmission",0)
-    cmds.setAttr(chrome[0] + ".aiVisibleInSpecularTransmission",0)
-    cmds.setAttr(chrome[0] + ".aiVisibleInVolume",0)
-    cmds.setAttr(chrome[0] + ".aiSelfShadows",0)
+    cmds.setAttr(chrome[0] + '.aiSubdivType', 1)
+    cmds.setAttr(chrome[0] + '.aiSubdivIterations', 3)
     cmds.makeIdentity(chrome[0], translate=True, apply=True)
     cmds.move(0,0,0, chrome[0] + ".scalePivot", chrome[0] + ".rotatePivot", absolute=True)
     cmds.parent(chrome[0], Sphgroup)
@@ -364,7 +332,7 @@ def createMAC(*args):
     cmds.setAttr(chromeShd + ".base", 1)
     cmds.setAttr(chromeShd + ".baseColor", 0.75,0.75,0.75, type='double3')
     cmds.setAttr(chromeShd + ".metalness", 1)
-    cmds.setAttr(chromeShd + ".specular", 0)
+    cmds.setAttr(chromeShd + ".specular", 1)
     cmds.setAttr(chromeShd + ".specularRoughness", 0)
     cmds.select(chrome[0])
     cmds.hyperShade(assign=chromeShd)
@@ -372,17 +340,8 @@ def createMAC(*args):
     gray = cmds.polySphere(name="graySphere", radius=6.6,createUVs=2,ch=False)
     cmds.setAttr(gray[0] + ".translateX",7.5)
     cmds.setAttr(gray[0] + ".translateY",49)
-    cmds.setAttr(gray[0] + ".receiveShadows",0)
-    cmds.setAttr(gray[0] + ".motionBlur",0)
-    cmds.setAttr(gray[0] + ".castsShadows",0)
-    cmds.setAttr(gray[0] + ".visibleInRefractions",0)
-    cmds.setAttr(gray[0] + ".visibleInReflections",0)
-    cmds.setAttr(gray[0] + ".aiVisibleInDiffuseReflection",0)
-    cmds.setAttr(gray[0] + ".aiVisibleInSpecularReflection",0)
-    cmds.setAttr(gray[0] + ".aiVisibleInDiffuseTransmission",0)
-    cmds.setAttr(gray[0] + ".aiVisibleInSpecularTransmission",0)
-    cmds.setAttr(gray[0] + ".aiVisibleInVolume",0)
-    cmds.setAttr(gray[0] + ".aiSelfShadows",0)
+    cmds.setAttr(gray[0] + '.aiSubdivType', 1)
+    cmds.setAttr(gray[0] + '.aiSubdivIterations', 3)
     cmds.makeIdentity(gray[0], translate=True, apply=True)
     cmds.move(0,0,0, gray[0] + ".scalePivot", gray[0] + ".rotatePivot", absolute=True)
     cmds.parent(gray[0], Sphgroup)
@@ -478,8 +437,8 @@ def createMAC(*args):
     cmds.setAttr(macCtrl + ".translateY", 2)
     cmds.makeIdentity(macCtrl, translate=True, apply=True)
     cmds.move(0,0,0, macCtrl + ".scalePivot", macCtrl + ".rotatePivot", absolute=True)
-    cmds.setAttr(MACctrlGrp + ".overrideEnabled", 1)
-    cmds.setAttr(MACctrlGrp + ".overrideDisplayType", 1)
+    # cmds.setAttr(MACctrlGrp + ".overrideEnabled", 1)
+    # cmds.setAttr(MACctrlGrp + ".overrideDisplayType", 1)
     cmds.parentConstraint(macCtrl, MACctrlGrp, maintainOffset=True, weight=1)
     cmds.scaleConstraint(macCtrl, MACctrlGrp, maintainOffset=True, weight=1)
     cmds.setAttr(macCtrl + ".translateX", -170)
@@ -493,6 +452,21 @@ def createMAC(*args):
         cmds.setAttr(each + ".rotateX", keyable=False, lock=True)
         cmds.setAttr(each + ".rotateY", keyable=False, lock=True)
         cmds.setAttr(each + ".rotateZ", keyable=False, lock=True)
+
+    #Arnold attributes
+    attrList = [chckBodyFlat[0], chckBodyShaded[0], chrome[0], gray[0] ]
+    for each in attrList:
+        cmds.setAttr(each + ".receiveShadows",0)
+        cmds.setAttr(each + ".motionBlur",0)
+        cmds.setAttr(each + ".castsShadows",0)
+        cmds.setAttr(each + ".visibleInRefractions",0)
+        cmds.setAttr(each + ".visibleInReflections",0)
+        cmds.setAttr(each + ".aiVisibleInDiffuseReflection",0)
+        cmds.setAttr(each + ".aiVisibleInSpecularReflection",0)
+        cmds.setAttr(each + ".aiVisibleInDiffuseTransmission",0)
+        cmds.setAttr(each + ".aiVisibleInSpecularTransmission",0)
+        cmds.setAttr(each + ".aiVisibleInVolume",0)
+        cmds.setAttr(each + ".aiSelfShadows",0)
 
     cmds.namespace(set=':')
     cmds.select(clear=True)
@@ -576,18 +550,18 @@ def checker(*args):
     else:
         cmds.namespace(add='dk_chck')
         cmds.namespace(set='dk_chck:')
-        mayadir = os.environ.get('MAYA_APP_DIR')
-        tex = (mayadir + '/lookdev_kit/sourceimages')
         chckBase = cmds.shadingNode('aiStandardSurface', asShader=True)
         chckShader = cmds.rename(chckBase, 'aiCheckerShader')
         chckImage = core.createArnoldNode('aiImage', name = 'checkerTexture')
-        checker_tex = (tex + '/' + 'checker.jpg' )
+        checker_tex = (TEX_FOLDER + '/' + 'checker.jpg' )
         cmds.setAttr(chckImage + '.filename', checker_tex, type = "string")
         cmds.setAttr(chckImage + '.colorSpace', 'sRGB', type='string')
         cmds.setAttr(chckImage + '.autoTx',0)
         cmds.setAttr(chckImage + '.ignoreColorSpaceFileRules',1)
         cmds.connectAttr(chckImage + '.outColor', chckShader + '.baseColor', force=True)
         cmds.namespace(set=':')
+        cmds.select(clear=True)
+        print 'Checker shader loaded'
 
 def remove_checker(*args):
     cmds.namespace(set=':')
@@ -711,6 +685,37 @@ def color_mcc2b(*args):
         cmds.setAttr(eachSel + '.mtoa_constant_color2Y', k=True)
         cmds.setAttr(eachSel + '.mtoa_constant_color2Z', k=True)
 
+def setTurntable(*args):
+    timeMin = cmds.playbackOptions(minTime=True, query=True)
+    timeMax = cmds.playbackOptions(maxTime=True, query=True)
+    FrNum = cmds.optionMenu('autott', select=True, query=True)
+    if FrNum == 1:
+        FrRange = 25
+    if FrNum == 2:
+        FrRange = 50
+    if FrNum == 3:
+        FrRange = 100
+    if FrNum == 4:
+        FrRange = 200
+    numFr = timeMax - timeMin
+    addFr = FrRange - numFr
+    subFr = numFr - FrRange
+    if numFr < FrRange:
+        cmds.playbackOptions(maxTime=timeMax + addFr)
+        cmds.playbackOptions(animationEndTime=timeMax + addFr)
+        
+    if numFr > FrRange:
+        cmds.playbackOptions(maxTime=timeMax - subFr)
+        cmds.playbackOptions(animationEndTime=timeMax - subFr)
+    objLoc = cmds.spaceLocator(name = "obj_tt_loc", position = [0,0,0])
+    skyLoc = cmds.spaceLocator(name = "sky_tt_loc", position = [0,0,0])
+    assetSel = cmds.ls(selection=True)
+    for each in assetSel:
+        cmds.parentConstraint(objLoc, each, maintainOffset=True, weight=1)
+
+
+    
+
 #UI
 def buildUI():
     if cmds.namespace(exists='dk_Ldv') == True:
@@ -737,13 +742,13 @@ def buildUI():
 
     winID = 'LdvUI'
     winWidth = 320
-    winHeight = 650
+    winHeight = 1000
     rowHeight = 30
 
     if cmds.window(winID, exists=True):
         cmds.deleteUI(winID)
 
-    cmds.window(winID, title='Lookdev Kit 2.0', width=winWidth, height=winHeight, sizeable=False )
+    cmds.window(winID, title='Lookdev Kit 2.0', width=winWidth, height=winHeight )
 
     #Main layout refs
     mainCL = cmds.columnLayout()
@@ -766,14 +771,6 @@ def buildUI():
 
     cmds.text(label='--- Skydome Controls ---', width=winWidth, height=rowHeight)
 
-    #HDR chooser + checker shader
-    # cmds.rowLayout(numberOfColumns=1, columnWidth1=winWidth)
-    # cmds.optionMenu('hdrSw', label='HDR', changeCommand=hdrSwitch)
-    # cmds.menuItem(label='HDR1')
-    # cmds.menuItem(label='HDR2')
-    # cmds.menuItem(label='HDR3')
-    # cmds.menuItem(label='HDR4')
-    # cmds.setParent(mainCL)
     #TEMP SLIDER
     tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
@@ -810,6 +807,20 @@ def buildUI():
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
     cmds.floatSliderGrp('sky_vis', label='Camera', min=0, max=1, value=skyVis, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
     cmds.setParent(mainCL)
+
+    #Auto Turntable
+
+    cmds.text(label='--- Setup Turntable ---', width=winWidth, height=rowHeight)
+    tmpRowWidth = [winWidth*0.5, winWidth*0.5]
+    cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
+    cmds.optionMenu('autott', label='No. of frames')
+    cmds.menuItem(label='25')
+    cmds.menuItem(label='50')
+    cmds.menuItem(label='100')
+    cmds.menuItem(label='200')
+    cmds.button(label='Setup Turntable', width=tmpRowWidth[1])
+    cmds.setParent(mainCL)
+
 
     #Arnold options
     #opaque on + off
