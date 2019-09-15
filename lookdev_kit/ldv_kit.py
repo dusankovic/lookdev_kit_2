@@ -538,6 +538,7 @@ def turntableButton(*args):
         if cmds.namespace(exists='dk_Ldv') == True:
             setTurntable()
             cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
+            cmds.select(assetSel)
         if cmds.namespace(exists='dk_Ldv') == False:
             setTurntable()
 
