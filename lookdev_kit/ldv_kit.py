@@ -536,11 +536,12 @@ def turntableButton(*args):
         if cmds.namespace(exists='dk_turn') == True:
             print 'Turntable setup already completed'
         if cmds.namespace(exists='dk_Ldv') == True:
-            setTurntable()
+            setTurntable(assetSel)
             cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
             cmds.select(assetSel)
         if cmds.namespace(exists='dk_Ldv') == False:
-            setTurntable()
+            print "Please load LDV kit"
+    cmds.select(assetSel)
 
 def removeTurntable(*args):
     cmds.namespace(set=':')
@@ -550,7 +551,7 @@ def removeTurntable(*args):
         print 'Nothing to remove'
 
 
-def setTurntable(*args):
+def setTurntable(objects):
     timeMin = cmds.playbackOptions(minTime=True, query=True)
     timeMax = cmds.playbackOptions(maxTime=True, query=True)
     FrNum = cmds.optionMenu('autott', select=True, query=True)
@@ -575,7 +576,6 @@ def setTurntable(*args):
 
     cmds.currentTime(timeMin)
 
-    assetSel = cmds.ls(selection=True, long=True, objectsOnly=True)
     #create locators
     cmds.namespace(add='dk_turn')
     cmds.namespace(set='dk_turn:')
@@ -596,11 +596,11 @@ def setTurntable(*args):
     cmds.setKeyframe( skyLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=skyRotMin, value= 0 )
     cmds.setKeyframe( skyLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=skyRotMax, value= 360 )
     cmds.parentConstraint(skyLoc, "dk_Ldv:aiSkydome", maintainOffset=True, weight=1)
-    for each in assetSel:
+    for each in objects:
         cmds.parentConstraint(objLoc, each, maintainOffset=True, weight=1)
 
     cmds.namespace(set=':')
-    cmds.select(assetSel)
+
 
 def subd_off(*args):
     sel = cmds.ls(sl=True)
@@ -779,11 +779,6 @@ def color_mcc2b(*args):
         cmds.setAttr(eachSel + '.mtoa_constant_color2Y', k=True)
         cmds.setAttr(eachSel + '.mtoa_constant_color2Z', k=True)
 
-
-
-
-    
-
 #UI
 def buildUI():
     if cmds.namespace(exists='dk_Ldv') == True:
@@ -817,13 +812,13 @@ def buildUI():
 
     winID = 'LdvUI'
     winWidth = 320
-    winHeight = 1000
+    winHeight = 650
     rowHeight = 30
 
     if cmds.window(winID, exists=True):
         cmds.deleteUI(winID)
 
-    cmds.window(winID, title='Lookdev Kit 2.0', width=winWidth, height=winHeight )
+    w = cmds.window(winID, title='Lookdev Kit 2.0', width=winWidth, height=winHeight)
 
     #Main layout refs
     mainCL = cmds.columnLayout()
@@ -949,4 +944,6 @@ def buildUI():
     # cmds.dockControl(label='Lookdev kit', area='right', content=winID, enablePopupOption=True, retain=False )
 
     # Display the window
-    cmds.showWindow()
+    cmds.showWindow(w)
+    cmds.window(w, edit=True, widthHeight=(winWidth, winHeight))
+
