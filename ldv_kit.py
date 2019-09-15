@@ -19,6 +19,10 @@ def LDVbutton(*args):
         createLDV()
         cmds.parent("mac:macbeth_spheres_grp", "dk_Ldv:lookdev_ctrl_grp")
         cmds.select(clear=True)
+    if cmds.namespace(exists='dk_turn') == True:
+        createLDV()
+        cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
+        cmds.select(clear=True)
     else:
         createLDV()
 
@@ -31,6 +35,7 @@ def createLDV(*args):
     skydome = mutils.createLocator('aiSkyDomeLight', asLight=True)
     sky_name = cmds.rename(skydome[1], 'aiSkydome')
     skydome_shape = cmds.listRelatives(sky_name, shapes=True)
+    cmds.addAttr(skydome_shape[0], longName="rotOffset", min=0, max=360,defaultValue=0, attributeType="double"  )
     cmds.setAttr('dk_Ldv:aiSkydomeShape.aiSamples', 3)
     value=cmds.floatSliderGrp('exp', query=True, value=True)
     cmds.setAttr('dk_Ldv:aiSkydomeShape.exposure', value)
@@ -93,7 +98,13 @@ def createLDV(*args):
     cmds.scaleConstraint(ldvCtrl, LDVctrlgroup, maintainOffset=True, weight=1)
 
     #remove and lock attributes
-    LDVgrplist = [LDVgroup, LDVctrlgroup, shCatch, sky_name, ldvCtrl]
+    cmds.setAttr(sky_name + ".translateX", keyable=False, lock=True)
+    cmds.setAttr(sky_name + ".translateY", keyable=False, lock=True)
+    cmds.setAttr(sky_name + ".translateZ", keyable=False, lock=True)
+    cmds.setAttr(sky_name + ".rotateX", keyable=False)
+    cmds.setAttr(sky_name + ".rotateY", keyable=False)
+    cmds.setAttr(sky_name + ".rotateZ", keyable=False)
+    LDVgrplist = [LDVgroup, LDVctrlgroup, shCatch, ldvCtrl]
     for each in LDVgrplist:
         cmds.setAttr(each + ".translateX", keyable=False, lock=True)
         cmds.setAttr(each + ".translateY", keyable=False, lock=True)
@@ -498,9 +509,12 @@ def exposure_slider(self, *_):
 
 def rotOffset(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
+        skyRot = cmds.getAttr("dk_Ldv:aiSkydome.rotateY")
         cmds.undoInfo( swf=False )
         value=cmds.floatSliderGrp("rotOff", query=True, value=True)
-        cmds.setAttr('dk_Ldv:aiSkydomeShape.rotateY', value)
+        skyAddedRot = skyRot + value
+        cmds.setAttr('dk_Ldv:aiSkydome.rotateY', skyAddedRot)
+        cmds.setAttr("dk_Ldv:aiSkydomeShape.rotOffset", value)
         cmds.undoInfo( swf=True)
 
 def sky_vis(self, *_):
@@ -509,6 +523,79 @@ def sky_vis(self, *_):
         value=cmds.floatSliderGrp('sky_vis', query=True, value=True)
         cmds.setAttr('dk_Ldv:aiSkydomeShape.camera', value)
         cmds.undoInfo( swf=True)
+
+def turntableButton(*args):
+    assetSel = cmds.ls(selection=True, long=True, objectsOnly=True)
+    if len(assetSel) == 0:
+        print "Please select all objects your asset"
+    else:
+        if cmds.namespace(exists='dk_turn') == True:
+            print 'Turntable setup already completed'
+        if cmds.namespace(exists='dk_Ldv') == True:
+            setTurntable()
+            cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
+        if cmds.namespace(exists='dk_Ldv') == False:
+            setTurntable()
+
+def removeTurntable(*args):
+    cmds.namespace(set=':')
+    if cmds.namespace(exists='dk_turn') == True:
+        cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
+    else:
+        print 'Nothing to remove'
+
+
+def setTurntable(*args):
+    timeMin = cmds.playbackOptions(minTime=True, query=True)
+    timeMax = cmds.playbackOptions(maxTime=True, query=True)
+    FrNum = cmds.optionMenu('autott', select=True, query=True)
+    if FrNum == 1:
+        FrRange = 25
+    if FrNum == 2:
+        FrRange = 50
+    if FrNum == 3:
+        FrRange = 100
+    if FrNum == 4:
+        FrRange = 200
+    numFr = timeMax - timeMin
+    addFr = FrRange - numFr
+    subFr = numFr - FrRange
+    if numFr < FrRange:
+        cmds.playbackOptions(maxTime=timeMax + addFr)
+        cmds.playbackOptions(animationEndTime=timeMax + addFr)
+        
+    if numFr > FrRange:
+        cmds.playbackOptions(maxTime=timeMax - subFr)
+        cmds.playbackOptions(animationEndTime=timeMax - subFr)
+
+    cmds.currentTime(timeMin)
+
+    assetSel = cmds.ls(selection=True, long=True, objectsOnly=True)
+    #create locators
+    cmds.namespace(add='dk_turn')
+    cmds.namespace(set='dk_turn:')
+    turnGrp = cmds.group(name = 'turntable_grp', empty=True)
+    objLoc = cmds.spaceLocator(name = "obj_tt_loc", position = [0,0,0])
+    skyLoc = cmds.spaceLocator(name = "sky_tt_loc", position = [0,0,0])
+    cmds.parent(objLoc, turnGrp)
+    cmds.parent(skyLoc, turnGrp)
+    cmds.setAttr(objLoc[0] + ".visibility",0)
+    cmds.setAttr(skyLoc[0] + ".visibility",0)
+    #animate locators
+    objRotMin = cmds.playbackOptions(minTime=True, query=True)
+    objRotMax = timeMin + FrRange / 2
+    skyRotMin = timeMin + FrRange / 2
+    skyRotMax = cmds.playbackOptions(maxTime=True, query=True)
+    cmds.setKeyframe( objLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=objRotMin, value= 0 )
+    cmds.setKeyframe( objLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=objRotMax, value= 360 )
+    cmds.setKeyframe( skyLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=skyRotMin, value= 0 )
+    cmds.setKeyframe( skyLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=skyRotMax, value= 360 )
+    
+    for each in assetSel:
+        cmds.parentConstraint(objLoc, each, maintainOffset=True, weight=1)
+
+    cmds.namespace(set=':')
+    cmds.select(assetSel)
 
 def subd_off(*args):
     sel = cmds.ls(sl=True)
@@ -519,8 +606,10 @@ def subd_off(*args):
 def catclark_on(*args):
     sel = cmds.ls(sl=True)
     shapeSel = cmds.listRelatives(sel, s=True)
+    value=cmds.intSliderGrp('subIter', query=True, value=True)
     for eachSel in shapeSel:
         cmds.setAttr(eachSel + '.aiSubdivType', 1)
+        cmds.setAttr(eachSel + '.aiSubdivIterations', value)
 
 def subd_iter(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
@@ -685,33 +774,7 @@ def color_mcc2b(*args):
         cmds.setAttr(eachSel + '.mtoa_constant_color2Y', k=True)
         cmds.setAttr(eachSel + '.mtoa_constant_color2Z', k=True)
 
-def setTurntable(*args):
-    timeMin = cmds.playbackOptions(minTime=True, query=True)
-    timeMax = cmds.playbackOptions(maxTime=True, query=True)
-    FrNum = cmds.optionMenu('autott', select=True, query=True)
-    if FrNum == 1:
-        FrRange = 25
-    if FrNum == 2:
-        FrRange = 50
-    if FrNum == 3:
-        FrRange = 100
-    if FrNum == 4:
-        FrRange = 200
-    numFr = timeMax - timeMin
-    addFr = FrRange - numFr
-    subFr = numFr - FrRange
-    if numFr < FrRange:
-        cmds.playbackOptions(maxTime=timeMax + addFr)
-        cmds.playbackOptions(animationEndTime=timeMax + addFr)
-        
-    if numFr > FrRange:
-        cmds.playbackOptions(maxTime=timeMax - subFr)
-        cmds.playbackOptions(animationEndTime=timeMax - subFr)
-    objLoc = cmds.spaceLocator(name = "obj_tt_loc", position = [0,0,0])
-    skyLoc = cmds.spaceLocator(name = "sky_tt_loc", position = [0,0,0])
-    assetSel = cmds.ls(selection=True)
-    for each in assetSel:
-        cmds.parentConstraint(objLoc, each, maintainOffset=True, weight=1)
+
 
 
     
@@ -727,6 +790,13 @@ def buildUI():
         skyVis = cmds.getAttr('dk_Ldv:aiSkydome.camera')
     else:
         skyVis = 1
+
+    if cmds.namespace(exists='dk_Ldv') == True:
+        skyY = cmds.getAttr('dk_Ldv:aiSkydome.rotateY')
+        skyRotOffset = cmds.getAttr('dk_Ldv:aiSkydomeShape.rotOffset')
+        skyOff = skyRotOffset
+    else:
+        skyOff = 0
 
     #CREATE A COMMAND THAT READS ROTATION OFFSET
 
@@ -789,17 +859,10 @@ def buildUI():
     cmds.floatSliderGrp('exp',label='Exposure', columnWidth3=(tmpRowWidth), min=-10, max=10, value=skyExpo, step=0.001, fieldMinValue=-100,fieldMaxValue=100, field=True, changeCommand=exposure_slider, dragCommand=exposure_slider)
     cmds.setParent(mainCL)
 
-    #Skydome Rotation
-    tmpRowWidth = [winWidth*0.5, winWidth*0.5]
-    cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
-    cmds.text(label='Rotation', width=tmpRowWidth[0])
-    cmds.floatField(width=tmpRowWidth[0], step=1)
-    cmds.setParent(mainCL)
-
     #Skydome Rotation offset
     tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
-    cmds.floatSliderGrp('rotOff',label='Rot Offset', columnWidth3=(tmpRowWidth), min=-10, max=10, value=skyExpo, step=0.001, fieldMinValue=-100,fieldMaxValue=100, field=True, changeCommand=rotOffset, dragCommand=rotOffset)
+    cmds.floatSliderGrp('rotOff',label='Rot Offset', columnWidth3=(tmpRowWidth), min=0, max=360, value=skyOff, step=0.001, fieldMinValue=0,fieldMaxValue=360, field=True, changeCommand=rotOffset, dragCommand=rotOffset)
     cmds.setParent(mainCL)
 
     #Skydome camera visibility
@@ -811,14 +874,15 @@ def buildUI():
     #Auto Turntable
 
     cmds.text(label='--- Setup Turntable ---', width=winWidth, height=rowHeight)
-    tmpRowWidth = [winWidth*0.5, winWidth*0.5]
-    cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
-    cmds.optionMenu('autott', label='No. of frames')
+    tmpRowWidth = [winWidth*0.4, winWidth*0.3, winWidth*0.3]
+    cmds.rowLayout(numberOfColumns=3)
+    cmds.optionMenu('autott', label='No. of frames', width=tmpRowWidth[0])
     cmds.menuItem(label='25')
     cmds.menuItem(label='50')
     cmds.menuItem(label='100')
     cmds.menuItem(label='200')
-    cmds.button(label='Setup Turntable', width=tmpRowWidth[1])
+    cmds.button(label='Setup Turntable', width=tmpRowWidth[1], command=turntableButton)
+    cmds.button(label='Remove Turntable', width=tmpRowWidth[2],command=removeTurntable)
     cmds.setParent(mainCL)
 
 
