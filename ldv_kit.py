@@ -98,9 +98,9 @@ def createLDV(*args):
     cmds.scaleConstraint(ldvCtrl, LDVctrlgroup, maintainOffset=True, weight=1)
 
     #remove and lock attributes
-    cmds.setAttr(sky_name + ".translateX", keyable=False, lock=True)
-    cmds.setAttr(sky_name + ".translateY", keyable=False, lock=True)
-    cmds.setAttr(sky_name + ".translateZ", keyable=False, lock=True)
+    cmds.setAttr(sky_name + ".translateX", keyable=False)
+    cmds.setAttr(sky_name + ".translateY", keyable=False)
+    cmds.setAttr(sky_name + ".translateZ", keyable=False)
     cmds.setAttr(sky_name + ".rotateX", keyable=False)
     cmds.setAttr(sky_name + ".rotateY", keyable=False)
     cmds.setAttr(sky_name + ".rotateZ", keyable=False)
@@ -122,6 +122,8 @@ def removeLDV(*args):
         cmds.namespace(removeNamespace=':dk_Ldv', deleteNamespaceContent=True)
     if cmds.namespace(exists='mac') == True:
         cmds.namespace(removeNamespace=':mac', deleteNamespaceContent=True)
+    if cmds.namespace(exists='dk_turn') == True:
+        cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
     else:
         print 'Nothing to remove'
 
@@ -530,6 +532,8 @@ def turntableButton(*args):
         print "Please select all objects your asset"
     else:
         if cmds.namespace(exists='dk_turn') == True:
+            cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
+        if cmds.namespace(exists='dk_turn') == True:
             print 'Turntable setup already completed'
         if cmds.namespace(exists='dk_Ldv') == True:
             setTurntable()
@@ -590,7 +594,7 @@ def setTurntable(*args):
     cmds.setKeyframe( objLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=objRotMax, value= 360 )
     cmds.setKeyframe( skyLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=skyRotMin, value= 0 )
     cmds.setKeyframe( skyLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=skyRotMax, value= 360 )
-    
+    cmds.parentConstraint(skyLoc, "dk_Ldv:aiSkydome", maintainOffset=True, weight=1)
     for each in assetSel:
         cmds.parentConstraint(objLoc, each, maintainOffset=True, weight=1)
 
