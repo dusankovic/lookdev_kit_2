@@ -833,7 +833,6 @@ def color_mcc2b(*args):
 
 #UI
 def buildUI():
-    print LOOKDEV_KIT_FOLDER
     if cmds.namespace(exists='dk_Ldv') == True:
         skyExpo = cmds.getAttr('dk_Ldv:aiSkydome.exposure')
     else:
@@ -851,27 +850,24 @@ def buildUI():
     else:
         skyOff = 0
 
-    #CREATE A COMMAND THAT READS ROTATION OFFSET
-
     if cmds.namespace(exists='dk_Ldv') == True:
         texChnl = cmds.getAttr('dk_Ldv:hdrTextures.startChannel')
         if texChnl == 0:
             hdrNum = 1
         else:
             hdrNum = texChnl/4
-
     else:
         hdrNum = 1
 
     winID = 'LdvUI'
-    winWidth = 320
+    winWidth = 350
     winHeight = 650
     rowHeight = 30
 
     if cmds.window(winID, exists=True):
         cmds.deleteUI(winID)
 
-    w = cmds.window(winID, title='Lookdev Kit 2.0', width=winWidth, height=winHeight)
+    w = cmds.window(winID, title='Lookdev Kit 2.0', width=winWidth, height=winHeight, sizeable=False)
 
     #Main layout refs
     mainCL = cmds.columnLayout()
@@ -927,9 +923,9 @@ def buildUI():
     #Auto Turntable
 
     cmds.text(label='--- Setup Turntable ---', width=winWidth, height=rowHeight)
-    tmpRowWidth = [winWidth*0.4, winWidth*0.3, winWidth*0.3]
+    tmpRowWidth = [winWidth*0.3, winWidth*0.35, winWidth*0.35]
     cmds.rowLayout(numberOfColumns=3)
-    cmds.optionMenu('autott', label='No. of frames', width=tmpRowWidth[0])
+    cmds.optionMenu('autott', label='Length', width=tmpRowWidth[0])
     cmds.menuItem(label='25')
     cmds.menuItem(label='50')
     cmds.menuItem(label='100')
