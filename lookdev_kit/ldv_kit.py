@@ -670,324 +670,166 @@ def remove_checker(*args):
 def color_mcc10(*args):
     sel = cmds.ls(sl=True)
     shapeSel = cmds.listRelatives(sel, s=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True and cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
+    for each in shapeSel:
+        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color' )
+
+        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-    else:
-        for each in shapeSel:
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
+
+        cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
+        cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
+        cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
+        cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
+        cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 0, typ='double3')
+        cmds.setAttr(each + '.mtoa_constant_color', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
 
 def color_mcc1r(*args):
     sel = cmds.ls(sl=True)
     shapeSel = cmds.listRelatives(sel, s=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True and cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
+    for each in shapeSel:
+        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color' )
+
+        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 1, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 1, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-    else:
-        for each in shapeSel:
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 1, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
+
+        cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
+        cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
+        cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
+        cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
+        cmds.setAttr(each + '.mtoa_constant_color', 1, 0, 0, typ='double3')
+        cmds.setAttr(each + '.mtoa_constant_color', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
 
 def color_mcc1g(*args):
     sel = cmds.ls(sl=True)
     shapeSel = cmds.listRelatives(sel, s=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True and cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
+    for each in shapeSel:
+        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color' )
+
+        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 0, 1, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 0, 1, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-    else:
-        for each in shapeSel:
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 0, 1, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
+
+        cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
+        cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
+        cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
+        cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
+        cmds.setAttr(each + '.mtoa_constant_color', 0, 1, 0, typ='double3')
+        cmds.setAttr(each + '.mtoa_constant_color', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
 
 def color_mcc1b(*args):
     sel = cmds.ls(sl=True)
     shapeSel = cmds.listRelatives(sel, s=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True and cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
+    for each in shapeSel:
+        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color' )
+
+        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 1, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 1, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-    else:
-        for each in shapeSel:
-            cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-            cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-            cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 1, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-            cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
+
+        cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
+        cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
+        cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
+        cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
+        cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 1, typ='double3')
+        cmds.setAttr(each + '.mtoa_constant_color', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
 
 #MCC COLOR2
 
 def color_mcc20(*args):
     sel = cmds.ls(sl=True)
     shapeSel = cmds.listRelatives(sel, s=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True and cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True):
-        for each in shapeSel:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
+    for each in shapeSel:
+        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 0, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-    if cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
+
+        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 0, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-    else:
-        for each in shapeSel:
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 0, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
+
+        cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
+        cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
+        cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
+        cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
+        cmds.setAttr(each + '.mtoa_constant_color2', 0, 0, 0, typ='double3')
+        cmds.setAttr(each + '.mtoa_constant_color2', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
+
+            
 
 def color_mcc2r(*args):
     sel = cmds.ls(sl=True)
     shapeSel = cmds.listRelatives(sel, s=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True and cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True):
-        for each in shapeSel:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
+    for each in shapeSel:
+        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 1, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-    if cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
+
+        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 1, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-    else:
-        for each in shapeSel:
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 1, 0, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
+
+        cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
+        cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
+        cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
+        cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
+        cmds.setAttr(each + '.mtoa_constant_color2', 1, 0, 0, typ='double3')
+        cmds.setAttr(each + '.mtoa_constant_color2', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
 
 def color_mcc2g(*args):
     sel = cmds.ls(sl=True)
     shapeSel = cmds.listRelatives(sel, s=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True and cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True):
-        for each in shapeSel:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
+    for each in shapeSel:
+        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 0, 1, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-    if cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
+
+        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 0, 1, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-    else:
-        for each in shapeSel:
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 0, 1, 0, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
+
+        cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
+        cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
+        cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
+        cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
+        cmds.setAttr(each + '.mtoa_constant_color2', 0, 1, 0, typ='double3')
+        cmds.setAttr(each + '.mtoa_constant_color2', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
 
 def color_mcc2b(*args):
     sel = cmds.ls(sl=True)
     shapeSel = cmds.listRelatives(sel, s=True)
-    if cmds.attributeQuery('mtoa_constant_color' ,node=shapeSel[0], exists=True) == True and cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True):
-        for each in shapeSel:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
+    for each in shapeSel:
+        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 0, 0, 1, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-    if cmds.attributeQuery('mtoa_constant_color2' ,node=shapeSel[0], exists=True) == True:
-        for each in shapeSel:
+
+        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
             cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 0, 0, 1, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-    else:
-        for each in shapeSel:
-            cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-            cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-            cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-            cmds.setAttr(each + '.mtoa_constant_color2', 0, 0, 1, typ='double3')
-            cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-            cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
+
+        cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
+        cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
+        cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
+        cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
+        cmds.setAttr(each + '.mtoa_constant_color2', 0, 0, 1, typ='double3')
+        cmds.setAttr(each + '.mtoa_constant_color2', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
+        cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
 
 #UI
 def buildUI():
@@ -1139,15 +981,15 @@ def buildUI():
     cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
     cmds.button(label='mcc1 0', width=winWidth*0.25, command=color_mcc10)
     cmds.button(label='mcc1 R', width=winWidth*0.25, command=color_mcc1r)
-    cmds.button(label='mcc1 B', width=winWidth*0.25, command=color_mcc1g)
-    cmds.button(label='mcc1 G', width=winWidth*0.25, command=color_mcc1b)
+    cmds.button(label='mcc1 G', width=winWidth*0.25, command=color_mcc1g)
+    cmds.button(label='mcc1 B', width=winWidth*0.25, command=color_mcc1b)
     cmds.setParent(mainCL)
 
     cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
     cmds.button(label='mcc2 0', width=winWidth*0.25, command=color_mcc20)
     cmds.button(label='mcc2 R', width=winWidth*0.25, command=color_mcc2r)
-    cmds.button(label='mcc2 B', width=winWidth*0.25, command=color_mcc2g)
-    cmds.button(label='mcc2 G', width=winWidth*0.25, command=color_mcc2b)
+    cmds.button(label='mcc2 G', width=winWidth*0.25, command=color_mcc2g)
+    cmds.button(label='mcc2 B', width=winWidth*0.25, command=color_mcc2b)
     cmds.setParent(mainCL)
 
     #dock test later
