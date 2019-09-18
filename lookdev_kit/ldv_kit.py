@@ -860,7 +860,7 @@ def buildUI():
 
     winID = 'LdvUI'
     winWidth = 350
-    winHeight = 650
+    winHeight = 700
     rowHeight = 30
     ldvTitle = "Lookdev Kit 2.0"
 
