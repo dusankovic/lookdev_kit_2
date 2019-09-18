@@ -15,7 +15,8 @@ TEX_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages").replace("\\", "/")
 
 def LDVbutton(*args):
     if cmds.namespace(exists='dk_Ldv') == True:
-        print 'Lookdev kit is already loaded'
+        cmds.warning( "Lookdev kit is already loaded" )
+        return
     if cmds.namespace(exists='mac') == True:
         createLDV()
         cmds.parent("mac:macbeth_spheres_grp", "dk_Ldv:lookdev_ctrl_grp")
@@ -29,7 +30,7 @@ def LDVbutton(*args):
 
 def createLDV(*args):
     cmds.namespace(add='dk_Ldv')
-    cmds.namespace(set='dk_Ldv')
+    cmds.namespace(set=':dk_Ldv')
     LDVgroup = cmds.group(name = 'lookdevkit_grp', empty=True)
     LDVctrlgroup = cmds.group(name = 'lookdev_ctrl_grp', empty=True)
     cmds.parent(LDVctrlgroup, LDVgroup)
@@ -48,8 +49,6 @@ def createLDV(*args):
     cmds.setAttr(imageNode + '.autoTx',0)
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
     shCatch = cmds.polyPlane(n='shadowCatcher', w=900, h=900, sx=10, sy=10, cuv=2, ax=[0,1,0], ch=False)[0]
-    # cmds.setAttr(shCatch + ".overrideEnabled", 1)
-    # cmds.setAttr(shCatch + ".overrideDisplayType", 1)
     shadowStr = cmds.shadingNode('aiShadowMatte', asShader=True)
     shadowMatte = cmds.rename(shadowStr, 'aiShadow')
     cmds.select( shCatch )
@@ -126,11 +125,11 @@ def removeLDV(*args):
     if cmds.namespace(exists='dk_turn') == True:
         cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
     else:
-        print 'Nothing to remove'
+        cmds.warning( "Nothing to remove" )
 
 def Macbutton(*args):
     if cmds.namespace(exists='mac') == True:
-        print 'Macbeth chart and spheres are already loaded'
+        cmds.warning( "Macbeth chart and spheres are already loaded" )
     if cmds.namespace(exists='dk_Ldv') == True:
         createMAC()
         cmds.parent("mac:macbeth_spheres_grp", "dk_Ldv:lookdev_ctrl_grp")
@@ -140,7 +139,7 @@ def Macbutton(*args):
 
 def createMAC(*args):
     cmds.namespace(add='mac')
-    cmds.namespace(set='mac')
+    cmds.namespace(set=':mac')
     macbeth_data = [
         {
             "row": 1,
@@ -493,7 +492,7 @@ def removeMAC(*args):
     if cmds.namespace(exists='dk_Ldv:mac') == True:
         cmds.namespace(removeNamespace=':dk_Ldv:mac', deleteNamespaceContent=True)
     else:
-        print 'Nothing to remove'
+        cmds.warning('Nothing to remove')
 
 def hdrSw(self, *_):
     hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
@@ -528,14 +527,15 @@ def sky_vis(self, *_):
         cmds.undoInfo( swf=True)
 
 def turntableButton(*args):
+    ldvTitle = "Lookdev Kit 2.0"
     assetSel = cmds.ls(selection=True, long=True, objectsOnly=True)
     if len(assetSel) == 0:
-        print "Please select all objects your asset"
+        cmds.confirmDialog(title=ldvTitle, message="Please first select your asset. It would be best that all asset elements are in the single group." ,messageAlign="center",button="Ok",defaultButton="Ok",icon="warning")
     else:
         if cmds.namespace(exists='dk_turn') == True:
             cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
         if cmds.namespace(exists='dk_turn') == True:
-            print 'Turntable setup already completed'
+            cmds.warning('Turntable setup already completed')
         if cmds.namespace(exists='dk_Ldv') == True:
             setTurntable(assetSel)
             cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
@@ -550,7 +550,7 @@ def removeTurntable(*args):
     if cmds.namespace(exists='dk_turn') == True:
         cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
     else:
-        print 'Nothing to remove'
+        cmds.warning('Nothing to remove')
 
 
 def setTurntable(objects):
@@ -642,7 +642,7 @@ def bucket_size128(*args):
 
 def checker(*args):
     if cmds.namespace(exists='dk_chck:') == True:
-        print 'Checker is already loaded'
+        cmds.warning('Checker shader is already loaded')
     else:
         cmds.namespace(add='dk_chck')
         cmds.namespace(set='dk_chck:')
@@ -657,14 +657,13 @@ def checker(*args):
         cmds.connectAttr(chckImage + '.outColor', chckShader + '.baseColor', force=True)
         cmds.namespace(set=':')
         cmds.select(clear=True)
-        print 'Checker shader loaded'
 
 def remove_checker(*args):
     cmds.namespace(set=':')
     if cmds.namespace(exists='dk_chck') == True:
         cmds.namespace(removeNamespace=':dk_chck', deleteNamespaceContent=True)
     else:
-        print 'Nothing to remove'
+        cmds.warning('Nothing to remove')
 
 
 def color_mcc10(*args):
@@ -863,11 +862,13 @@ def buildUI():
     winWidth = 350
     winHeight = 650
     rowHeight = 30
+    ldvTitle = "Lookdev Kit 2.0"
 
     if cmds.window(winID, exists=True):
         cmds.deleteUI(winID)
 
-    w = cmds.window(winID, title='Lookdev Kit 2.0', width=winWidth, height=winHeight, sizeable=False)
+    w = cmds.window(winID, title=ldvTitle, width=winWidth, height=winHeight, sizeable=False)
+
 
     #Main layout refs
     mainCL = cmds.columnLayout()
@@ -911,7 +912,7 @@ def buildUI():
     #Skydome Rotation offset
     tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
-    cmds.floatSliderGrp('rotOff',label='Rot Offset', columnWidth3=(tmpRowWidth), min=0, max=360, value=skyOff, step=0.001, fieldMinValue=0,fieldMaxValue=360, field=True, changeCommand=rotOffset, dragCommand=rotOffset)
+    cmds.floatSliderGrp('rotOff',label='Rot. Offset', columnWidth3=(tmpRowWidth), min=0, max=360, value=skyOff, step=0.001, fieldMinValue=0,fieldMaxValue=360, field=True, changeCommand=rotOffset, dragCommand=rotOffset)
     cmds.setParent(mainCL)
 
     #Skydome camera visibility
