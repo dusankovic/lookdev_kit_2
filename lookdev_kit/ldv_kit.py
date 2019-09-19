@@ -519,6 +519,16 @@ def rotOffset(self, *_):
         cmds.setAttr("dk_Ldv:aiSkydomeShape.rotOffset", value)
         cmds.undoInfo( swf=True)
 
+def objOffset(self, *_):
+    if cmds.namespace(exists='dk_turn') == True:
+        objRot = cmds.getAttr("dk_turn:obj_tt_Offloc.rotateY")
+        cmds.undoInfo( swf=False )
+        value=cmds.floatSliderGrp("objOff", query=True, value=True)
+        objAddedRot = objRot + value
+        cmds.setAttr("dk_turn:obj_tt_Offloc.rotateY", objAddedRot)
+        cmds.setAttr("dk_turn:obj_tt_Offloc.objOffset", value)
+        cmds.undoInfo( swf=True)
+
 def sky_vis(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.undoInfo( swf=False )
@@ -583,10 +593,14 @@ def setTurntable(objects):
     cmds.namespace(set='dk_turn:')
     turnGrp = cmds.group(name = 'turntable_grp', empty=True)
     objLoc = cmds.spaceLocator(name = "obj_tt_loc", position = [0,0,0])
+    objOffLoc = cmds.spaceLocator(name = "obj_tt_Offloc", position = [0,0,0])
     skyLoc = cmds.spaceLocator(name = "sky_tt_loc", position = [0,0,0])
+    cmds.addAttr(objOffLoc[0], longName="objOffset", min=0, max=360,defaultValue=0, attributeType="double"  )
+    cmds.parent(objOffLoc, turnGrp)
     cmds.parent(objLoc, turnGrp)
     cmds.parent(skyLoc, turnGrp)
     cmds.setAttr(objLoc[0] + ".visibility",0)
+    cmds.setAttr(objOffLoc[0] + ".visibility",0)
     cmds.setAttr(skyLoc[0] + ".visibility",0)
     #animate locators
     objRotMin = cmds.playbackOptions(minTime=True, query=True)
@@ -598,8 +612,9 @@ def setTurntable(objects):
     cmds.setKeyframe( skyLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=skyRotMin, value= 0 )
     cmds.setKeyframe( skyLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=skyRotMax, value= 360 )
     cmds.parentConstraint(skyLoc, "dk_Ldv:aiSkydome", maintainOffset=True, weight=1)
+    cmds.parentConstraint(objLoc, objOffLoc, maintainOffset=True, weight=1)
     for each in objects:
-        cmds.parentConstraint(objLoc, each, maintainOffset=True, weight=1)
+        cmds.parentConstraint(objOffLoc, each, maintainOffset=True, weight=1)
 
     cmds.namespace(set=':')
 
@@ -607,16 +622,16 @@ def setTurntable(objects):
 def subd_off(*args):
     sel = cmds.ls(sl=True)
     shapeSel = cmds.listRelatives(sel, s=True)
-    for eachSel in shapeSel:
-        cmds.setAttr(eachSel + '.aiSubdivType', 0)
+    for each in shapeSel:
+        cmds.setAttr(each + '.aiSubdivType', 0)
 
 def catclark_on(*args):
+    value = cmds.intSliderGrp('subIter', query=True, value=True)
     sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    value=cmds.intSliderGrp('subIter', query=True, value=True)
-    for eachSel in shapeSel:
-        cmds.setAttr(eachSel + '.aiSubdivType', 1)
-        cmds.setAttr(eachSel + '.aiSubdivIterations', value)
+    shapeSel = cmds.listRelatives(sel, shapes=True)
+    for each in shapeSel:
+        cmds.setAttr(each + '.aiSubdivType', 1)
+        cmds.setAttr(each + '.aiSubdivIterations', value)
 
 def subd_iter(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
@@ -624,8 +639,8 @@ def subd_iter(self, *_):
         sel = cmds.ls(sl=True)
         shapeSel = cmds.listRelatives(sel, s=True)
         value=cmds.intSliderGrp('subIter', query=True, value=True)
-        for eachSel in shapeSel:
-            cmds.setAttr(eachSel + '.aiSubdivIterations', value)
+        for each in shapeSel:
+            cmds.setAttr(each + '.aiSubdivIterations', value)
             cmds.undoInfo( swf=True)
 
 def bucket_size16(*args):
@@ -843,11 +858,16 @@ def buildUI():
         skyVis = 1
 
     if cmds.namespace(exists='dk_Ldv') == True:
-        skyY = cmds.getAttr('dk_Ldv:aiSkydome.rotateY')
         skyRotOffset = cmds.getAttr('dk_Ldv:aiSkydomeShape.rotOffset')
         skyOff = skyRotOffset
     else:
         skyOff = 0
+
+    if cmds.namespace(exists='dk_turn') == True:
+        objRotOffset = cmds.getAttr('dk_turn:obj_tt_Offloc.rotateY')
+        objOff = objRotOffset
+    else:
+        objOff = 0
 
     if cmds.namespace(exists='dk_Ldv') == True:
         texChnl = cmds.getAttr('dk_Ldv:hdrTextures.startChannel')
@@ -913,6 +933,12 @@ def buildUI():
     tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
     cmds.floatSliderGrp('rotOff',label='Rot. Offset', columnWidth3=(tmpRowWidth), min=0, max=360, value=skyOff, step=0.001, fieldMinValue=0,fieldMaxValue=360, field=True, changeCommand=rotOffset, dragCommand=rotOffset)
+    cmds.setParent(mainCL)
+
+    #Object Rotation offset
+    tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
+    cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
+    cmds.floatSliderGrp('objOff',label='Object Rotation', columnWidth3=(tmpRowWidth), min=0, max=360, value=objOff, step=0.001, fieldMinValue=0,fieldMaxValue=360, field=True, changeCommand=objOffset, dragCommand=objOffset)
     cmds.setParent(mainCL)
 
     #Skydome camera visibility
