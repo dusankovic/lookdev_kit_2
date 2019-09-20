@@ -521,7 +521,7 @@ def rotOffset(self, *_):
 
 def objOffset(self, *_):
     if cmds.namespace(exists='dk_turn') == True:
-        objRot = cmds.getAttr("dk_turn:obj_tt_Offloc.rotateY")
+        objRot = cmds.getAttr("dk_turn:obj_tt_loc.rotateY")
         cmds.undoInfo( swf=False )
         value=cmds.floatSliderGrp("objOff", query=True, value=True)
         objAddedRot = objRot + value
@@ -614,10 +614,9 @@ def setTurntable(objects):
     cmds.parentConstraint(skyLoc, "dk_Ldv:aiSkydome", maintainOffset=True, weight=1)
     cmds.parentConstraint(objLoc, objOffLoc, maintainOffset=True, weight=1)
     for each in objects:
-        cmds.parentConstraint(objOffLoc, each, maintainOffset=True, weight=1)
+        cmds.orientConstraint(objOffLoc, each, maintainOffset=True, weight=1)
 
     cmds.namespace(set=':')
-
 
 def subd_off(*args):
     sel = cmds.ls(sl=True)
