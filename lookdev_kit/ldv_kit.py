@@ -506,18 +506,15 @@ def hdrPaths(self, *_):
     hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
     new_hdr = os.path.join(mydir, file[hdr_num-1]).replace("\\", "/")
     cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', str(new_hdr), type = "string")
-    print file[hdr_num-1]
-    print new_hdr
-
+    print file
 
 def hdrSw(self, *_):
     hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
+    mydir = HDR_FOLDER 
+    file = cmds.getFileList( folder=mydir, filespec='*.tx' )
+    new_hdr = os.path.join(mydir, file[hdr_num-1]).replace("\\", "/")
     cmds.symbolButton("hdrSym", edit=True, image=MINI_HDR_FOLDER + "/" + str(hdr_num) + ".jpg")
-
     if cmds.namespace(exists='dk_Ldv') == True:
-        mydir = HDR_FOLDER 
-        file = cmds.getFileList( folder=mydir, filespec='*.tx' )
-        new_hdr = os.path.join(mydir, file[hdr_num-1]).replace("\\", "/")
         cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', str(new_hdr), type = "string")
 
 def exposure_slider(self, *_):
@@ -891,6 +888,10 @@ def buildUI():
     else:
         hdrNum = 1
 
+    mydir = HDR_FOLDER
+    file = cmds.getFileList( folder=mydir, filespec='*.tx' )
+    hdrCount = len(file)
+
     winID = 'LdvUI'
     winWidth = 350
     winHeight = 700
@@ -923,10 +924,11 @@ def buildUI():
 
     cmds.text(label='--- Skydome Controls ---', width=winWidth, height=rowHeight)
 
-    #TEMP SLIDER
+    #hdr switch
     tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
+
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
-    cmds.intSliderGrp('hdrSw', label='HDR', columnWidth3=(tmpRowWidth), min=1, max=10, value=hdrNum, step=1, fieldMinValue=0,fieldMaxValue=10, field=True, changeCommand=hdrSw, dragCommand=hdrSw)
+    cmds.intSliderGrp('hdrSw', label='HDR', columnWidth3=(tmpRowWidth), min=1, max=hdrCount, value=hdrNum, step=1, fieldMinValue=0,fieldMaxValue=10, field=True, changeCommand=hdrSw, dragCommand=hdrSw)
     cmds.setParent(mainCL)
 
     #image
@@ -950,10 +952,6 @@ def buildUI():
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
     cmds.floatSliderGrp('sky_vis', label='Camera', min=0, max=1, value=skyVis, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
     cmds.setParent(mainCL)
-
-
-    #TEST BUTTON
-    cmds.button(label='hdr Test', width=tmpRowWidth[1], command=hdrPaths)
 
     #Auto Turntable
 
