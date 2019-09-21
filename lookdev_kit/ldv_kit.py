@@ -8,8 +8,7 @@ import os
 LOOKDEV_KIT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "miniHdrs").replace("\\", "/")
 TEX_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages").replace("\\", "/")
-
-
+HDR_FOLDER = os.path.join(TEX_FOLDER, "hdr").replace("\\", "/")
 
 #COMMANDS
 
@@ -43,10 +42,17 @@ def createLDV(*args):
     cmds.setAttr('dk_Ldv:aiSkydomeShape.exposure', value)
     cmds.setAttr('dk_Ldv:aiSkydomeShape.skyRadius', 0)
     cmds.parent(sky_name, LDVctrlgroup)
+
+
     imageNode = core.createArnoldNode('aiImage', name = 'hdrTextures')
-    skydome_tex = (TEX_FOLDER + '/' + 'lookdev_hdri_2k_01.tx' )
-    cmds.setAttr(imageNode + '.filename', skydome_tex, type = "string")
+    hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
+    mydir = HDR_FOLDER 
+    file = cmds.getFileList( folder=mydir, filespec='*.tx' )
+    new_hdr = os.path.join(mydir, file[hdr_num-1]).replace("\\", "/")
+    cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', new_hdr, type = "string")
     cmds.setAttr(imageNode + '.autoTx',0)
+
+
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
     shCatch = cmds.polyPlane(n='shadowCatcher', w=900, h=900, sx=10, sy=10, cuv=2, ax=[0,1,0], ch=False)[0]
     shadowStr = cmds.shadingNode('aiShadowMatte', asShader=True)
@@ -90,8 +96,6 @@ def createLDV(*args):
     cmds.setAttr(cam[0] + ".displayCameraFrustum", 1)
     cmds.parent(cam[0], "dk_Ldv:lookdev_ctrl_grp")
 
-
-
     #create global ctrl
     ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[(-500, 0, 500), (-500, 0, -500), (500, 0, -500), (500, 0, 500), (-500, 0, 500)] )
     cmds.parent(ldvCtrl, LDVgroup)
@@ -120,10 +124,13 @@ def removeLDV(*args):
     cmds.namespace(set=':')
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.namespace(removeNamespace=':dk_Ldv', deleteNamespaceContent=True)
+        return
     if cmds.namespace(exists='mac') == True:
         cmds.namespace(removeNamespace=':mac', deleteNamespaceContent=True)
+        return
     if cmds.namespace(exists='dk_turn') == True:
         cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
+        return
     else:
         cmds.warning( "Nothing to remove" )
 
@@ -483,8 +490,7 @@ def createMAC(*args):
 
     cmds.namespace(set=':')
     cmds.select(clear=True)
-
-        
+     
 def removeMAC(*args):
     cmds.namespace(set=':')
     if cmds.namespace(exists='mac') == True:
@@ -494,13 +500,25 @@ def removeMAC(*args):
     else:
         cmds.warning('Nothing to remove')
 
+def hdrPaths(self, *_):
+    mydir = HDR_FOLDER 
+    file = cmds.getFileList( folder=mydir, filespec='*.tx' )
+    hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
+    new_hdr = os.path.join(mydir, file[hdr_num-1]).replace("\\", "/")
+    cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', str(new_hdr), type = "string")
+    print file[hdr_num-1]
+    print new_hdr
+
+
 def hdrSw(self, *_):
     hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
     cmds.symbolButton("hdrSym", edit=True, image=MINI_HDR_FOLDER + "/" + str(hdr_num) + ".jpg")
 
     if cmds.namespace(exists='dk_Ldv') == True:
-        value=cmds.intSliderGrp('hdrSw', query=True, value=True)
-        cmds.setAttr('dk_Ldv:hdrTextures.startChannel', (value-1)*4)
+        mydir = HDR_FOLDER 
+        file = cmds.getFileList( folder=mydir, filespec='*.tx' )
+        new_hdr = os.path.join(mydir, file[hdr_num-1]).replace("\\", "/")
+        cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', str(new_hdr), type = "string")
 
 def exposure_slider(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
@@ -561,7 +579,6 @@ def removeTurntable(*args):
         cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
     else:
         cmds.warning('Nothing to remove')
-
 
 def setTurntable(objects):
     timeMin = cmds.playbackOptions(minTime=True, query=True)
@@ -679,7 +696,6 @@ def remove_checker(*args):
     else:
         cmds.warning('Nothing to remove')
 
-
 def color_mcc10(*args):
     sel = cmds.ls(sl=True)
     shapeSel = cmds.listRelatives(sel, s=True)
@@ -781,8 +797,6 @@ def color_mcc20(*args):
         cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
         cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
         cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-
-            
 
 def color_mcc2r(*args):
     sel = cmds.ls(sl=True)
@@ -888,7 +902,6 @@ def buildUI():
 
     w = cmds.window(winID, title=ldvTitle, width=winWidth, height=winHeight, sizeable=False)
 
-
     #Main layout refs
     mainCL = cmds.columnLayout()
 
@@ -923,28 +936,24 @@ def buildUI():
     cmds.setParent(mainCL)
 
     #Skydome Exposure
-    tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
+    tmpRowWidth = [winWidth*0.3, winWidth*0.15, winWidth*0.45]
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
     cmds.floatSliderGrp('exp',label='Exposure', columnWidth3=(tmpRowWidth), min=-10, max=10, value=skyExpo, step=0.001, fieldMinValue=-100,fieldMaxValue=100, field=True, changeCommand=exposure_slider, dragCommand=exposure_slider)
     cmds.setParent(mainCL)
 
     #Skydome Rotation offset
-    tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
     cmds.floatSliderGrp('rotOff',label='Rot. Offset', columnWidth3=(tmpRowWidth), min=0, max=360, value=skyOff, step=0.001, fieldMinValue=0,fieldMaxValue=360, field=True, changeCommand=rotOffset, dragCommand=rotOffset)
     cmds.setParent(mainCL)
 
-    #Object Rotation offset
-    tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
-    cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
-    cmds.floatSliderGrp('objOff',label='Object Rotation', columnWidth3=(tmpRowWidth), min=0, max=360, value=objOff, step=0.001, fieldMinValue=0,fieldMaxValue=360, field=True, changeCommand=objOffset, dragCommand=objOffset)
-    cmds.setParent(mainCL)
-
     #Skydome camera visibility
-    tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
     cmds.floatSliderGrp('sky_vis', label='Camera', min=0, max=1, value=skyVis, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
     cmds.setParent(mainCL)
+
+
+    #TEST BUTTON
+    cmds.button(label='hdr Test', width=tmpRowWidth[1], command=hdrPaths)
 
     #Auto Turntable
 
@@ -960,9 +969,11 @@ def buildUI():
     cmds.button(label='Remove Turntable', width=tmpRowWidth[2],command=removeTurntable)
     cmds.setParent(mainCL)
 
-
-    #Arnold options
-    #opaque on + off
+    #Object Rotation offset
+    tmpRowWidth = [winWidth*0.3, winWidth*0.15, winWidth*0.45]
+    cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
+    cmds.floatSliderGrp('objOff',label='Obj. Rot. Offset', columnWidth3=(tmpRowWidth), min=0, max=360, value=objOff, step=0.001, fieldMinValue=0,fieldMaxValue=360, field=True, changeCommand=objOffset, dragCommand=objOffset)
+    cmds.setParent(mainCL)
 
     #SUBD CONTROLS
 
@@ -1013,10 +1024,6 @@ def buildUI():
     cmds.button(label='mcc2 G', width=winWidth*0.25, command=color_mcc2g)
     cmds.button(label='mcc2 B', width=winWidth*0.25, command=color_mcc2b)
     cmds.setParent(mainCL)
-
-    #dock test later
-    # allowedAreas = ['right', 'left']
-    # cmds.dockControl(label='Lookdev kit', area='right', content=winID, enablePopupOption=True, retain=False )
 
     # Display the window
     cmds.showWindow(w)
