@@ -48,9 +48,11 @@ def createLDV(*args):
     cmds.parent(sky_name, LDVctrlgroup)
     imageNode = core.createArnoldNode('aiImage', name = 'hdrTextures')
     hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
-    mydir = HDR_FOLDER 
-    file = cmds.getFileList( folder=mydir, filespec='*.tx' )
-    new_hdr = os.path.join(mydir, file[hdr_num-1]).replace("\\", "/")
+    file = cmds.getFileList( folder=HDR_FOLDER , filespec='*.tx' )
+    if len(file) == 0:
+        new_hdr = TEX_FOLDER + "/no_prev.tx"
+    else:
+        new_hdr = os.path.join(HDR_FOLDER , file[hdr_num-1]).replace("\\", "/")
     cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', new_hdr, type = "string")
     cmds.setAttr(imageNode + '.autoTx',0)
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
@@ -130,6 +132,9 @@ def removeLDV(*args):
         return
     if cmds.namespace(exists='dk_turn') == True:
         cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
+        return
+    if cmds.namespace(exists='dk_bake') == True:
+        cmds.namespace(removeNamespace=':dk_bake', deleteNamespaceContent=True)
         return
     else:
         cmds.warning( "Nothing to remove" )
@@ -562,6 +567,8 @@ def refHDR(*args):
     minijpeg = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpeg')
     hdrList = hdrexr + hdrhdr
     miniList = minijpg + minijpeg
+    prog = 0
+    progTx = 0
     
     dialog = cmds.confirmDialog(title = "Lookdev Kit 2.0 - Rebuild", message = "This will delete all files in miniHDRs folder and refresh HDR files", button=["Yes", "No"], cancelButton="No", dismissString = "No")
     if len(miniList) == 0 and len(hdrList) == 0:
@@ -582,14 +589,16 @@ def refHDR(*args):
         for each in hdrtx:
                 deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
                 cmds.sysFile(deltx, delete=True)
-
+        
         #create planes:
         for each in hdrList:
             hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             miniPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
             lowPlane = cmds.polyPlane(name= each + "_low", axis=[0,1,0], width=2, height=1, subdivisionsX = 1, subdivisionsY = 1, cuv=1, ch=0 )
             highPlane = cmds.polyPlane(name= each + "_high", axis=[0,1,0], width=2, height=1, subdivisionsX = 1, subdivisionsY = 1, cuv=1, ch=0 )
-            
+            numhdr = len(hdrList)
+            maxNumBake = 100/int(numhdr)
+
             for each in highPlane:
                 lambHi = cmds.shadingNode('lambert', asShader=True, name = each + "_high")
                 cmds.select(each)
@@ -604,9 +613,27 @@ def refHDR(*args):
                 cmds.select(each)
                 cmds.hyperShade(assign=lambLo)
 
+            
             for each in hdrList:
                 cmds.surfaceSampler(target = lowPlane, source = highPlane, searchCage="", searchOffset=0, uvSet="map1", mapOutput="diffuseRGB", mapWidth=300, mapHeight=150, maximumValue=2, mapSpace="tangent", mapMaterials=1, shadows=0, filename=miniPath, fileFormat="jpg", superSampling=2, filterSize=3, filterType=0, overscan=1, flipV=False, flipU=False  )
+                # cmds.progressWindow(title='Baking HDR preview images', progress=prog, status='Baking: 0%' )
 
+                # while True :
+                #     if cmds.progressWindow( query=True, progress=True ) == 100 :
+                #         break
+
+                #     prog += maxNumBake
+                #     cmds.progressWindow(edit=True, progress=prog, status=('Baking: ' + `prog` + '%' ) )
+                #     cmds.pause( seconds=1 )
+                # # prog += maxNumBake
+                # # cmds.progressWindow(edit=True, progress=prog, status=('Baking: ' + `prog` + '%' ) )
+                # # cmds.pause( seconds=1 )
+
+                # # if cmds.progressWindow(query=True, progress=True) == 100:
+                # #     prog = 0
+                # #     cmds.progressWindow(endProgress=1)
+                # #     break
+        
         for each in hdrList:
             hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True) # get mtoa.mll path
@@ -615,8 +642,8 @@ def refHDR(*args):
             base, ext = os.path.splitext(each)
             outfile = base + ".tx"
             out = os.path.join(HDR_FOLDER, outfile).replace("\\", "/")
-            subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdrPath, "-o", out])
-
+            subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdrPath, "-o", out], shell=True)
+                   
         cmds.namespace(removeNamespace=':dk_bake',deleteNamespaceContent=True)
         cmds.namespace(set=':')
         buildUI()
@@ -952,13 +979,18 @@ def buildUI():
     else:
         hdrslide = 1
 
-    if cmds.namespace(exists='dk_Ldv') == True:
-        miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' )
+    miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' ) 
+
+    if cmds.namespace(exists='dk_Ldv') == True and len(miniFile) is not 0:
         hdrswitch = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')-1
-        minIntFile = "/" + miniFile[hdrswitch]
+        minIntFile = MINI_HDR_FOLDER +  "/" + miniFile[hdrswitch]
+    if len(miniFile) is not 0:
+        miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' )
+        minIntFile = MINI_HDR_FOLDER + "/" + miniFile[0]
     else:
         miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' )
-        minIntFile ="/" + miniFile[0]
+        minIntFile = TEX_FOLDER + "/no_prev.jpg"
+
 
     if cmds.namespace(exists='dk_turn') == True:
         objRotOffset = cmds.getAttr('dk_turn:obj_tt_Offloc.rotateY')
@@ -1012,7 +1044,7 @@ def buildUI():
     #image
     tmpRowWidth = [winWidth*1, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=1)
-    cmds.symbolButton("hdrSym", image=MINI_HDR_FOLDER + minIntFile, width=tmpRowWidth[0])
+    cmds.symbolButton("hdrSym", image=minIntFile, width=tmpRowWidth[0])
     cmds.setParent(mainCL)
 
     #Skydome Exposure
