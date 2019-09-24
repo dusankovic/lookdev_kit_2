@@ -589,7 +589,7 @@ def refHDR(*args):
         for each in hdrtx:
                 deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
                 cmds.sysFile(deltx, delete=True)
-        
+        cmds.progressWindow(title='Baking HDR preview images', progress=prog, status='Baking: 0%' )
         #create planes:
         for each in hdrList:
             hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
@@ -614,26 +614,21 @@ def refHDR(*args):
                 cmds.hyperShade(assign=lambLo)
 
             
-            for each in hdrList:
-                cmds.surfaceSampler(target = lowPlane, source = highPlane, searchCage="", searchOffset=0, uvSet="map1", mapOutput="diffuseRGB", mapWidth=300, mapHeight=150, maximumValue=2, mapSpace="tangent", mapMaterials=1, shadows=0, filename=miniPath, fileFormat="jpg", superSampling=2, filterSize=3, filterType=0, overscan=1, flipV=False, flipU=False  )
-                # cmds.progressWindow(title='Baking HDR preview images', progress=prog, status='Baking: 0%' )
+            cmds.surfaceSampler(target = lowPlane, source = highPlane, searchCage="", searchOffset=0, uvSet="map1", mapOutput="diffuseRGB", mapWidth=300, mapHeight=150, maximumValue=2, mapSpace="tangent", mapMaterials=1, shadows=0, filename=miniPath, fileFormat="jpg", superSampling=2, filterSize=3, filterType=0, overscan=1, flipV=False, flipU=False  )
 
-                # while True :
-                #     if cmds.progressWindow( query=True, progress=True ) == 100 :
-                #         break
+            prog += maxNumBake
+            cmds.progressWindow(edit=True, progress=prog, status=('Baking HDR preview images: ' + `prog` + '%' ) )
+            cmds.pause( seconds=1 )
 
-                #     prog += maxNumBake
-                #     cmds.progressWindow(edit=True, progress=prog, status=('Baking: ' + `prog` + '%' ) )
-                #     cmds.pause( seconds=1 )
-                # # prog += maxNumBake
-                # # cmds.progressWindow(edit=True, progress=prog, status=('Baking: ' + `prog` + '%' ) )
-                # # cmds.pause( seconds=1 )
+            if cmds.progressWindow(query=True, progress=True) == 100:
+                prog = 0
+                cmds.progressWindow(endProgress=1)
+                break
 
-                # # if cmds.progressWindow(query=True, progress=True) == 100:
-                # #     prog = 0
-                # #     cmds.progressWindow(endProgress=1)
-                # #     break
+        cmds.namespace(removeNamespace=':dk_bake',deleteNamespaceContent=True)
+        cmds.namespace(set=':')
         
+        cmds.progressWindow(title='Converting textures to TX', progress=prog, status='Converting: 0%' )
         for each in hdrList:
             hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True) # get mtoa.mll path
@@ -643,9 +638,17 @@ def refHDR(*args):
             outfile = base + ".tx"
             out = os.path.join(HDR_FOLDER, outfile).replace("\\", "/")
             subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdrPath, "-o", out], shell=True)
-                   
-        cmds.namespace(removeNamespace=':dk_bake',deleteNamespaceContent=True)
-        cmds.namespace(set=':')
+            prog += maxNumBake
+            cmds.progressWindow(edit=True, progress=prog, status=('Converting textures to TX: ' + `prog` + '%' ) )
+            cmds.pause( seconds=3 )
+
+            if cmds.progressWindow(query=True, progress=True) == 100:
+                cmds.pause( seconds=5 )
+                prog = 0
+                cmds.progressWindow(endProgress=1)
+                break
+
+        
         buildUI()
 
     else:
