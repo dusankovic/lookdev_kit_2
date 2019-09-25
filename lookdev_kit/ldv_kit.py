@@ -516,6 +516,10 @@ def hdrSw(self, *_):
         cmds.image("hdrSym", edit=True, image=minIntFile)
         cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', str(new_hdr), type = "string")
         cmds.setAttr('dk_Ldv:aiSkydomeShape.hdrsl', hdr_num)
+    if len(file) != 0:
+        minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[hdr_num-1]).replace("\\", "/")
+        cmds.image("hdrSym", edit=True, image=minIntFile)
+
     else:
         cmds.warning("Refresh HDRs")
 
