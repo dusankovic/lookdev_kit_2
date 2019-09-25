@@ -642,6 +642,19 @@ def refHDR(*args):
     else:
         cmds.warning("Operation Canceled")
 
+def deletePrevTx(*args):
+    hdrtx = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx')
+    minijpg = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg')
+    minijpeg = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpeg')
+    miniList = minijpg + minijpeg
+    for each in miniList:
+                delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
+                cmds.sysFile(delPath, delete=True)
+    for each in hdrtx:
+            deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
+            cmds.sysFile(deltx, delete=True)
+    buildUI()
+
 def turntableButton(*args):
     ldvTitle = "Lookdev Kit 2.0"
     assetSel = cmds.ls(selection=True, long=True, objectsOnly=True)
@@ -1063,6 +1076,7 @@ def buildUI():
     tmpRowWidth = [winWidth*0.5, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
     cmds.button(label='Refresh HDRs', width=tmpRowWidth[0], command=refHDR)
+    cmds.button(label='Del Tx/jpg', width=tmpRowWidth[1], command=deletePrevTx)
     cmds.setParent(mainCL)
 
     #Auto Turntable
