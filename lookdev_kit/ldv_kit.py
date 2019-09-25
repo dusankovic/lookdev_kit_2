@@ -505,25 +505,19 @@ def removeMAC(*args):
     else:
         cmds.warning('Nothing to remove')
 
-def hdrPaths(self, *_):
-    mydir = HDR_FOLDER 
-    file = cmds.getFileList( folder=mydir, filespec='*.tx' )
-    hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
-    new_hdr = os.path.join(mydir, file[hdr_num-1]).replace("\\", "/")
-    cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', str(new_hdr), type = "string")
-    print file
-
 def hdrSw(self, *_):
-    hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
-    mydir = HDR_FOLDER 
+    hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True) 
     file = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx' )
     miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' )
-    new_hdr = os.path.join(HDR_FOLDER, file[hdr_num-1]).replace("\\", "/")
-    minIntFile = MINI_HDR_FOLDER + "/" + miniFile[hdr_num-1]
-    cmds.symbolButton("hdrSym", edit=True, image=minIntFile)
-    if cmds.namespace(exists='dk_Ldv') == True:
+    
+    if cmds.namespace(exists='dk_Ldv') == True and len(file) != 0:
+        new_hdr = os.path.join(HDR_FOLDER, file[hdr_num-1]).replace("\\", "/")
+        minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[hdr_num-1]).replace("\\", "/")
+        cmds.image("hdrSym", edit=True, image=minIntFile)
         cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', str(new_hdr), type = "string")
         cmds.setAttr('dk_Ldv:aiSkydomeShape.hdrsl', hdr_num)
+    else:
+        cmds.warning("Refresh HDRs")
 
 def exposure_slider(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
@@ -613,13 +607,10 @@ def refHDR(*args):
                 cmds.select(each)
                 cmds.hyperShade(assign=lambLo)
 
-            
             cmds.surfaceSampler(target = lowPlane, source = highPlane, searchCage="", searchOffset=0, uvSet="map1", mapOutput="diffuseRGB", mapWidth=300, mapHeight=150, maximumValue=2, mapSpace="tangent", mapMaterials=1, shadows=0, filename=miniPath, fileFormat="jpg", superSampling=2, filterSize=3, filterType=0, overscan=1, flipV=False, flipU=False  )
-
             prog += maxNumBake
-            cmds.progressWindow(edit=True, progress=prog, status=('Baking HDR preview images: ' + `prog` + '%' ) )
+            cmds.progressWindow(edit=True, progress=prog, status='Baking HDR preview images: ' )
             cmds.pause( seconds=1 )
-
             if cmds.progressWindow(query=True, progress=True) == 100:
                 prog = 0
                 cmds.progressWindow(endProgress=1)
@@ -637,20 +628,17 @@ def refHDR(*args):
             base, ext = os.path.splitext(each)
             outfile = base + ".tx"
             out = os.path.join(HDR_FOLDER, outfile).replace("\\", "/")
-            subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdrPath, "-o", out], shell=True)
+            baketx = subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdrPath, "-o", out], shell=True)
             prog += maxNumBake
-            cmds.progressWindow(edit=True, progress=prog, status=('Converting textures to TX: ' + `prog` + '%' ) )
-            cmds.pause( seconds=3 )
-
+            cmds.progressWindow(edit=True, progress=prog, status='Converting textures to TX: ' )
+            baketx.wait()
             if cmds.progressWindow(query=True, progress=True) == 100:
                 cmds.pause( seconds=5 )
                 prog = 0
                 cmds.progressWindow(endProgress=1)
                 break
-
-        
+        cmds.pause( seconds=3 )
         buildUI()
-
     else:
         cmds.warning("Operation Canceled")
 
@@ -976,24 +964,29 @@ def buildUI():
     else:
         skyOff = 0
 
-    if cmds.namespace(exists='dk_Ldv') == True:
+    miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' ) 
+    hdrtx = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx')
+
+    if cmds.namespace(exists='dk_Ldv') == True and len(hdrtx) != 0:
         hdrswitch = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')
         hdrslide = hdrswitch
+        hdrCount = len(hdrtx)
     else:
         hdrslide = 1
+        hdrCount = 1
 
-    miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' ) 
-
-    if cmds.namespace(exists='dk_Ldv') == True and len(miniFile) is not 0:
+    if cmds.namespace(exists='dk_Ldv') == True and len(miniFile) != 0:
         hdrswitch = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')-1
         minIntFile = MINI_HDR_FOLDER +  "/" + miniFile[hdrswitch]
-    if len(miniFile) is not 0:
+        txIntFile = HDR_FOLDER +  "/" + hdrtx[hdrswitch]
+    if len(miniFile) != 0:
         miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' )
         minIntFile = MINI_HDR_FOLDER + "/" + miniFile[0]
+        txIntFile = HDR_FOLDER +  "/" + hdrtx[0]
     else:
         miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' )
         minIntFile = TEX_FOLDER + "/no_prev.jpg"
-
+        txIntFile = HDR_FOLDER +  "/no_prev.tx"
 
     if cmds.namespace(exists='dk_turn') == True:
         objRotOffset = cmds.getAttr('dk_turn:obj_tt_Offloc.rotateY')
@@ -1045,9 +1038,9 @@ def buildUI():
     cmds.setParent(mainCL)
 
     #image
-    tmpRowWidth = [winWidth*1, winWidth*0.5]
-    cmds.rowLayout(numberOfColumns=1)
-    cmds.symbolButton("hdrSym", image=minIntFile, width=tmpRowWidth[0])
+    tmpRowWidth = [winWidth*1, winWidth*0.065]
+    cmds.rowLayout(numberOfColumns=1, columnOffset1 =tmpRowWidth[1], columnAttach1="both")
+    cmds.image("hdrSym", image=minIntFile, width=tmpRowWidth[0])
     cmds.setParent(mainCL)
 
     #Skydome Exposure
