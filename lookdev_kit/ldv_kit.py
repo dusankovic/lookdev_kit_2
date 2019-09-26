@@ -126,18 +126,18 @@ def removeLDV(*args):
     cmds.namespace(set=':')
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.namespace(removeNamespace=':dk_Ldv', deleteNamespaceContent=True)
-        return
+
     if cmds.namespace(exists='mac') == True:
         cmds.namespace(removeNamespace=':mac', deleteNamespaceContent=True)
-        return
+
     if cmds.namespace(exists='dk_turn') == True:
         cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
-        return
+        
     if cmds.namespace(exists='dk_bake') == True:
         cmds.namespace(removeNamespace=':dk_bake', deleteNamespaceContent=True)
-        return
-    else:
-        cmds.warning( "Nothing to remove" )
+        
+    # else: FIX THIS
+    #     cmds.warning( "Nothing to remove" )
 
 def Macbutton(*args):
     if cmds.namespace(exists='mac') == True:
@@ -566,7 +566,6 @@ def refHDR(*args):
     hdrList = hdrexr + hdrhdr
     miniList = minijpg + minijpeg
     prog = 0
-    progTx = 0
     
     dialog = cmds.confirmDialog(title = "Lookdev Kit 2.0 - Rebuild", message = "This will delete all files in miniHDRs folder and refresh HDR files", button=["Yes", "No"], cancelButton="No", dismissString = "No")
     if len(miniList) == 0 and len(hdrList) == 0:
@@ -667,15 +666,13 @@ def turntableButton(*args):
     else:
         if cmds.namespace(exists='dk_turn') == True:
             cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
-        if cmds.namespace(exists='dk_turn') == True:
-            cmds.warning('Turntable setup already completed')
         if cmds.namespace(exists='dk_Ldv') == True:
             setTurntable(assetSel)
             cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
-            cmds.select(assetSel)
         if cmds.namespace(exists='dk_Ldv') == False:
             createLDV()
             setTurntable(assetSel)
+            cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
     cmds.select(assetSel)
 
 def removeTurntable(*args):
@@ -721,6 +718,7 @@ def setTurntable(objects):
     cmds.parent(objOffLoc, turnGrp)
     cmds.parent(objLoc, turnGrp)
     cmds.parent(skyLoc, turnGrp)
+    print("P wins!")
     cmds.setAttr(objLoc[0] + ".visibility",0)
     cmds.setAttr(objOffLoc[0] + ".visibility",0)
     cmds.setAttr(skyLoc[0] + ".visibility",0)
@@ -735,6 +733,24 @@ def setTurntable(objects):
     cmds.setKeyframe( skyLoc[0], attribute='rotateY', inTangentType = "linear", outTangentType = "linear", time=skyRotMax, value= 360 )
     cmds.parentConstraint(skyLoc, "dk_Ldv:aiSkydome", maintainOffset=True, weight=1)
     cmds.parentConstraint(objLoc, objOffLoc, maintainOffset=True, weight=1)
+    
+    selected = cmds.ls(geometry=True, sl=True)
+    if cmds.namespace(exists="dk_Ldv") == True:
+        ldvsel = cmds.select("dk_Ldv:*")
+    else:
+        ldvsel = []
+    if cmds.namespace(exists="mac") == True:
+        macsel = cmds.select("mac:*")
+    else:
+        macsel = []
+    if cmds.namespace(exists="dk_turn") == True:
+        turnsel = cmds.select("dk_turn:*")
+    else:
+        turnsel = []
+
+    #trueSel = selected - ldvsel - macsel - turnsel
+
+
     for each in objects:
         cmds.orientConstraint(objOffLoc, each, maintainOffset=True, weight=1)
 
