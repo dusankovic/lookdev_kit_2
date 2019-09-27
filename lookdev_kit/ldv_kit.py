@@ -586,6 +586,8 @@ def refHDR(*args):
 
     if dialog == "Yes":
         cmds.warning("Rebuilding HDRs")
+        cmds.arnoldFlushCache(textures=True)
+        cmds.pause(seconds=2)
         if cmds.namespace(exists='dk_Ldv') == True:
             cmds.namespace(removeNamespace=':dk_Ldv', deleteNamespaceContent=True)
         cmds.namespace(add='dk_bake')
@@ -662,6 +664,8 @@ def deletePrevTx(*args):
     minijpg = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg')
     minijpeg = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpeg')
     miniList = minijpg + minijpeg
+    cmds.arnoldFlushCache(textures=True)
+    cmds.pause(seconds=2)
     for each in miniList:
                 delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
                 cmds.sysFile(delPath, delete=True)
