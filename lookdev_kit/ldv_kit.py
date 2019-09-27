@@ -62,6 +62,8 @@ def createLDV(*args):
     cmds.select( shCatch )
     cmds.hyperShade(assign=shadowMatte)
     cmds.parent(shCatch, LDVctrlgroup)
+    cmds.setAttr(shCatch + ".overrideEnabled", 1)
+    cmds.setAttr(shCatch + ".overrideDisplayType", 2)
 
     #camera
     cam = cmds.camera(
@@ -125,16 +127,16 @@ def createLDV(*args):
 def removeLDV(*args):
     cmds.namespace(set=':')
     if cmds.namespace(exists='dk_Ldv') == True:
-        cmds.namespace(removeNamespace=':dk_Ldv', deleteNamespaceContent=True)
+        cmds.namespace(removeNamespace='dk_Ldv', deleteNamespaceContent=True)
 
     if cmds.namespace(exists='mac') == True:
-        cmds.namespace(removeNamespace=':mac', deleteNamespaceContent=True)
+        cmds.namespace(removeNamespace='mac', deleteNamespaceContent=True)
 
     if cmds.namespace(exists='dk_turn') == True:
-        cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
+        cmds.namespace(removeNamespace='dk_turn', deleteNamespaceContent=True)
         
     if cmds.namespace(exists='dk_bake') == True:
-        cmds.namespace(removeNamespace=':dk_bake', deleteNamespaceContent=True)
+        cmds.namespace(removeNamespace='dk_bake', deleteNamespaceContent=True)
         
     # else: FIX THIS
     #     cmds.warning( "Nothing to remove" )
@@ -378,10 +380,17 @@ def createMAC(*args):
     cmds.select(gray[0])
     cmds.hyperShade(assign=grayShd)
 
+    dispOver = [gray, chrome, chckBodyShaded, chckBodyFlat]
+    for each in dispOver:
+        doSel = cmds.ls(each)
+        cmds.setAttr(each[0] + ".overrideEnabled", 1)
+        cmds.setAttr(each[0] + ".overrideDisplayType", 2)
+
     #PATCHES FLAT
     for each in macbeth_data:
             #geo
             patch = cmds.polyCube(name=(each["name"] + "Flat"), width=4.2, height=4.2, depth=0.3, createUVs=4, axis=[0,1,0],ch=False)
+            patchDOsel = cmds.ls(patch)
             cmds.setAttr(patch[0] + ".translateX", (each["column"])*mtp)
             cmds.setAttr(patch[0] + ".translateY", (each["row"])*-mtp)
             xpos = cmds.getAttr(patch[0] + ".translateX")
@@ -401,7 +410,8 @@ def createMAC(*args):
             cmds.setAttr(patch[0] + ".aiVisibleInSpecularTransmission",0)
             cmds.setAttr(patch[0] + ".aiVisibleInVolume",0)
             cmds.setAttr(patch[0] + ".aiSelfShadows",0)
-
+            cmds.setAttr(patchDOsel[0] + ".overrideEnabled", 1)
+            cmds.setAttr(patchDOsel[0] + ".overrideDisplayType", 2)
             cmds.setAttr(patch[0] + ".translateX", keyable=False, lock=True)
             cmds.setAttr(patch[0] + ".translateY", keyable=False, lock=True)
             cmds.setAttr(patch[0] + ".translateZ", keyable=False, lock=True)
@@ -419,6 +429,7 @@ def createMAC(*args):
     for each in macbeth_data:
             #geo
             patchShaded = cmds.polyCube(name=(each["name"] + "Shaded"), width=4.2, height=4.2, depth=0.3, createUVs=4, axis=[0,1,0],ch=False)
+            patchShadedDOsel = cmds.ls(patchShaded)
             cmds.setAttr(patchShaded[0] + ".translateX", (each["column"])*mtp)
             cmds.setAttr(patchShaded[0] + ".translateY", (each["row"])*-mtp)
             xpos = cmds.getAttr(patchShaded[0] + ".translateX")
@@ -438,7 +449,8 @@ def createMAC(*args):
             cmds.setAttr(patchShaded[0] + ".aiVisibleInSpecularTransmission",0)
             cmds.setAttr(patchShaded[0] + ".aiVisibleInVolume",0)
             cmds.setAttr(patchShaded[0] + ".aiSelfShadows",0)
-
+            cmds.setAttr(patchShadedDOsel[0] + ".overrideEnabled", 1)
+            cmds.setAttr(patchShadedDOsel[0] + ".overrideDisplayType", 2)
             cmds.setAttr(patchShaded[0] + ".translateX", keyable=False, lock=True)
             cmds.setAttr(patchShaded[0] + ".translateY", keyable=False, lock=True)
             cmds.setAttr(patchShaded[0] + ".translateZ", keyable=False, lock=True)
