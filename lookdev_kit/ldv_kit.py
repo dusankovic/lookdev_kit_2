@@ -823,10 +823,10 @@ def checker(*args):
 
 def remove_checker(*args):
     cmds.namespace(set=':')
-    if cmds.namespace(exists='dk_chck') == True:
-        cmds.namespace(removeNamespace=':dk_chck', deleteNamespaceContent=True)
-    else:
+    if cmds.namespace(exists=':dk_chck') == False:
         cmds.warning('Nothing to remove')
+    if cmds.namespace(exists=':dk_chck') == True:
+        cmds.namespace(removeNamespace=':dk_chck', deleteNamespaceContent=True)
 
 def color_mcc10(*args):
     sel = cmds.ls(sl=True)
