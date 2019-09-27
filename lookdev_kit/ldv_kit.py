@@ -66,8 +66,7 @@ def createLDV(*args):
     cmds.setAttr(shCatch + ".overrideDisplayType", 2)
 
     #camera
-    cam = cmds.camera(
-        name="lookdev_cam", 
+    cam = cmds.camera( 
         focalLength=50, 
         centerOfInterest=5, 
         lensSqueezeRatio=1, 
@@ -126,24 +125,22 @@ def createLDV(*args):
 
 def removeLDV(*args):
     cmds.namespace(set=':')
+    if cmds.namespace(exists='dk_Ldv') == False:
+        cmds.warning( "Nothing to remove" )
+        return
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.namespace(removeNamespace='dk_Ldv', deleteNamespaceContent=True)
-
     if cmds.namespace(exists='mac') == True:
         cmds.namespace(removeNamespace='mac', deleteNamespaceContent=True)
-
     if cmds.namespace(exists='dk_turn') == True:
         cmds.namespace(removeNamespace='dk_turn', deleteNamespaceContent=True)
-        
     if cmds.namespace(exists='dk_bake') == True:
         cmds.namespace(removeNamespace='dk_bake', deleteNamespaceContent=True)
         
-    # else: FIX THIS
-    #     cmds.warning( "Nothing to remove" )
-
 def Macbutton(*args):
-    if cmds.namespace(exists='mac') == True:
+    if cmds.namespace(exists=':mac') == True:
         cmds.warning( "Macbeth chart and spheres are already loaded" )
+        return
     if cmds.namespace(exists='dk_Ldv') == True:
         createMAC()
         cmds.parent("mac:macbeth_spheres_grp", "dk_Ldv:lookdev_ctrl_grp")
@@ -510,12 +507,10 @@ def createMAC(*args):
      
 def removeMAC(*args):
     cmds.namespace(set=':')
+    if cmds.namespace(exists='mac') == False:
+        cmds.warning('Nothing to remove')
     if cmds.namespace(exists='mac') == True:
         cmds.namespace(removeNamespace=':mac', deleteNamespaceContent=True)
-    if cmds.namespace(exists='dk_Ldv:mac') == True:
-        cmds.namespace(removeNamespace=':dk_Ldv:mac', deleteNamespaceContent=True)
-    else:
-        cmds.warning('Nothing to remove')
 
 def hdrSw(self, *_):
     hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True) 
@@ -693,10 +688,10 @@ def turntableButton(*args):
 
 def removeTurntable(*args):
     cmds.namespace(set=':')
-    if cmds.namespace(exists='dk_turn') == True:
-        cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
-    else:
+    if cmds.namespace(exists=':dk_turn') == False:
         cmds.warning('Nothing to remove')
+    if cmds.namespace(exists=':dk_turn') == True:
+        cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
 
 def setTurntable(objects):
     timeMin = cmds.playbackOptions(minTime=True, query=True)
