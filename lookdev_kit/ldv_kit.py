@@ -567,12 +567,12 @@ def sky_vis(self, *_):
         cmds.undoInfo( swf=True)
 
 def refHDR(*args):
-    hdrexr = cmds.getFileList( folder=HDR_FOLDER, filespec='*.exr')
+    #hdrexr = cmds.getFileList( folder=HDR_FOLDER, filespec='*.exr')
     hdrhdr = cmds.getFileList( folder=HDR_FOLDER, filespec='*.hdr')
     hdrtx = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx')
     minijpg = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg')
     minijpeg = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpeg')
-    hdrList = hdrexr + hdrhdr
+    hdrList = hdrhdr
     miniList = minijpg + minijpeg
     prog = 0
     
