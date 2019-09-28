@@ -1064,16 +1064,16 @@ def buildUI():
     tmpRowWidth = [winWidth*0.5, winWidth*0.5]
 
     cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth, height=rowHeight)
-    cmds.button(label='Load LDV Kit', width=tmpRowWidth[0], annotation='Load Lookdev Kit', command=LDVbutton)
-    cmds.button(label='Remove LDV Kit', width=tmpRowWidth[1], annotation='Remove Lookdev Kit', command=removeLDV)
+    cmds.button(label='Load LDV Kit', width=tmpRowWidth[0], annotation="Load Lookdev Kit", command=LDVbutton)
+    cmds.button(label='Remove LDV Kit', width=tmpRowWidth[1], annotation="Remove Lookdev Kit", command=removeLDV)
 
     cmds.setParent(mainCL)
 
     #Buttons - MacBeth and spheres
     tmpRowWidth = [winWidth*0.5, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
-    cmds.button(label='Load MacBeth and Spheres', width=tmpRowWidth[0], command=Macbutton)
-    cmds.button(label='Remove MacBeth and Spheres', width=tmpRowWidth[0], command=removeMAC)
+    cmds.button(label='Load MAC', width=tmpRowWidth[0], annotation="Load Macbeth Chart, chrome and gray spheres", command=Macbutton)
+    cmds.button(label='Remove MAC', width=tmpRowWidth[0], annotation="Remove Macbeth chart and spheres", command=removeMAC)
     cmds.setParent(mainCL)
 
     cmds.text(label='--- Skydome Controls ---', width=winWidth, height=rowHeight)
@@ -1110,8 +1110,8 @@ def buildUI():
     #refresh HDRS
     tmpRowWidth = [winWidth*0.5, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
-    cmds.button(label='Refresh HDRs', width=tmpRowWidth[0], command=refHDR)
-    cmds.button(label='Del Tx/jpg', width=tmpRowWidth[1], command=deletePrevTx)
+    cmds.button(label='Refresh HDRs', width=tmpRowWidth[0], annotation="Recreate .jpg preview images and .tx files from existing HDRs", command=refHDR)
+    cmds.button(label='Del Tx/jpg', width=tmpRowWidth[1], annotation="Delete .jpg preview images and .tx files", command=deletePrevTx)
     cmds.setParent(mainCL)
 
     #Auto Turntable
@@ -1124,8 +1124,8 @@ def buildUI():
     cmds.menuItem(label='50')
     cmds.menuItem(label='100')
     cmds.menuItem(label='200')
-    cmds.button(label='Setup Turntable', width=tmpRowWidth[1], command=turntableButton)
-    cmds.button(label='Remove Turntable', width=tmpRowWidth[2],command=removeTurntable)
+    cmds.button(label='Setup Turntable', width=tmpRowWidth[1], annotation="Create a turntable setup based on the selected objects and chosen number of frames. NOTE: Turntable won't be applied on the LDV kit objects.", command=turntableButton)
+    cmds.button(label='Remove Turntable', width=tmpRowWidth[2],annotation="Remove turntable setup", command=removeTurntable)
     cmds.setParent(mainCL)
 
     #Object Rotation offset
@@ -1140,8 +1140,8 @@ def buildUI():
 
     tmpRowWidth = [winWidth*0.25, winWidth*0.25, winWidth*0.48]
     cmds.rowLayout(numberOfColumns=3, columnWidth3=tmpRowWidth)
-    cmds.button(label='SubD Off', width=tmpRowWidth[0], command=subd_off)
-    cmds.button(label='Catclark', width=tmpRowWidth[1], command=catclark_on)
+    cmds.button(label='SubD Off', width=tmpRowWidth[0],annotation="Turn off render-time subdivisions on the selected objects", command=subd_off)
+    cmds.button(label='SubD On', width=tmpRowWidth[1],annotation="Turn on render-time subdivisions on the selected objects", command=catclark_on)
     cmds.intSliderGrp('subIter', minValue=0, maxValue=10, value=3, step=1, field=True, width=tmpRowWidth[2], changeCommand=subd_iter)
     cmds.setParent(mainCL)
 
@@ -1150,10 +1150,10 @@ def buildUI():
     cmds.text(label='--- Bucket Size ---', width=winWidth, height=rowHeight)
 
     cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
-    cmds.button(label='16', width=winWidth*0.25, command=bucket_size16)
-    cmds.button(label='32', width=winWidth*0.25, command=bucket_size32)
-    cmds.button(label='64', width=winWidth*0.25, command=bucket_size64)
-    cmds.button(label='128', width=winWidth*0.25, command=bucket_size128)
+    cmds.button(label='16', width=winWidth*0.25, annotation="Sets bucket size to 16", command=bucket_size16)
+    cmds.button(label='32', width=winWidth*0.25, annotation="Sets bucket size to 32", command=bucket_size32)
+    cmds.button(label='64', width=winWidth*0.25, annotation="Sets bucket size to 64", command=bucket_size64)
+    cmds.button(label='128', width=winWidth*0.25, annotation="Sets bucket size to 128", command=bucket_size128)
     cmds.setParent(mainCL)
 
     #UTILITIES
@@ -1163,25 +1163,25 @@ def buildUI():
     #checker shader
     tmpRowWidth = [winWidth*0.5, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
-    cmds.button(label='Load Checker Shader', width=tmpRowWidth[0], command=checker)
-    cmds.button(label='Remove Checker Shader', width=tmpRowWidth[1], command=remove_checker)
+    cmds.button(label='Load Checker Shader', width=tmpRowWidth[0],annotation="Load shader with checker texture - useful for checking UVs", command=checker)
+    cmds.button(label='Remove Checker Shader', width=tmpRowWidth[1], annotation="Remove shader with checker texture", command=remove_checker)
     cmds.setParent(mainCL)
 
     cmds.text(label='--- MtoA Constant Color ---', width=winWidth, height=rowHeight)
 
     #primvars (constant color1)
     cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
-    cmds.button(label='mcc1 0', width=winWidth*0.25, command=color_mcc10)
-    cmds.button(label='mcc1 R', width=winWidth*0.25, command=color_mcc1r)
-    cmds.button(label='mcc1 G', width=winWidth*0.25, command=color_mcc1g)
-    cmds.button(label='mcc1 B', width=winWidth*0.25, command=color_mcc1b)
+    cmds.button(label='mcc1 0', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Black", command=color_mcc10)
+    cmds.button(label='mcc1 R', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Red",command=color_mcc1r)
+    cmds.button(label='mcc1 G', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Green",command=color_mcc1g)
+    cmds.button(label='mcc1 B', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Blue",command=color_mcc1b)
     cmds.setParent(mainCL)
 
     cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
-    cmds.button(label='mcc2 0', width=winWidth*0.25, command=color_mcc20)
-    cmds.button(label='mcc2 R', width=winWidth*0.25, command=color_mcc2r)
-    cmds.button(label='mcc2 G', width=winWidth*0.25, command=color_mcc2g)
-    cmds.button(label='mcc2 B', width=winWidth*0.25, command=color_mcc2b)
+    cmds.button(label='mcc2 0', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Black",command=color_mcc20)
+    cmds.button(label='mcc2 R', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Red",command=color_mcc2r)
+    cmds.button(label='mcc2 G', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Green",command=color_mcc2g)
+    cmds.button(label='mcc2 B', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Blue",command=color_mcc2b)
     cmds.setParent(mainCL)
 
     # Display the window
