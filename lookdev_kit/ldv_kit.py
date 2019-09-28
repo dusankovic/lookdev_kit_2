@@ -1002,10 +1002,6 @@ def color_mcc2b(*args):
 
 #UI
 def buildUI():
-    miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' ) 
-    hdrtx = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx')
-    file = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx' )
-    hdrCount = len(file)
     if cmds.namespace(exists='dk_Ldv') == True:
         skyExpo = cmds.getAttr('dk_Ldv:aiSkydome.exposure')
     else:
@@ -1021,6 +1017,9 @@ def buildUI():
         skyOff = skyRotOffset
     else:
         skyOff = 0
+
+    miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' ) 
+    hdrtx = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx')
 
     if cmds.namespace(exists='dk_Ldv') == True and len(hdrtx) != 0:
         hdrswitch = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')
@@ -1048,6 +1047,9 @@ def buildUI():
         objOff = objRotOffset
     else:
         objOff = 0
+
+    file = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx' )
+    hdrCount = len(file)
 
     winID = 'LdvUI'
     winWidth = 350
