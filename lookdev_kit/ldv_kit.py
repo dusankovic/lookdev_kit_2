@@ -5,11 +5,13 @@ import mtoa.utils as mutils
 import mtoa.core as core
 import os
 import subprocess
+import sys
 
 LOOKDEV_KIT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "miniHdrs").replace("\\", "/")
 TEX_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages").replace("\\", "/")
 HDR_FOLDER = os.path.join(TEX_FOLDER, "hdr").replace("\\", "/")
+
 
 #COMMANDS
 
@@ -669,6 +671,10 @@ def deletePrevTx(*args):
             cmds.sysFile(deltx, delete=True)
     buildUI()
 
+def hdrFol(*args):
+    dir = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "hdr")
+    os.popen('start explorer "%s" ' % dir)
+
 def turntableButton(*args):
     ldvTitle = "Lookdev Kit 2.0"
     initSel= cmds.ls(selection=True, transforms=True)
@@ -996,6 +1002,10 @@ def color_mcc2b(*args):
 
 #UI
 def buildUI():
+    miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' ) 
+    hdrtx = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx')
+    file = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx' )
+    hdrCount = len(file)
     if cmds.namespace(exists='dk_Ldv') == True:
         skyExpo = cmds.getAttr('dk_Ldv:aiSkydome.exposure')
     else:
@@ -1011,9 +1021,6 @@ def buildUI():
         skyOff = skyRotOffset
     else:
         skyOff = 0
-
-    miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' ) 
-    hdrtx = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx')
 
     if cmds.namespace(exists='dk_Ldv') == True and len(hdrtx) != 0:
         hdrswitch = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')
@@ -1042,13 +1049,9 @@ def buildUI():
     else:
         objOff = 0
 
-
-    file = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx' )
-    hdrCount = len(file)
-
     winID = 'LdvUI'
     winWidth = 350
-    winHeight = 700
+    winHeight = 712
     rowHeight = 30
     ldvTitle = "Lookdev Kit 2.0"
 
@@ -1111,6 +1114,11 @@ def buildUI():
     tmpRowWidth = [winWidth*0.5, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
     cmds.button(label='Refresh HDRs', width=tmpRowWidth[0], annotation="Recreate .jpg preview images and .tx files from existing HDRs", command=refHDR)
+    cmds.button(label='Open HDR folder', width=tmpRowWidth[1], annotation="Open folder with HDR files", command=hdrFol)
+    cmds.setParent(mainCL)
+
+    tmpRowWidth = [winWidth*0.5, winWidth*0.5]
+    cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
     cmds.button(label='Del Tx/jpg', width=tmpRowWidth[1], annotation="Delete .jpg preview images and .tx files", command=deletePrevTx)
     cmds.setParent(mainCL)
 
