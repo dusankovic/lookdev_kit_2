@@ -671,7 +671,11 @@ def deletePrevTx(*args):
 
 def turntableButton(*args):
     ldvTitle = "Lookdev Kit 2.0"
-    assetSel = cmds.ls(selection=True, long=True, objectsOnly=True)
+    initSel= cmds.ls(selection=True, transforms=True)
+    ldvSel = cmds.ls("dk_Ldv:*",transforms=True)
+    macSel = cmds.ls("mac:*",transforms=True)
+    camSel = cmds.ls(exactType="camera")
+    assetSel = set(initSel) - set(ldvSel) - set(macSel) - set(camSel)
     if len(assetSel) == 0:
         cmds.confirmDialog(title=ldvTitle, message="Please first select your asset. It would be best that all asset elements are in the single group." ,messageAlign="center",button="Ok",defaultButton="Ok",icon="warning")
     else:
