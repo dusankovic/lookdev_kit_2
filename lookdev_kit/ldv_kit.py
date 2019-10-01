@@ -52,7 +52,7 @@ def createLDV(*args):
     hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
     file = cmds.getFileList( folder=HDR_FOLDER , filespec='*.tx' )
     if len(file) == 0:
-        new_hdr = TEX_FOLDER + "/no_prev.tx"
+        new_hdr = os.path.join(TEX_FOLDER , "no_prev.tx").replace("\\", "/")
     else:
         new_hdr = os.path.join(HDR_FOLDER , file[hdr_num-1]).replace("\\", "/")
     cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', new_hdr, type = "string")
@@ -636,9 +636,9 @@ def refHDR(*args):
         cmds.progressWindow(title='Converting textures to TX', progress=prog, status='Converting: 0%' )
         for each in hdrList:
             hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
-            mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True) # get mtoa.mll path
-            mtoa_root = os.path.dirname(os.path.dirname(mtoa_plugin)) # get mtoa plugin instalation path
-            mtoa_maketx = os.path.join(mtoa_root, "bin", "maketx").replace("\\", "/") # assume binaries are in <install_dir>/bin and force unix style seperators just because it's easier that way (do not add .exe, it wont linux/mac)
+            mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True) 
+            mtoa_root = os.path.dirname(os.path.dirname(mtoa_plugin)) 
+            mtoa_maketx = os.path.join(mtoa_root, "bin", "maketx").replace("\\", "/") 
             base, ext = os.path.splitext(each)
             outfile = base + ".tx"
             out = os.path.join(HDR_FOLDER, outfile).replace("\\", "/")
@@ -694,6 +694,7 @@ def turntableButton(*args):
             createLDV()
             setTurntable(assetSel)
             cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
+    cmds.select(clear=True)
     cmds.select(assetSel)
 
 def removeTurntable(*args):
@@ -755,23 +756,6 @@ def setTurntable(objects):
     cmds.parentConstraint(skyLoc, "dk_Ldv:aiSkydome", maintainOffset=True, weight=1)
     cmds.parentConstraint(objLoc, objOffLoc, maintainOffset=True, weight=1)
     
-    selected = cmds.ls(geometry=True, sl=True)
-    if cmds.namespace(exists="dk_Ldv") == True:
-        ldvsel = cmds.select("dk_Ldv:*")
-    else:
-        ldvsel = []
-    if cmds.namespace(exists="mac") == True:
-        macsel = cmds.select("mac:*")
-    else:
-        macsel = []
-    if cmds.namespace(exists="dk_turn") == True:
-        turnsel = cmds.select("dk_turn:*")
-    else:
-        turnsel = []
-
-    #trueSel = selected - ldvsel - macsel - turnsel
-
-
     for each in objects:
         cmds.orientConstraint(objOffLoc, each, maintainOffset=True, weight=1)
 
@@ -1025,31 +1009,31 @@ def buildUI():
         hdrswitch = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')
         hdrslide = hdrswitch
         hdrCount = len(hdrtx)
+    if len(hdrtx) != 0:
+        hdrslide = 1
+        hdrCount = len(hdrtx)
     else:
         hdrslide = 1
         hdrCount = 1
 
     if cmds.namespace(exists='dk_Ldv') == True and len(miniFile) != 0:
         hdrswitch = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')-1
-        minIntFile = MINI_HDR_FOLDER +  "/" + miniFile[hdrswitch]
-        txIntFile = HDR_FOLDER +  "/" + hdrtx[hdrswitch]
+        minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[hdrswitch]).replace("\\", "/")
+        #txIntFile = os.path.join(HDR_FOLDER, hdrtx[hdrswitch]).replace("\\", "/")
     if len(miniFile) != 0:
         miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' )
-        minIntFile = MINI_HDR_FOLDER + "/" + miniFile[0]
-        txIntFile = HDR_FOLDER +  "/" + hdrtx[0]
+        minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[0]).replace("\\", "/")
+        txIntFile = os.path.join(HDR_FOLDER, hdrtx[0]).replace("\\", "/")
     else:
         miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' )
-        minIntFile = TEX_FOLDER + "/no_prev.jpg"
-        txIntFile = HDR_FOLDER +  "/no_prev.tx"
+        minIntFile = os.path.join(TEX_FOLDER, "no_prev.jpg").replace("\\", "/")
+        #txIntFile = os.path.join(HDR_FOLDER, "no_prev.tx").replace("\\", "/")
 
     if cmds.namespace(exists='dk_turn') == True:
         objRotOffset = cmds.getAttr('dk_turn:obj_tt_Offloc.rotateY')
         objOff = objRotOffset
     else:
         objOff = 0
-
-    file = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx' )
-    hdrCount = len(file)
 
     winID = 'LdvUI'
     winWidth = 350
