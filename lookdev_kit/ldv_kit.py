@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 LOOKDEV_KIT_FOLDER = os.path.dirname(os.path.abspath(__file__))
-MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "miniHdrs").replace("\\", "/")
+MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "mini").replace("\\", "/")
 TEX_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages").replace("\\", "/")
 HDR_FOLDER = os.path.join(TEX_FOLDER, "hdr").replace("\\", "/")
 
@@ -55,7 +55,7 @@ def createLDV(*args):
         new_hdr = os.path.join(TEX_FOLDER , "no_prev.tx").replace("\\", "/")
     else:
         new_hdr = os.path.join(HDR_FOLDER , file[hdr_num-1]).replace("\\", "/")
-        
+
     cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', new_hdr, type = "string")
     cmds.setAttr(imageNode + '.autoTx',0)
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
@@ -470,15 +470,25 @@ def createMAC(*args):
 
     #macbeth control curve and constraints
     macCtrl = cmds.curve(name="Macbeth_ctrl", degree=1, point=[(-17, -2, 0), (-17, 57, 0), (17, 57, 0), (17, -2, 0), (-17, -2, 0)] )
+    macLoc = cmds.spaceLocator(name = "mac_loc", position = [0,0,0])
+
     cmds.parent(macCtrl, MACgroup)
+    cmds.parent(macLoc, MACgroup)
     cmds.setAttr(macCtrl + ".translateY", 2)
     cmds.makeIdentity(macCtrl, translate=True, apply=True)
     cmds.move(0,0,0, macCtrl + ".scalePivot", macCtrl + ".rotatePivot", absolute=True)
-    # cmds.setAttr(MACctrlGrp + ".overrideEnabled", 1)
-    # cmds.setAttr(MACctrlGrp + ".overrideDisplayType", 1)
+
     cmds.parentConstraint(macCtrl, MACctrlGrp, maintainOffset=True, weight=1)
     cmds.scaleConstraint(macCtrl, MACctrlGrp, maintainOffset=True, weight=1)
     cmds.setAttr(macCtrl + ".translateX", -170)
+
+    #CREATE A MAC SCALING
+    if cmds.namespace(exists=":dk_Ldv") == True:
+        scale = cmds.getAttr("dk_Ldv:ldvGlobal_ctrl.scaleX")
+        cmds.parentConstraint(macLoc[0], macCtrl, maintainOffset=True, weight=1)
+        cmds.setAttr(macLoc[0] + ".scaleX", scale)
+
+    
 
     #lock attr
     MACgrplist = [MACgroup, patchGroupFlat, MACflat, MACctrlGrp, MACshaded, patchGroupShaded, Sphgroup, chckBodyFlat[0], chckBodyShaded[0], chrome[0], gray[0] ]
