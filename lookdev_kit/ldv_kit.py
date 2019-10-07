@@ -12,7 +12,6 @@ MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "miniHdrs").r
 TEX_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages").replace("\\", "/")
 HDR_FOLDER = os.path.join(TEX_FOLDER, "hdr").replace("\\", "/")
 
-
 #COMMANDS
 
 def LDVbutton(*args):
@@ -51,10 +50,12 @@ def createLDV(*args):
     imageNode = core.createArnoldNode('aiImage', name = 'hdrTextures')
     hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
     file = cmds.getFileList( folder=HDR_FOLDER , filespec='*.tx' )
+
     if len(file) == 0:
         new_hdr = os.path.join(TEX_FOLDER , "no_prev.tx").replace("\\", "/")
     else:
         new_hdr = os.path.join(HDR_FOLDER , file[hdr_num-1]).replace("\\", "/")
+        
     cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', new_hdr, type = "string")
     cmds.setAttr(imageNode + '.autoTx',0)
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
