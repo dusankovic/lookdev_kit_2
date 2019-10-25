@@ -487,8 +487,9 @@ def createMAC(*args):
         scale = cmds.getAttr("dk_Ldv:ldvGlobal_ctrl.scaleX")
         cmds.parentConstraint(macLoc[0], macCtrl, maintainOffset=True, weight=1)
         cmds.setAttr(macLoc[0] + ".scaleX", scale)
-
-    
+        cmds.setAttr(macCtrl + ".scaleX", scale)
+        cmds.setAttr(macCtrl + ".scaleY", scale)
+        cmds.setAttr(macCtrl + ".scaleZ", scale)
 
     #lock attr
     MACgrplist = [MACgroup, patchGroupFlat, MACflat, MACctrlGrp, MACshaded, patchGroupShaded, Sphgroup, chckBodyFlat[0], chckBodyShaded[0], chrome[0], gray[0] ]
