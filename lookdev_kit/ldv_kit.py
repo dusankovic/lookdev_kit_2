@@ -555,10 +555,10 @@ def rotOffset(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
         skyRot = cmds.getAttr("dk_Ldv:aiSkydome.rotateY")
         cmds.undoInfo( swf=False )
-        value=cmds.floatSliderGrp("rotOff", query=True, value=True)
-        skyAddedRot = skyRot + value
+        skyValue=cmds.floatSliderGrp("rotOff", query=True, value=True)
+        skyAddedRot = skyValue
         cmds.setAttr('dk_Ldv:aiSkydome.rotateY', skyAddedRot)
-        cmds.setAttr("dk_Ldv:aiSkydomeShape.rotOffset", value)
+        cmds.setAttr("dk_Ldv:aiSkydomeShape.rotOffset", skyValue)
         cmds.undoInfo( swf=True)
 
 def objOffset(self, *_):
@@ -609,7 +609,7 @@ def refHDR(*args):
         for each in hdrtx:
                 deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
                 cmds.sysFile(deltx, delete=True)
-        cmds.progressWindow(title='Baking HDR preview images', progress=prog, status='Baking: 0%' )
+        cmds.progressWindow(title='LookdevKit 2.0', progress=prog, status='Baking HDR preview images:' )
         #create planes:
         for each in hdrList:
             hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
@@ -645,7 +645,7 @@ def refHDR(*args):
         cmds.namespace(removeNamespace=':dk_bake',deleteNamespaceContent=True)
         cmds.namespace(set=':')
         
-        cmds.progressWindow(title='Converting textures to TX', progress=prog, status='Converting: 0%' )
+        cmds.progressWindow(title='LookdevKit 2.0', progress=prog, status='Converting textures to TX:' )
         for each in hdrList:
             hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True) 
@@ -681,6 +681,7 @@ def deletePrevTx(*args):
     for each in hdrtx:
             deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             cmds.sysFile(deltx, delete=True)
+    cmds.pause( seconds=3 )
     buildUI()
 
 def hdrFol(*args):
@@ -752,7 +753,6 @@ def setTurntable(objects):
     cmds.parent(objOffLoc, turnGrp)
     cmds.parent(objLoc, turnGrp)
     cmds.parent(skyLoc, turnGrp)
-    print("P wins!")
     cmds.setAttr(objLoc[0] + ".visibility",0)
     cmds.setAttr(objOffLoc[0] + ".visibility",0)
     cmds.setAttr(skyLoc[0] + ".visibility",0)
@@ -1105,7 +1105,7 @@ def buildUI():
 
     #Skydome camera visibility
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
-    cmds.floatSliderGrp('sky_vis', label='Camera', min=0, max=1, value=skyVis, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
+    cmds.floatSliderGrp('sky_vis', label='Camera Vis.', min=0, max=1, value=skyVis, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
     cmds.setParent(mainCL)
 
     #refresh HDRS
