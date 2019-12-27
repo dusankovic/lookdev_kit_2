@@ -626,7 +626,7 @@ def refHDR(*args):
             
             prog += maxNumBake
             cmds.progressWindow(edit=True, progress=prog, status='Baking HDR preview images: ' )
-            cmds.pause( seconds=1 )
+            #cmds.pause( seconds=1 )
             if cmds.progressWindow(query=True, progress=True) == 100:
                 prog = 0
                 cmds.progressWindow(endProgress=1)
