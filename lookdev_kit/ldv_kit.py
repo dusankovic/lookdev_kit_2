@@ -11,6 +11,7 @@ LOOKDEV_KIT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "mini").replace("\\", "/")
 TEX_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages").replace("\\", "/")
 HDR_FOLDER = os.path.join(TEX_FOLDER, "hdr").replace("\\", "/")
+OIIO_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "oiio", "bin").replace("\\", "/")
 
 #COMMANDS
 
@@ -579,13 +580,14 @@ def sky_vis(self, *_):
         cmds.undoInfo( swf=True)
 
 def refHDR(*args):
-    #hdrexr = cmds.getFileList( folder=HDR_FOLDER, filespec='*.exr')
+    hdrexr = cmds.getFileList( folder=HDR_FOLDER, filespec='*.exr')
     hdrhdr = cmds.getFileList( folder=HDR_FOLDER, filespec='*.hdr')
     hdrtx = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx')
     minijpg = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg')
     minijpeg = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpeg')
-    hdrList = hdrhdr
+    hdrList = hdrhdr + hdrexr
     miniList = minijpg + minijpeg
+    oiio = os.path.join(OIIO_FOLDER, "oiiotool.exe").replace("\\", "/")
     prog = 0
     
     dialog = cmds.confirmDialog(title = "Lookdev Kit 2.0 - Rebuild", message = "This will delete all files in miniHDRs folder and refresh HDR files", button=["Yes", "No"], cancelButton="No", dismissString = "No")
@@ -610,30 +612,18 @@ def refHDR(*args):
                 deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
                 cmds.sysFile(deltx, delete=True)
         cmds.progressWindow(title='LookdevKit 2.0', progress=prog, status='Baking HDR preview images:' )
-        #create planes:
+
         for each in hdrList:
             hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
-            miniPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
-            lowPlane = cmds.polyPlane(name= each + "_low", axis=[0,1,0], width=2, height=1, subdivisionsX = 1, subdivisionsY = 1, cuv=1, ch=0 )
-            highPlane = cmds.polyPlane(name= each + "_high", axis=[0,1,0], width=2, height=1, subdivisionsX = 1, subdivisionsY = 1, cuv=1, ch=0 )
+            base, ext = os.path.splitext(each)
+            extJpg = base + ".jpg"
+            miniPath = os.path.join(MINI_HDR_FOLDER, extJpg).replace("\\", "/")
             numhdr = len(hdrList)
             maxNumBake = 100/int(numhdr)
 
-            for each in highPlane:
-                lambHi = cmds.shadingNode('lambert', asShader=True, name = each + "_high")
-                cmds.select(each)
-                cmds.hyperShade(assign=lambHi)
-                imageNode = cmds.shadingNode("file",asTexture=True, name = each + "_high")
-                cmds.connectAttr(imageNode + '.outColor', lambHi + '.color', force=True)
-                cmds.setAttr(imageNode + '.fileTextureName', hdrPath, type = "string")
-                cmds.setAttr(imageNode + '.colorSpace', 'Raw', type='string')
-                cmds.setAttr(imageNode + '.ignoreColorSpaceFileRules',1)
-            for each in lowPlane:
-                lambLo = cmds.shadingNode('lambert', asShader=True, name = each + "_low")
-                cmds.select(each)
-                cmds.hyperShade(assign=lambLo)
-
-            cmds.surfaceSampler(target = lowPlane, source = highPlane, searchCage="", searchOffset=0, uvSet="map1", mapOutput="diffuseRGB", mapWidth=300, mapHeight=150, maximumValue=2, mapSpace="tangent", mapMaterials=1, shadows=0, filename=miniPath, fileFormat="jpg", superSampling=2, filterSize=3, filterType=0, overscan=1, flipV=False, flipU=False  )
+            oiio_convert = subprocess.Popen([oiio, hdrPath, "--resize", "300x150", "--cpow", "0.454,0.454,0.454,1.0", "-o", miniPath], shell=True)
+            oiio_convert.wait()          
+            
             prog += maxNumBake
             cmds.progressWindow(edit=True, progress=prog, status='Baking HDR preview images: ' )
             cmds.pause( seconds=1 )
@@ -690,10 +680,10 @@ def hdrFol(*args):
 
 def turntableButton(*args):
     ldvTitle = "Lookdev Kit 2.0"
-    initSel= cmds.ls(selection=True, transforms=True)
-    ldvSel = cmds.ls("dk_Ldv:*",transforms=True)
-    macSel = cmds.ls("mac:*",transforms=True)
-    camSel = cmds.ls(exactType="camera")
+    initSel= cmds.ls(selection=True, transforms=True, absoluteName=True)
+    ldvSel = cmds.ls("dk_Ldv:*",transforms=True, absoluteName=True)
+    macSel = cmds.ls("mac:*",transforms=True, absoluteName=True)
+    camSel = cmds.ls(exactType="camera", absoluteName=True)
     assetSel = set(initSel) - set(ldvSel) - set(macSel) - set(camSel)
     if len(assetSel) == 0:
         cmds.confirmDialog(title=ldvTitle, message="Please first select your asset. It would be best that all asset elements are in the single group." ,messageAlign="center",button="Ok",defaultButton="Ok",icon="warning")
@@ -769,7 +759,7 @@ def setTurntable(objects):
     cmds.parentConstraint(objLoc, objOffLoc, maintainOffset=True, weight=1)
     
     for each in objects:
-        cmds.orientConstraint(objOffLoc, each, maintainOffset=True, weight=1)
+        cmds.parentConstraint(objOffLoc, each, maintainOffset=True, weight=1)
 
     cmds.namespace(set=':')
 
