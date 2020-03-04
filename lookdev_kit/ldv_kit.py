@@ -61,6 +61,7 @@ def createLDV(*args):
     cmds.setAttr(imageNode + '.autoTx',0)
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
     shCatch = cmds.polyPlane(n='shadowCatcher', w=900, h=900, sx=10, sy=10, cuv=2, ax=[0,1,0], ch=False)[0]
+    cmds.addAttr(shCatch, longName= "shadowChckVis", attributeType= "bool" )
     shadowStr = cmds.shadingNode('aiShadowMatte', asShader=True)
     shadowMatte = cmds.rename(shadowStr, 'aiShadow')
     cmds.select( shCatch )
@@ -579,6 +580,14 @@ def sky_vis(self, *_):
         cmds.setAttr('dk_Ldv:aiSkydomeShape.camera', value)
         cmds.undoInfo( swf=True)
 
+def shadowChckOn(self, *_):
+    if cmds.namespace(exists='dk_Ldv') == True:
+        cmds.setAttr("dk_Ldv:shadowCatcher.visibility", 1)
+
+def shadowChckOff(self, *_):
+    if cmds.namespace(exists='dk_Ldv') == True:
+        cmds.setAttr("dk_Ldv:shadowCatcher.visibility", 0)
+
 def refHDR(*args):
     hdrexr = cmds.getFileList( folder=HDR_FOLDER, filespec='*.exr')
     hdrhdr = cmds.getFileList( folder=HDR_FOLDER, filespec='*.hdr')
@@ -1004,6 +1013,13 @@ def buildUI():
     else:
         skyOff = 0
 
+
+    if cmds.namespace(exists='dk_Ldv') == True:
+        checkBoxState = cmds.getAttr('dk_Ldv:shadowCatcher.shadowChckVis')
+        checkBoxVal = checkBoxState
+    else:
+        checkBoxVal = True
+
     miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' ) 
     hdrtx = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx')
 
@@ -1096,6 +1112,11 @@ def buildUI():
     #Skydome camera visibility
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
     cmds.floatSliderGrp('sky_vis', label='Camera Vis.', min=0, max=1, value=skyVis, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
+    cmds.setParent(mainCL)
+
+    #shadow plane checkbox
+    cmds.rowLayout(numberOfColumns=1, adjustableColumn=True, columnAlign1="center")
+    cmds.checkBox(label="Shadow Matte visibility", value=checkBoxVal, recomputeSize=True, onCommand=shadowChckOn, offCommand=shadowChckOff)
     cmds.setParent(mainCL)
 
     #refresh HDRS
