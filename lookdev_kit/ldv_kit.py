@@ -60,6 +60,7 @@ def createLDV(*args):
     cmds.setAttr("dk_Ldv:hdrTextures" + '.filename', new_hdr, type = "string")
     cmds.setAttr(imageNode + '.autoTx',0)
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
+
     shCatch = cmds.polyPlane(n='shadowCatcher', w=900, h=900, sx=10, sy=10, cuv=2, ax=[0,1,0], ch=False)[0]
     cmds.addAttr(shCatch, longName= "shadowChckVis", attributeType= "bool" )
     shadowStr = cmds.shadingNode('aiShadowMatte', asShader=True)
@@ -103,6 +104,32 @@ def createLDV(*args):
     cmds.setAttr(cam[0] + ".locatorScale", 15)
     cmds.setAttr(cam[0] + ".displayCameraFrustum", 1)
     cmds.parent(cam[0], "dk_Ldv:lookdev_ctrl_grp")
+
+    fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[(-200, 0, 0), (-200, 210, 0), (200, 210, 0), (200, 0, 0), (-200, 0, 0)] )
+    fcsText = cmds.textCurves(name = "focusPlane_txt", object = True, text = "FOCUS PLANE")
+
+    cmds.setAttr("dk_Ldv:focusPlane_txtShape.scaleX", 12)
+    cmds.setAttr("dk_Ldv:focusPlane_txtShape.scaleY", 12)
+    cmds.setAttr("dk_Ldv:focusPlane_txtShape.scaleZ", 12)
+    cmds.setAttr("dk_Ldv:focusPlane_txtShape.translateX", 126.522)
+    cmds.setAttr("dk_Ldv:focusPlane_txtShape.translateY", 210.987)
+    fcsSel = cmds.listRelatives(fcsText, allDescendents=True)
+
+    fcsSel2 = cmds.listRelatives(fcsSel, shapes=True)
+    #fcsSel3 = fcsPlane + fcsSel2
+    for each in fcsSel2:
+        cmds.setAttr(each + ".overrideEnabled", 1)
+        cmds.setAttr(each + ".overrideDisplayType", 1)
+
+
+
+    crvGrp = cmds.group(name = "fcsCrv", empty = True)
+    cmds.parent(fcsSel2,crvGrp, shape = True)
+
+    cmds.delete(fcsText)
+
+
+
 
     #create global ctrl
     ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[(-500, 0, 500), (-500, 0, -500), (500, 0, -500), (500, 0, 500), (-500, 0, 500)] )
@@ -583,10 +610,12 @@ def sky_vis(self, *_):
 def shadowChckOn(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.setAttr("dk_Ldv:shadowCatcher.visibility", 1)
+        cmds.setAttr('dk_Ldv:shadowCatcher.shadowChckVis', 1)
 
 def shadowChckOff(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.setAttr("dk_Ldv:shadowCatcher.visibility", 0)
+        cmds.setAttr('dk_Ldv:shadowCatcher.shadowChckVis', 0)
 
 def refHDR(*args):
     hdrexr = cmds.getFileList( folder=HDR_FOLDER, filespec='*.exr')
@@ -1115,8 +1144,8 @@ def buildUI():
     cmds.setParent(mainCL)
 
     #shadow plane checkbox
-    cmds.rowLayout(numberOfColumns=1, adjustableColumn=True, columnAlign1="center")
-    cmds.checkBox(label="Shadow Matte visibility", value=checkBoxVal, recomputeSize=True, onCommand=shadowChckOn, offCommand=shadowChckOff)
+    cmds.rowColumnLayout(numberOfColumns=1, columnOffset=[1, "both", 45])
+    cmds.checkBox(label="Shadow Matte", value=checkBoxVal, recomputeSize=True, onCommand=shadowChckOn, offCommand=shadowChckOff)
     cmds.setParent(mainCL)
 
     #refresh HDRS
@@ -1184,22 +1213,22 @@ def buildUI():
     cmds.button(label='Remove Checker Shader', width=tmpRowWidth[1], annotation="Remove shader with checker texture", command=remove_checker)
     cmds.setParent(mainCL)
 
-    cmds.text(label='--- MtoA Constant Color ---', width=winWidth, height=rowHeight)
+    # cmds.text(label='--- MtoA Constant Color ---', width=winWidth, height=rowHeight)
 
     #primvars (constant color1)
-    cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
-    cmds.button(label='mcc1 0', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Black", command=color_mcc10)
-    cmds.button(label='mcc1 R', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Red",command=color_mcc1r)
-    cmds.button(label='mcc1 G', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Green",command=color_mcc1g)
-    cmds.button(label='mcc1 B', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Blue",command=color_mcc1b)
-    cmds.setParent(mainCL)
+    # cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
+    # cmds.button(label='mcc1 0', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Black", command=color_mcc10)
+    # cmds.button(label='mcc1 R', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Red",command=color_mcc1r)
+    # cmds.button(label='mcc1 G', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Green",command=color_mcc1g)
+    # cmds.button(label='mcc1 B', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Blue",command=color_mcc1b)
+    # cmds.setParent(mainCL)
 
-    cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
-    cmds.button(label='mcc2 0', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Black",command=color_mcc20)
-    cmds.button(label='mcc2 R', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Red",command=color_mcc2r)
-    cmds.button(label='mcc2 G', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Green",command=color_mcc2g)
-    cmds.button(label='mcc2 B', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Blue",command=color_mcc2b)
-    cmds.setParent(mainCL)
+    # cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
+    # cmds.button(label='mcc2 0', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Black",command=color_mcc20)
+    # cmds.button(label='mcc2 R', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Red",command=color_mcc2r)
+    # cmds.button(label='mcc2 G', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Green",command=color_mcc2g)
+    # cmds.button(label='mcc2 B', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Blue",command=color_mcc2b)
+    # cmds.setParent(mainCL)
 
     # Display the window
     cmds.showWindow(w)
