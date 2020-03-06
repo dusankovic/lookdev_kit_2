@@ -39,13 +39,31 @@ def createLDV(*args):
     skydome = mutils.createLocator('aiSkyDomeLight', asLight=True)
     sky_name = cmds.rename(skydome[1], 'aiSkydome')
     skydome_shape = cmds.listRelatives(sky_name, shapes=True)
+
+
+
+    #read camera visibility slider
+    cmds.undoInfo( swf=False)
+    skyVis = cmds.floatSliderGrp("sky_vis", query=True, value=True)
+    cmds.setAttr(skydome_shape[0] + ".camera", skyVis)
+
     cmds.addAttr(skydome_shape[0], longName="rotOffset", min=0, max=360,defaultValue=0, attributeType="double"  )
+
+    #read rotation offset slider
+    rotOff = cmds.floatSliderGrp("rotOff", query=True, value=True)
+    cmds.setAttr(sky_name + ".rotateY", rotOff)
+    cmds.setAttr(skydome_shape[0] + ".rotOffset", rotOff)
+    cmds.undoInfo( swf=True)
+
     hdrtx = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx')
     hdrskynum = len(hdrtx) 
     cmds.addAttr(skydome_shape[0], longName="hdrsl", min=1, max=hdrskynum, defaultValue=1, attributeType="long"  )
     cmds.setAttr('dk_Ldv:aiSkydomeShape.aiSamples', 3)
+    #read exposure slider
     value=cmds.floatSliderGrp('exp', query=True, value=True)
     cmds.setAttr('dk_Ldv:aiSkydomeShape.exposure', value)
+    cmds.undoInfo( swf=True)
+
     cmds.setAttr('dk_Ldv:aiSkydomeShape.skyRadius', 0)
     cmds.parent(sky_name, LDVctrlgroup)
     imageNode = core.createArnoldNode('aiImage', name = 'hdrTextures')
@@ -61,8 +79,9 @@ def createLDV(*args):
     cmds.setAttr(imageNode + '.autoTx',0)
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
 
-    shCatch = cmds.polyPlane(n='shadowCatcher', w=900, h=900, sx=10, sy=10, cuv=2, ax=[0,1,0], ch=False)[0]
-    cmds.addAttr(shCatch, longName= "shadowChckVis", attributeType= "bool" )
+    shCatchMain = cmds.polyPlane(n='shadowCatcher', w=900, h=900, sx=10, sy=10, cuv=2, ax=[0,1,0], ch=False)
+    shCatch = shCatchMain[0]
+    cmds.addAttr(shCatchMain, longName= "shadowChckVis", attributeType= "bool" )
     shadowStr = cmds.shadingNode('aiShadowMatte', asShader=True)
     shadowMatte = cmds.rename(shadowStr, 'aiShadow')
     cmds.select( shCatch )
@@ -70,6 +89,11 @@ def createLDV(*args):
     cmds.parent(shCatch, LDVctrlgroup)
     cmds.setAttr(shCatch + ".overrideEnabled", 1)
     cmds.setAttr(shCatch + ".overrideDisplayType", 2)
+
+    #read shadow matte checkbox
+    shCatchBox = cmds.checkBox("shMatte", query=True, value=True)
+    cmds.setAttr(shCatch + ".shadowChckVis", shCatchBox)
+    cmds.setAttr(shCatch + ".visibility", shCatchBox)
 
     #camera
     cam = cmds.camera( 
@@ -97,36 +121,85 @@ def createLDV(*args):
         displayResolution=1,
         )
 
+    cmds.addAttr(cam[0], longName= "DoF", attributeType= "bool" )
+    
+    #camera DoF checkbox read
+    camBox = cmds.checkBox("camDoF", query=True, value=True)
+    cmds.setAttr(cam[0] + ".DoF", camBox)
+    #camera Aperture slider read
+    cmds.undoInfo( swf=False )
+    camAper = cmds.floatSliderGrp('cam_aper', query=True, value=True)
+    cmds.setAttr(cam[0] + ".aiApertureSize", camAper)
+    cmds.undoInfo( swf=True)
+
     cmds.setAttr(cam[0] + ".displayGateMaskColor", 0.1,0.1,0.1, type="double3")
     cmds.setAttr(cam[0] + ".translateY", 195)
     cmds.setAttr(cam[0] + ".translateZ", 550)
     cmds.setAttr(cam[0] + ".rotateX", -10)
     cmds.setAttr(cam[0] + ".locatorScale", 15)
     cmds.setAttr(cam[0] + ".displayCameraFrustum", 1)
-    cmds.parent(cam[0], "dk_Ldv:lookdev_ctrl_grp")
+    
 
-    fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[(-200, 0, 0), (-200, 210, 0), (200, 210, 0), (200, 0, 0), (-200, 0, 0)] )
+    #focus plane
+    fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[(-200, 0, 0), (-200, 210, 0), (200, 210, 0), (200, 0, 0), (-200, 0, 0)] )  
     fcsText = cmds.textCurves(name = "focusPlane_txt", object = True, text = "FOCUS PLANE")
+    fcsGrp = cmds.ls(fcsText, long = True)
 
-    cmds.setAttr("dk_Ldv:focusPlane_txtShape.scaleX", 12)
-    cmds.setAttr("dk_Ldv:focusPlane_txtShape.scaleY", 12)
-    cmds.setAttr("dk_Ldv:focusPlane_txtShape.scaleZ", 12)
-    cmds.setAttr("dk_Ldv:focusPlane_txtShape.translateX", 126.522)
-    cmds.setAttr("dk_Ldv:focusPlane_txtShape.translateY", 210.987)
-    fcsSel = cmds.listRelatives(fcsText, allDescendents=True)
+    cmds.setAttr(fcsGrp[0] + ".scaleX", 12)
+    cmds.setAttr(fcsGrp[0] + ".scaleY", 12)
+    cmds.setAttr(fcsGrp[0] + ".scaleZ", 12)
+    cmds.setAttr(fcsGrp[0] + ".translateX", 126.522)
+    cmds.setAttr(fcsGrp[0] + ".translateY", 210.987)
+    cmds.makeIdentity(fcsText, translate = True, scale = True, apply = True )
 
-    fcsSel2 = cmds.listRelatives(fcsSel, shapes=True)
-    #fcsSel3 = fcsPlane + fcsSel2
+    fcsSel = cmds.listRelatives(fcsText, allDescendents = True)
+    fcsSel2 = cmds.listRelatives(fcsSel, shapes = True)
+    fcsSelPlane = cmds.listRelatives(fcsPlane, allDescendents = True)
+    fcsSelPlane2 = cmds.ls(fcsSelPlane, shapes = True, long = True)
+    fcsSelMain = fcsSel2 + fcsSelPlane2
+
     for each in fcsSel2:
         cmds.setAttr(each + ".overrideEnabled", 1)
         cmds.setAttr(each + ".overrideDisplayType", 1)
 
-
-
     crvGrp = cmds.group(name = "fcsCrv", empty = True)
-    cmds.parent(fcsSel2,crvGrp, shape = True)
+    cmds.move(0,105,0, crvGrp + ".scalePivot", crvGrp + ".rotatePivot", absolute=True)
 
-    cmds.delete(fcsText)
+    cmds.parent(fcsSelMain,crvGrp, shape = True, relative = True)
+    cmds.delete("dk_Ldv:focusPlane_txtShape")
+    cmds.delete(fcsPlane)
+    cmds.setAttr(crvGrp + ".rotateX", -10)   
+
+    distTool = cmds.distanceDimension(startPoint = [0,195,550], endPoint = [0,105,0] ) 
+    distSel = cmds.ls(distTool)
+    distShape = distSel[0]
+    camShape = cam[0]
+    cmds.setAttr(distSel[0] +".visibility", 0)
+    distLoc = cmds.listConnections(distSel, source = True)
+    for each in distLoc:
+        cmds.setAttr(each +".visibility", 0)
+
+    cmds.parent(distLoc[1],crvGrp)
+    cmds.parent(distLoc[0],cam[0])
+
+    cmds.connectAttr(distShape + ".distance", camShape + ".aiFocusDistance", force = True)
+
+    cmds.parent(distTool, "dk_Ldv:lookdev_ctrl_grp", shape=True)
+    cmds.delete("dk_Ldv:distanceDimension1")
+    cmds.parent(crvGrp, cam[0])
+    cmds.parent(cam[0], "dk_Ldv:lookdev_ctrl_grp")
+
+    cmds.setAttr(crvGrp + ".translateX", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".translateY", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".rotateX", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".rotateY", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".rotateZ", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".scaleX", keyable=False)
+    cmds.setAttr(crvGrp + ".scaleY", keyable=False)
+    cmds.setAttr(crvGrp + ".scaleZ", keyable=False)
+
+
+
 
 
 
@@ -590,21 +663,18 @@ def rotOffset(self, *_):
         cmds.setAttr("dk_Ldv:aiSkydomeShape.rotOffset", skyValue)
         cmds.undoInfo( swf=True)
 
-def objOffset(self, *_):
-    if cmds.namespace(exists='dk_turn') == True:
-        objRot = cmds.getAttr("dk_turn:obj_tt_loc.rotateY")
-        cmds.undoInfo( swf=False )
-        value=cmds.floatSliderGrp("objOff", query=True, value=True)
-        objAddedRot = objRot + value
-        cmds.setAttr("dk_turn:obj_tt_Offloc.rotateY", objAddedRot)
-        cmds.setAttr("dk_turn:obj_tt_Offloc.objOffset", value)
-        cmds.undoInfo( swf=True)
-
 def sky_vis(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.undoInfo( swf=False )
         value=cmds.floatSliderGrp('sky_vis', query=True, value=True)
         cmds.setAttr('dk_Ldv:aiSkydomeShape.camera', value)
+        cmds.undoInfo( swf=True)
+
+def cam_aper(self, *_):
+    if cmds.namespace(exists='dk_Ldv') == True:
+        cmds.undoInfo( swf=False )
+        value=cmds.floatSliderGrp('cam_aper', query=True, value=True)
+        cmds.setAttr('dk_Ldv:cameraShape1.aiApertureSize', value)
         cmds.undoInfo( swf=True)
 
 def shadowChckOn(self, *_):
@@ -616,6 +686,16 @@ def shadowChckOff(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.setAttr("dk_Ldv:shadowCatcher.visibility", 0)
         cmds.setAttr('dk_Ldv:shadowCatcher.shadowChckVis', 0)
+
+def DoFOn(self, *_):
+    if cmds.namespace(exists='dk_Ldv') == True:
+        cmds.setAttr("dk_Ldv:cameraShape1.aiEnableDOF", 1)
+        cmds.setAttr("dk_Ldv:camera1.DoF", 1)
+
+def DoFOff(self, *_):
+    if cmds.namespace(exists='dk_Ldv') == True:
+        cmds.setAttr("dk_Ldv:cameraShape1.aiEnableDOF", 0)
+        cmds.setAttr("dk_Ldv:camera1.DoF", 0)
 
 def refHDR(*args):
     hdrexr = cmds.getFileList( folder=HDR_FOLDER, filespec='*.exr')
@@ -716,6 +796,16 @@ def hdrFol(*args):
     dir = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "hdr")
     os.popen('start explorer "%s" ' % dir)
 
+def objOffset(self, *_):
+    if cmds.namespace(exists='dk_turn') == True:
+        objRot = cmds.getAttr("dk_turn:obj_tt_loc.rotateY")
+        cmds.undoInfo( swf=False )
+        value=cmds.floatSliderGrp("objOff", query=True, value=True)
+        objAddedRot = objRot + value
+        cmds.setAttr("dk_turn:obj_tt_Offloc.rotateY", objAddedRot)
+        cmds.setAttr("dk_turn:obj_tt_Offloc.objOffset", value)
+        cmds.undoInfo( swf=True)
+
 def turntableButton(*args):
     ldvTitle = "Lookdev Kit 2.0"
     initSel= cmds.ls(selection=True, transforms=True, absoluteName=True)
@@ -735,6 +825,9 @@ def turntableButton(*args):
             createLDV()
             setTurntable(assetSel)
             cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
+
+    objOffset(args)
+
     cmds.select(clear=True)
     cmds.select(assetSel)
 
@@ -1037,17 +1130,27 @@ def buildUI():
         skyVis = 1
 
     if cmds.namespace(exists='dk_Ldv') == True:
+        camAper = cmds.getAttr('dk_Ldv:cameraShape1.aiApertureSize')
+    else:
+        camAper = 1
+
+    if cmds.namespace(exists='dk_Ldv') == True:
         skyRotOffset = cmds.getAttr('dk_Ldv:aiSkydomeShape.rotOffset')
         skyOff = skyRotOffset
     else:
         skyOff = 0
 
-
     if cmds.namespace(exists='dk_Ldv') == True:
-        checkBoxState = cmds.getAttr('dk_Ldv:shadowCatcher.shadowChckVis')
+        checkBoxState = cmds.getAttr("dk_Ldv:shadowCatcher.shadowChckVis")
         checkBoxVal = checkBoxState
     else:
         checkBoxVal = True
+
+    if cmds.namespace(exists='dk_Ldv') == True:
+        checkBoxStateDoF = cmds.getAttr("dk_Ldv:camera1.DoF")
+        checkBoxDoF = checkBoxStateDoF
+    else:
+        checkBoxDoF = False
 
     miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' ) 
     hdrtx = cmds.getFileList( folder=HDR_FOLDER, filespec='*.tx')
@@ -1066,7 +1169,6 @@ def buildUI():
     if cmds.namespace(exists='dk_Ldv') == True and len(miniFile) != 0:
         hdrswitch = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')-1
         minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[hdrswitch]).replace("\\", "/")
-        #txIntFile = os.path.join(HDR_FOLDER, hdrtx[hdrswitch]).replace("\\", "/")
     if len(miniFile) != 0:
         miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' )
         minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[0]).replace("\\", "/")
@@ -1074,7 +1176,6 @@ def buildUI():
     else:
         miniFile = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg' )
         minIntFile = os.path.join(TEX_FOLDER, "no_prev.jpg").replace("\\", "/")
-        #txIntFile = os.path.join(HDR_FOLDER, "no_prev.tx").replace("\\", "/")
 
     if cmds.namespace(exists='dk_turn') == True:
         objRotOffset = cmds.getAttr('dk_turn:obj_tt_Offloc.rotateY')
@@ -1143,9 +1244,15 @@ def buildUI():
     cmds.floatSliderGrp('sky_vis', label='Camera Vis.', min=0, max=1, value=skyVis, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
     cmds.setParent(mainCL)
 
-    #shadow plane checkbox
-    cmds.rowColumnLayout(numberOfColumns=1, columnOffset=[1, "both", 45])
-    cmds.checkBox(label="Shadow Matte", value=checkBoxVal, recomputeSize=True, onCommand=shadowChckOn, offCommand=shadowChckOff)
+    #Camera Aperture
+    cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
+    cmds.floatSliderGrp('cam_aper', label='Aperture', min=0, max=30, value=camAper, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=cam_aper, dragCommand=cam_aper)
+    cmds.setParent(mainCL)
+
+    #Checkboxes
+    cmds.rowColumnLayout(numberOfColumns=2, columnOffset=[1, "both", 20])
+    cmds.checkBox("shMatte", label="Shadow Matte", value=checkBoxVal, recomputeSize=True, onCommand=shadowChckOn, offCommand=shadowChckOff)
+    cmds.checkBox("camDoF",label="DoF", value=checkBoxDoF, recomputeSize=True, onCommand=DoFOn, offCommand=DoFOff)
     cmds.setParent(mainCL)
 
     #refresh HDRS
