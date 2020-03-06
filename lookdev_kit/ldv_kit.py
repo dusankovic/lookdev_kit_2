@@ -1,5 +1,10 @@
 #Lookdev kit 2.0 by Dusan Kovic - www.dusankovic.com
 #Special thanks to Aleksandar Kocic - www.aleksandarkocic.com for being great advisor on this project
+
+#So you wanted to check my code! Before you go on, let me quote my TD friend Aleksandar:
+#"Your code is crap, but it works... more or less"
+#Remmeber those words while reading the rest of the code...
+
 import maya.cmds as cmds
 import mtoa.utils as mutils
 import mtoa.core as core
@@ -1185,7 +1190,7 @@ def buildUI():
 
     winID = 'LdvUI'
     winWidth = 350
-    winHeight = 712
+    winHeight = 675
     rowHeight = 30
     ldvTitle = "Lookdev Kit 2.0"
 
@@ -1255,7 +1260,7 @@ def buildUI():
     cmds.checkBox("camDoF",label="DoF", value=checkBoxDoF, recomputeSize=True, onCommand=DoFOn, offCommand=DoFOff)
     cmds.setParent(mainCL)
 
-    #refresh HDRS
+    #refresh HDRs
     tmpRowWidth = [winWidth*0.5, winWidth*0.5]
     cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
     cmds.button(label='Refresh HDRs', width=tmpRowWidth[0], annotation="Recreate .jpg preview images and .tx files from existing HDRs", command=refHDR)
