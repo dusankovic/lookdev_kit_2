@@ -1228,7 +1228,7 @@ def buildUI():
     cmds.button(label='Remove MAC', width=tmpRowWidth[0], annotation="Remove Macbeth chart and spheres", command=removeMAC)
     cmds.setParent(mainCL)
 
-    cmds.text(label='--- Skydome Controls ---', width=winWidth, height=rowHeight)
+    cmds.text(label='--- HDR Controls ---', width=winWidth, height=rowHeight)
 
     #hdr switch
     tmpRowWidth = [winWidth*0.2, winWidth*0.2, winWidth*0.5]
@@ -1265,7 +1265,7 @@ def buildUI():
     cmds.setParent(mainCL)
 
     #Checkboxes
-    cmds.rowColumnLayout(numberOfColumns=2, columnOffset=[1, "both", 20])
+    cmds.rowColumnLayout(numberOfColumns=2, columnOffset=[1, "both", 70])
     cmds.checkBox("shMatte", label="Shadow Matte", value=checkBoxVal, recomputeSize=True, onCommand=shadowChckOn, offCommand=shadowChckOff)
     cmds.checkBox("camDoF",label="DoF", value=checkBoxDoF, recomputeSize=True, onCommand=DoFOn, offCommand=DoFOff)
     cmds.setParent(mainCL)
