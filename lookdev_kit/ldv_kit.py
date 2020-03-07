@@ -724,8 +724,16 @@ def refHDR(*args):
         cmds.warning("Rebuilding HDRs")
         cmds.arnoldFlushCache(textures=True)
         cmds.pause(seconds=2)
+        
         if cmds.namespace(exists='dk_Ldv') == True:
-            cmds.namespace(removeNamespace=':dk_Ldv', deleteNamespaceContent=True)
+            cmds.namespace(removeNamespace='dk_Ldv', deleteNamespaceContent=True)
+        if cmds.namespace(exists='mac') == True:
+            cmds.namespace(removeNamespace='mac', deleteNamespaceContent=True)
+        if cmds.namespace(exists='dk_turn') == True:
+            cmds.namespace(removeNamespace='dk_turn', deleteNamespaceContent=True)
+        if cmds.namespace(exists='dk_bake') == True:
+            cmds.namespace(removeNamespace='dk_bake', deleteNamespaceContent=True)
+
         cmds.namespace(add='dk_bake')
         cmds.namespace(set=':dk_bake')
 
