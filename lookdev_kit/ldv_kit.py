@@ -193,24 +193,20 @@ def createLDV(*args):
     cmds.parent(crvGrp, cam[0])
     cmds.parent(cam[0], "dk_Ldv:lookdev_ctrl_grp")
 
+    cmds.expression(crvGrp, string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $scale = $measuredDistance / $distanceForOne;dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;")
+
     cmds.makeIdentity(crvGrp, translate = True, apply = True )
     cmds.setAttr(crvGrp + ".translateY",-6.7)
     cmds.makeIdentity(crvGrp, translate = True, apply = True )
 
-    # cmds.setAttr(crvGrp + ".translateX", keyable=False, lock = True)
-    # cmds.setAttr(crvGrp + ".translateY", keyable=False, lock = True)
-    # cmds.setAttr(crvGrp + ".rotateX", keyable=False, lock = True)
-    # cmds.setAttr(crvGrp + ".rotateY", keyable=False, lock = True)
-    # cmds.setAttr(crvGrp + ".rotateZ", keyable=False, lock = True)
-    # cmds.setAttr(crvGrp + ".scaleX", keyable=False, lock = True)
-    # cmds.setAttr(crvGrp + ".scaleY", keyable=False, lock = True)
-    # cmds.setAttr(crvGrp + ".scaleZ", keyable=False, lock = True)
-
-
-
-
-
-
+    cmds.setAttr(crvGrp + ".translateX", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".translateY", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".rotateX", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".rotateY", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".rotateZ", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".scaleX", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".scaleY", keyable=False, lock = True)
+    cmds.setAttr(crvGrp + ".scaleZ", keyable=False, lock = True)
 
     #create global ctrl
     ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[(-500, 0, 500), (-500, 0, -500), (500, 0, -500), (500, 0, 500), (-500, 0, 500)] )
