@@ -127,15 +127,6 @@ def createLDV(*args):
         )
 
     cmds.addAttr(cam[0], longName= "DoF", attributeType= "bool" )
-    
-    #camera DoF checkbox read
-    camBox = cmds.checkBox("camDoF", query=True, value=True)
-    cmds.setAttr(cam[0] + ".DoF", camBox)
-    #camera Aperture slider read
-    cmds.undoInfo( swf=False )
-    camAper = cmds.floatSliderGrp('cam_aper', query=True, value=True)
-    cmds.setAttr(cam[0] + ".aiApertureSize", camAper)
-    cmds.undoInfo( swf=True)
 
     cmds.setAttr(cam[0] + ".displayGateMaskColor", 0.1,0.1,0.1, type="double3")
     cmds.setAttr(cam[0] + ".translateY", 195)
@@ -194,6 +185,16 @@ def createLDV(*args):
     cmds.parent(cam[0], "dk_Ldv:lookdev_ctrl_grp")
 
     cmds.expression(crvGrp, string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $scale = $measuredDistance / $distanceForOne;dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;")
+
+    #camera DoF checkbox read
+    camBox = cmds.checkBox("camDoF", query=True, value=True)
+    cmds.setAttr(cam[0] + ".DoF", camBox)
+    cmds.setAttr("dk_Ldv:fcsCrv.visibility", camBox)
+    #camera Aperture slider read
+    cmds.undoInfo( swf=False )
+    camAper = cmds.floatSliderGrp('cam_aper', query=True, value=True)
+    cmds.setAttr(cam[0] + ".aiApertureSize", camAper)
+    cmds.undoInfo( swf=True)
 
     cmds.makeIdentity(crvGrp, translate = True, apply = True )
     cmds.setAttr(crvGrp + ".translateY",-6.7)
@@ -695,11 +696,13 @@ def DoFOn(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.setAttr("dk_Ldv:cameraShape1.aiEnableDOF", 1)
         cmds.setAttr("dk_Ldv:camera1.DoF", 1)
+        cmds.setAttr("dk_Ldv:fcsCrv.visibility", 1)
 
 def DoFOff(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.setAttr("dk_Ldv:cameraShape1.aiEnableDOF", 0)
         cmds.setAttr("dk_Ldv:camera1.DoF", 0)
+        cmds.setAttr("dk_Ldv:fcsCrv.visibility", 0)
 
 def refHDR(*args):
     hdrexr = cmds.getFileList( folder=HDR_FOLDER, filespec='*.exr')
@@ -733,7 +736,7 @@ def refHDR(*args):
         for each in hdrtx:
                 deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
                 cmds.sysFile(deltx, delete=True)
-        cmds.progressWindow(title='LookdevKit 2.0', progress=prog, status='Baking HDR preview images:' )
+        cmds.progressWindow(title='LookdevKit 2.0', progress=prog, status='Baking HDR preview images, please wait.' )
 
         for each in hdrList:
             hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
@@ -747,7 +750,7 @@ def refHDR(*args):
             oiio_convert.wait()          
             
             prog += maxNumBake
-            cmds.progressWindow(edit=True, progress=prog, status='Baking HDR preview images: ' )
+            cmds.progressWindow(edit=True, progress=prog, status='Baking HDR preview images, please wait. ' )
             #cmds.pause( seconds=1 )
             if cmds.progressWindow(query=True, progress=True) == 100:
                 prog = 0
@@ -757,7 +760,7 @@ def refHDR(*args):
         cmds.namespace(removeNamespace=':dk_bake',deleteNamespaceContent=True)
         cmds.namespace(set=':')
         
-        cmds.progressWindow(title='LookdevKit 2.0', progress=prog, status='Converting textures to TX:' )
+        cmds.progressWindow(title='LookdevKit 2.0', progress=prog, status='Converting textures to TX, please wait.' )
         for each in hdrList:
             hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True) 
@@ -768,7 +771,7 @@ def refHDR(*args):
             out = os.path.join(HDR_FOLDER, outfile).replace("\\", "/")
             baketx = subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdrPath, "-o", out], shell=True)
             prog += maxNumBake
-            cmds.progressWindow(edit=True, progress=prog, status='Converting textures to TX: ' )
+            cmds.progressWindow(edit=True, progress=prog, status='Converting textures to TX, please wait. ' )
             baketx.wait()
             if cmds.progressWindow(query=True, progress=True) == 100:
                 cmds.pause( seconds=5 )
@@ -841,7 +844,14 @@ def turntableButton(*args):
             setTurntable(assetSel)
             cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
 
-    objOffset(args)
+    #objOffset(args)
+    objRotdk = cmds.getAttr("dk_turn:obj_tt_loc.rotateY")
+    cmds.undoInfo( swf=False )
+    valuedk = cmds.floatSliderGrp("objOff", query=True, value=True)
+    objAddedRotdk = objRotdk + valuedk
+    cmds.setAttr("dk_turn:obj_tt_Offloc.rotateY", objAddedRotdk)
+    cmds.setAttr("dk_turn:obj_tt_Offloc.objOffset", valuedk)
+    cmds.undoInfo( swf=True)
 
     cmds.select(clear=True)
     cmds.select(assetSel)
