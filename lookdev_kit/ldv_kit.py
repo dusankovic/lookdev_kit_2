@@ -3,7 +3,7 @@
 
 #So you wanted to check my code! Before you go on, let me quote my TD friend Aleksandar:
 #"Your code is crap, but it works... more or less"
-#Remmeber those words while reading the rest of the code...
+#Remmeber those words while you read the rest of the code...
 
 import maya.cmds as cmds
 import mtoa.utils as mutils
@@ -146,15 +146,15 @@ def createLDV(*args):
     
 
     #focus plane
-    fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[(-200, 0, 0), (-200, 210, 0), (200, 210, 0), (200, 0, 0), (-200, 0, 0)] )  
+    fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[(-200, -8, 0), (-200, 218, 0), (200, 218, 0), (200, -8, 0), (-200, -8, 0)] )  
     fcsText = cmds.textCurves(name = "focusPlane_txt", object = True, text = "FOCUS PLANE")
     fcsGrp = cmds.ls(fcsText, long = True)
 
     cmds.setAttr(fcsGrp[0] + ".scaleX", 12)
     cmds.setAttr(fcsGrp[0] + ".scaleY", 12)
     cmds.setAttr(fcsGrp[0] + ".scaleZ", 12)
-    cmds.setAttr(fcsGrp[0] + ".translateX", 126.522)
-    cmds.setAttr(fcsGrp[0] + ".translateY", 210.987)
+    cmds.setAttr(fcsGrp[0] + ".translateX", 126.5)
+    cmds.setAttr(fcsGrp[0] + ".translateY", 220)
     cmds.makeIdentity(fcsText, translate = True, scale = True, apply = True )
 
     fcsSel = cmds.listRelatives(fcsText, allDescendents = True)
@@ -169,7 +169,6 @@ def createLDV(*args):
 
     crvGrp = cmds.group(name = "fcsCrv", empty = True)
     cmds.move(0,105,0, crvGrp + ".scalePivot", crvGrp + ".rotatePivot", absolute=True)
-
     cmds.parent(fcsSelMain,crvGrp, shape = True, relative = True)
     cmds.delete("dk_Ldv:focusPlane_txtShape")
     cmds.delete(fcsPlane)
@@ -194,14 +193,18 @@ def createLDV(*args):
     cmds.parent(crvGrp, cam[0])
     cmds.parent(cam[0], "dk_Ldv:lookdev_ctrl_grp")
 
-    cmds.setAttr(crvGrp + ".translateX", keyable=False, lock = True)
-    cmds.setAttr(crvGrp + ".translateY", keyable=False, lock = True)
-    cmds.setAttr(crvGrp + ".rotateX", keyable=False, lock = True)
-    cmds.setAttr(crvGrp + ".rotateY", keyable=False, lock = True)
-    cmds.setAttr(crvGrp + ".rotateZ", keyable=False, lock = True)
-    cmds.setAttr(crvGrp + ".scaleX", keyable=False)
-    cmds.setAttr(crvGrp + ".scaleY", keyable=False)
-    cmds.setAttr(crvGrp + ".scaleZ", keyable=False)
+    cmds.makeIdentity(crvGrp, translate = True, apply = True )
+    cmds.setAttr(crvGrp + ".translateY",-6.7)
+    cmds.makeIdentity(crvGrp, translate = True, apply = True )
+
+    # cmds.setAttr(crvGrp + ".translateX", keyable=False, lock = True)
+    # cmds.setAttr(crvGrp + ".translateY", keyable=False, lock = True)
+    # cmds.setAttr(crvGrp + ".rotateX", keyable=False, lock = True)
+    # cmds.setAttr(crvGrp + ".rotateY", keyable=False, lock = True)
+    # cmds.setAttr(crvGrp + ".rotateZ", keyable=False, lock = True)
+    # cmds.setAttr(crvGrp + ".scaleX", keyable=False, lock = True)
+    # cmds.setAttr(crvGrp + ".scaleY", keyable=False, lock = True)
+    # cmds.setAttr(crvGrp + ".scaleZ", keyable=False, lock = True)
 
 
 
@@ -713,7 +716,7 @@ def refHDR(*args):
     oiio = os.path.join(OIIO_FOLDER, "oiiotool.exe").replace("\\", "/")
     prog = 0
     
-    dialog = cmds.confirmDialog(title = "Lookdev Kit 2.0 - Rebuild", message = "This will delete all files in miniHDRs folder and refresh HDR files", button=["Yes", "No"], cancelButton="No", dismissString = "No")
+    dialog = cmds.confirmDialog(title = "Lookdev Kit 2.0 - Rebuild", message = "This will delete all files in miniHDRs folder and refresh HDR files. Please wait.", button=["Yes", "No"], cancelButton="No", dismissString = "No")
     if len(miniList) == 0 and len(hdrList) == 0:
         cmds.warning("HDR folder is empty")
         return
@@ -813,11 +816,22 @@ def objOffset(self, *_):
 
 def turntableButton(*args):
     ldvTitle = "Lookdev Kit 2.0"
-    initSel= cmds.ls(selection=True, transforms=True, absoluteName=True)
-    ldvSel = cmds.ls("dk_Ldv:*",transforms=True, absoluteName=True)
-    macSel = cmds.ls("mac:*",transforms=True, absoluteName=True)
-    camSel = cmds.ls(exactType="camera", absoluteName=True)
-    assetSel = set(initSel) - set(ldvSel) - set(macSel) - set(camSel)
+    initSel = cmds.ls(selection=True, transforms=True, long=True)
+    ldvSel = cmds.ls("dk_Ldv:*",selection=True,transforms=True, long=True)
+    macSel = cmds.ls("mac:*",selection=True,transforms=True, long=True)
+    camSel = cmds.listCameras()
+
+    setInit = cmds.sets(initSel, name = "initSet")
+
+    ldvRem = cmds.sets(ldvSel, split = setInit)
+    macRem = cmds.sets(macSel, split = setInit)
+    camRem = cmds.sets(camSel, split = setInit)
+
+    #assetTemp = cmds.listRelatives(setInit)
+    assetSel = cmds.sets(setInit, query = True)
+
+    cmds.delete(setInit, ldvRem, macRem, camRem)
+
     if len(assetSel) == 0:
         cmds.confirmDialog(title=ldvTitle, message="Please first select your asset. It would be best that all asset elements are in the single group." ,messageAlign="center",button="Ok",defaultButton="Ok",icon="warning")
     else:
@@ -1274,7 +1288,7 @@ def buildUI():
 
     #Auto Turntable
 
-    cmds.text(label='--- Setup Turntable ---', width=winWidth, height=rowHeight)
+    cmds.text(label='--- Turntable ---', width=winWidth, height=rowHeight)
     tmpRowWidth = [winWidth*0.3, winWidth*0.35, winWidth*0.35]
     cmds.rowLayout(numberOfColumns=3)
     cmds.optionMenu('autott', label='Length', width=tmpRowWidth[0])
