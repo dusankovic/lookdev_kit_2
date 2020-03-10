@@ -126,6 +126,7 @@ def createLDV(*args):
         displayResolution=1,
         )
 
+
     cmds.addAttr(cam[0], longName= "DoF", attributeType= "bool" )
 
     cmds.setAttr(cam[0] + ".displayGateMaskColor", 0.1,0.1,0.1, type="double3")
@@ -159,6 +160,8 @@ def createLDV(*args):
         cmds.setAttr(each + ".overrideDisplayType", 1)
 
     crvGrp = cmds.group(name = "fcsCrv", empty = True)
+    crvGrpa = cmds.listRelatives(crvGrp, shapes=True)
+
     cmds.move(0,105,0, crvGrp + ".scalePivot", crvGrp + ".rotatePivot", absolute=True)
     cmds.parent(fcsSelMain,crvGrp, shape = True, relative = True)
     cmds.delete("dk_Ldv:focusPlane_txtShape")
@@ -184,12 +187,11 @@ def createLDV(*args):
     cmds.parent(crvGrp, cam[0])
     cmds.parent(cam[0], "dk_Ldv:lookdev_ctrl_grp")
 
-    cmds.expression(crvGrp, string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $scale = $measuredDistance / $distanceForOne;dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;")
-
     #camera DoF checkbox read
     camBox = cmds.checkBox("camDoF", query=True, value=True)
     cmds.setAttr(cam[0] + ".DoF", camBox)
     cmds.setAttr("dk_Ldv:fcsCrv.visibility", camBox)
+
     #camera Aperture slider read
     cmds.undoInfo( swf=False )
     camAper = cmds.floatSliderGrp('cam_aper', query=True, value=True)
@@ -205,9 +207,19 @@ def createLDV(*args):
     cmds.setAttr(crvGrp + ".rotateX", keyable=False, lock = True)
     cmds.setAttr(crvGrp + ".rotateY", keyable=False, lock = True)
     cmds.setAttr(crvGrp + ".rotateZ", keyable=False, lock = True)
-    cmds.setAttr(crvGrp + ".scaleX", keyable=False, lock = True)
-    cmds.setAttr(crvGrp + ".scaleY", keyable=False, lock = True)
-    cmds.setAttr(crvGrp + ".scaleZ", keyable=False, lock = True)
+    # cmds.setAttr(crvGrp + ".scaleX", keyable=False)
+    # cmds.setAttr(crvGrp + ".scaleY", keyable=False)
+    # cmds.setAttr(crvGrp + ".scaleZ", keyable=False)
+
+    fstop(args)
+    sensor(args)
+    
+    cmds.expression(crvGrp, string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $scale = $measuredDistance / $distanceForOne;dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;")
+    cmds.select(crvGrp)
+    ddd = cmds.ls(sl=True, transforms=True)
+    #focalScaling(ddd)
+    focal(args)
+    
 
     #create global ctrl
     ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[(-500, 0, 500), (-500, 0, -500), (500, 0, -500), (500, 0, 500), (-500, 0, 500)] )
@@ -232,6 +244,7 @@ def createLDV(*args):
 
     cmds.namespace(set=':')
     cmds.select(clear=True)
+
 
 def removeLDV(*args):
     cmds.namespace(set=':')
@@ -625,7 +638,7 @@ def createMAC(*args):
 
     cmds.namespace(set=':')
     cmds.select(clear=True)
-     
+
 def removeMAC(*args):
     cmds.namespace(set=':')
     if cmds.namespace(exists='mac') == False:
@@ -681,6 +694,97 @@ def cam_aper(self, *_):
         value=cmds.floatSliderGrp('cam_aper', query=True, value=True)
         cmds.setAttr('dk_Ldv:cameraShape1.aiApertureSize', value)
         cmds.undoInfo( swf=True)
+
+def fstop (*args):
+    fOpt = cmds.optionMenu('fstop', value=True, query=True)
+    #d=f/n
+    focCam = cmds.getAttr('dk_Ldv:cameraShape1.focalLength')
+    foc = focCam/10
+    dia = foc/float(fOpt)
+    cmds.setAttr('dk_Ldv:cameraShape1.aiApertureSize', dia)
+
+
+def focal (*args):
+    focalOpt = cmds.optionMenu('focal', value=True, query=True)
+    focalLng = focalOpt[:-2]
+    cmds.setAttr('dk_Ldv:cameraShape1.focalLength', float(focalLng))
+    fstop(args)
+
+def sensor (*args):
+    if cmds.namespace(exists='dk_Ldv') == True:
+        sensorOpt = cmds.optionMenu('sensor', value=True, query=True)
+        senSizeH = ["36", "24", "18"]
+        senSizeV = ["24", "16", "13.5"]
+        convInch = 25.4
+        if sensorOpt == "Full Frame":
+            senHor = float(senSizeH[0])/convInch
+            senVer = float(senSizeV[0])/convInch
+            crop = 1
+        if sensorOpt == "APS-C":
+            senHor = float(senSizeH[1])/convInch
+            senVer = float(senSizeV[1])/convInch
+            crop = 1.5
+        if sensorOpt == "Micro 4/3":
+            senHor = float(senSizeH[2])/convInch
+            senVer = float(senSizeV[2])/convInch
+            crop = 2
+        cmds.setAttr('dk_Ldv:cameraShape1.horizontalFilmAperture', senHor)
+        cmds.setAttr('dk_Ldv:cameraShape1.verticalFilmAperture', senVer)
+        conns = cmds.listConnections("dk_Ldv:fcsCrv", plugs=True, source=True)
+        if len(conns) != 0:
+            cmds.disconnectAttr(conns[0], "dk_Ldv:fcsCrv.scaleX")
+            cmds.disconnectAttr(conns[1], "dk_Ldv:fcsCrv.scaleY")
+            cmds.disconnectAttr(conns[2], "dk_Ldv:fcsCrv.scaleZ")
+            cmds.setAttr("dk_Ldv:fcsCrv.scaleX", 1)
+            cmds.setAttr("dk_Ldv:fcsCrv.scaleY", 1)
+            cmds.setAttr("dk_Ldv:fcsCrv.scaleZ", 1)
+        cmds.expression("dk_Ldv:fcsCrv", string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $scale = ($measuredDistance  / $distanceForOne) / {};dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;".format(crop))
+
+
+# def sensorDrop(*args):
+#     sensorOpt = cmds.optionMenu('sensor', value=True, query=True)
+#     senSizeH = ["36", "24", "18"]
+#     senSizeV = ["24", "16", "13.5"]
+#     convInch = 25.4
+#     if sensorOpt == "Full Frame":
+#         senHor = float(senSizeH[0])/convInch
+#         senVer = float(senSizeV[0])/convInch
+#         crop = 1
+#     if sensorOpt == "APS-C":
+#         senHor = float(senSizeH[1])/convInch
+#         senVer = float(senSizeV[1])/convInch
+#         crop = 1.5
+#     if sensorOpt == "Micro 4/3":
+#         senHor = float(senSizeH[2])/convInch
+#         senVer = float(senSizeV[2])/convInch
+#         crop = 2
+#     return senHor, senVer, crop
+
+def focalScaling(objects):
+    sensorOpt = cmds.optionMenu('sensor', value=True, query=True)
+    senSizeH = ["36", "24", "18"]
+    senSizeV = ["24", "16", "13.5"]
+    convInch = 25.4
+    if sensorOpt == "Full Frame":
+        senHor = float(senSizeH[0])/convInch
+        senVer = float(senSizeV[0])/convInch
+        crop = 1
+    if sensorOpt == "APS-C":
+        senHor = float(senSizeH[1])/convInch
+        senVer = float(senSizeV[1])/convInch
+        crop = 1.5
+    if sensorOpt == "Micro 4/3":
+        senHor = float(senSizeH[2])/convInch
+        senVer = float(senSizeV[2])/convInch
+        crop = 2
+    for each in objects:
+        conns = cmds.listConnections("dk_Ldv:fcsCrv", plugs=True, source=True)
+        if len(conns) != 0:
+            cmds.disconnectAttr(conns[0], each + ".scaleX")
+            cmds.disconnectAttr(conns[1], each + ".scaleY")
+            cmds.disconnectAttr(conns[2], each + ".scaleZ")
+        cmds.expression(each, string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $scale = ($measuredDistance  / $distanceForOne) / {};dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;".format(crop))
+   
 
 def shadowChckOn(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
@@ -988,168 +1092,6 @@ def remove_checker(*args):
     if cmds.namespace(exists=':dk_chck') == True:
         cmds.namespace(removeNamespace=':dk_chck', deleteNamespaceContent=True)
 
-def color_mcc10(*args):
-    sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    for each in shapeSel:
-        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-
-        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-
-        cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-        cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-        cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-        cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-        cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 0, typ='double3')
-        cmds.setAttr(each + '.mtoa_constant_color', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-
-def color_mcc1r(*args):
-    sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    for each in shapeSel:
-        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-
-        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-
-        cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-        cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-        cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-        cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-        cmds.setAttr(each + '.mtoa_constant_color', 1, 0, 0, typ='double3')
-        cmds.setAttr(each + '.mtoa_constant_color', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-
-def color_mcc1g(*args):
-    sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    for each in shapeSel:
-        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-
-        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-
-        cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-        cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-        cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-        cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-        cmds.setAttr(each + '.mtoa_constant_color', 0, 1, 0, typ='double3')
-        cmds.setAttr(each + '.mtoa_constant_color', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-
-def color_mcc1b(*args):
-    sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    for each in shapeSel:
-        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-
-        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-
-        cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-        cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-        cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-        cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-        cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 1, typ='double3')
-        cmds.setAttr(each + '.mtoa_constant_color', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
-
-#MCC COLOR2
-
-def color_mcc20(*args):
-    sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    for each in shapeSel:
-        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-
-        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-
-        cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-        cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-        cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-        cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-        cmds.setAttr(each + '.mtoa_constant_color2', 0, 0, 0, typ='double3')
-        cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-
-def color_mcc2r(*args):
-    sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    for each in shapeSel:
-        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-
-        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-
-        cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-        cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-        cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-        cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-        cmds.setAttr(each + '.mtoa_constant_color2', 1, 0, 0, typ='double3')
-        cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-
-def color_mcc2g(*args):
-    sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    for each in shapeSel:
-        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-
-        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-
-        cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-        cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-        cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-        cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-        cmds.setAttr(each + '.mtoa_constant_color2', 0, 1, 0, typ='double3')
-        cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-
-def color_mcc2b(*args):
-    sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    for each in shapeSel:
-        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
-
-        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
-
-        cmds.addAttr(each, ln='mtoa_constant_color2', at='double3')
-        cmds.addAttr(each, ln='mtoa_constant_color2X', at='double', p='mtoa_constant_color2')
-        cmds.addAttr(each, ln='mtoa_constant_color2Y', at='double', p='mtoa_constant_color2')
-        cmds.addAttr(each, ln='mtoa_constant_color2Z', at='double', p='mtoa_constant_color2')
-        cmds.setAttr(each + '.mtoa_constant_color2', 0, 0, 1, typ='double3')
-        cmds.setAttr(each + '.mtoa_constant_color2', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2X', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2Y', k=True)
-        cmds.setAttr(each + '.mtoa_constant_color2Z', k=True)
-
 #UI
 def buildUI():
     if cmds.namespace(exists='dk_Ldv') == True:
@@ -1218,7 +1160,7 @@ def buildUI():
 
     winID = 'LdvUI'
     winWidth = 350
-    winHeight = 675
+    winHeight = 700
     rowHeight = 30
     ldvTitle = "Lookdev Kit 2.0"
 
@@ -1281,6 +1223,45 @@ def buildUI():
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
     cmds.floatSliderGrp('cam_aper', label='Aperture', min=0, max=30, value=camAper, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=cam_aper, dragCommand=cam_aper)
     cmds.setParent(mainCL)
+
+    tmpRowWidth = [winWidth*0.4, winWidth*0.18, winWidth*0.4]
+    cmds.rowLayout(numberOfColumns=3)
+
+    cmds.optionMenu('focal', label=' Focal Length', width=tmpRowWidth[0], annotation = "Choose camera focal length", changeCommand = focal)
+    cmds.menuItem(label='14mm', parent = 'focal')
+    cmds.menuItem(label='18mm', parent = 'focal')
+    cmds.menuItem(label='24mm', parent = 'focal')
+    cmds.menuItem(label='35mm', parent = 'focal')
+    cmds.menuItem(label='50mm', parent = 'focal')
+    cmds.menuItem(label='70mm', parent = 'focal')
+    cmds.menuItem(label='90mm', parent = 'focal')
+    cmds.menuItem(label='105mm', parent = 'focal')
+    cmds.menuItem(label='135mm', parent = 'focal')
+    cmds.menuItem(label='200mm', parent = 'focal')
+    cmds.menuItem(label='270mm', parent = 'focal')
+    cmds.menuItem(label='400mm', parent = 'focal')
+    cmds.menuItem(label='600mm', parent = 'focal')
+
+    cmds.optionMenu('fstop', label=' f/', width=tmpRowWidth[1], annotation = "Choose lens aperture", changeCommand = fstop)
+    cmds.menuItem(label='1.2', parent = 'fstop')
+    cmds.menuItem(label='1.4', parent = 'fstop')
+    cmds.menuItem(label='2', parent = 'fstop')
+    cmds.menuItem(label='2.8', parent = 'fstop')
+    cmds.menuItem(label='4', parent = 'fstop')
+    cmds.menuItem(label='5.6', parent = 'fstop')
+    cmds.menuItem(label='8', parent = 'fstop')
+    cmds.menuItem(label='11', parent = 'fstop')
+    cmds.menuItem(label='16', parent = 'fstop')
+
+    cmds.optionMenu('sensor', label=' Sensor', width=tmpRowWidth[2], annotation = "Choose sensor size", changeCommand = sensor)
+    cmds.menuItem(label='Full Frame', parent = 'sensor')
+    cmds.menuItem(label='APS-C', parent = 'sensor')
+    cmds.menuItem(label='Micro 4/3', parent = 'sensor')
+    
+
+
+    cmds.setParent(mainCL)
+
 
     #Checkboxes
     cmds.rowColumnLayout(numberOfColumns=2, columnOffset=[1, "both", 70])
