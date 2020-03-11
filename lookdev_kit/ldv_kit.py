@@ -6,6 +6,7 @@
 #Remmeber those words while you read the rest of the code...
 
 import maya.cmds as cmds
+import maya.mel as mel
 import mtoa.utils as mutils
 import mtoa.core as core
 import os
@@ -44,8 +45,6 @@ def createLDV(*args):
     skydome = mutils.createLocator('aiSkyDomeLight', asLight=True)
     sky_name = cmds.rename(skydome[1], 'aiSkydome')
     skydome_shape = cmds.listRelatives(sky_name, shapes=True)
-
-
 
     #read camera visibility slider
     cmds.undoInfo( swf=False)
@@ -126,7 +125,6 @@ def createLDV(*args):
         displayResolution=1,
         )
 
-
     cmds.addAttr(cam[0], longName= "DoF", attributeType= "bool" )
 
     cmds.setAttr(cam[0] + ".displayGateMaskColor", 0.1,0.1,0.1, type="double3")
@@ -136,7 +134,6 @@ def createLDV(*args):
     cmds.setAttr(cam[0] + ".locatorScale", 15)
     cmds.setAttr(cam[0] + ".displayCameraFrustum", 1)
     
-
     #focus plane
     fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[(-200, -8, 0), (-200, 218, 0), (200, 218, 0), (200, -8, 0), (-200, -8, 0)] )  
     fcsText = cmds.textCurves(name = "focusPlane_txt", object = True, text = "FOCUS PLANE")
@@ -211,16 +208,9 @@ def createLDV(*args):
     # cmds.setAttr(crvGrp + ".scaleY", keyable=False)
     # cmds.setAttr(crvGrp + ".scaleZ", keyable=False)
 
-    fstop(args)
-    sensor(args)
+    fstop()
+    focal()
     
-    cmds.expression(crvGrp, string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $scale = $measuredDistance / $distanceForOne;dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;")
-    cmds.select(crvGrp)
-    ddd = cmds.ls(sl=True, transforms=True)
-    #focalScaling(ddd)
-    focal(args)
-    
-
     #create global ctrl
     ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[(-500, 0, 500), (-500, 0, -500), (500, 0, -500), (500, 0, 500), (-500, 0, 500)] )
     cmds.parent(ldvCtrl, LDVgroup)
@@ -244,7 +234,6 @@ def createLDV(*args):
 
     cmds.namespace(set=':')
     cmds.select(clear=True)
-
 
 def removeLDV(*args):
     cmds.namespace(set=':')
@@ -703,16 +692,23 @@ def fstop (*args):
     dia = foc/float(fOpt)
     cmds.setAttr('dk_Ldv:cameraShape1.aiApertureSize', dia)
 
-
 def focal (*args):
     focalOpt = cmds.optionMenu('focal', value=True, query=True)
     focalLng = focalOpt[:-2]
     cmds.setAttr('dk_Ldv:cameraShape1.focalLength', float(focalLng))
-    fstop(args)
+    fstop()
+    sensor()
 
 def sensor (*args):
+    mel.eval("cycleCheck -e off")
+    cmds.namespace(setNamespace=':')
     if cmds.namespace(exists='dk_Ldv') == True:
+        cmds.namespace(setNamespace=':dk_Ldv')
         sensorOpt = cmds.optionMenu('sensor', value=True, query=True)
+        focalOpt = cmds.optionMenu('focal', value=True, query=True)
+        focalLng = focalOpt[:-2]
+        planeZ = cmds.getAttr("dk_Ldv:fcsCrv.translateZ")
+        planeZ1 = planeZ + 1
         senSizeH = ["36", "24", "18"]
         senSizeV = ["24", "16", "13.5"]
         convInch = 25.4
@@ -731,61 +727,32 @@ def sensor (*args):
         cmds.setAttr('dk_Ldv:cameraShape1.horizontalFilmAperture', senHor)
         cmds.setAttr('dk_Ldv:cameraShape1.verticalFilmAperture', senVer)
         conns = cmds.listConnections("dk_Ldv:fcsCrv", plugs=True, source=True)
-        if len(conns) != 0:
+        connsObj = cmds.listConnections("dk_Ldv:fcsCrv", source=True)
+        try:
+            connsStr = str(connsObj[0])
+        except:
+            connsStr = 0
+        try:
+            connsSel = cmds.ls(connsStr)
+        except:
+            connsSel = []
+
+        if len(connsSel) != 0:
             cmds.disconnectAttr(conns[0], "dk_Ldv:fcsCrv.scaleX")
             cmds.disconnectAttr(conns[1], "dk_Ldv:fcsCrv.scaleY")
             cmds.disconnectAttr(conns[2], "dk_Ldv:fcsCrv.scaleZ")
+            cmds.delete("dk_Ldv:expression1")
             cmds.setAttr("dk_Ldv:fcsCrv.scaleX", 1)
             cmds.setAttr("dk_Ldv:fcsCrv.scaleY", 1)
             cmds.setAttr("dk_Ldv:fcsCrv.scaleZ", 1)
-        cmds.expression("dk_Ldv:fcsCrv", string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $scale = ($measuredDistance  / $distanceForOne) / {};dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;".format(crop))
-
-
-# def sensorDrop(*args):
-#     sensorOpt = cmds.optionMenu('sensor', value=True, query=True)
-#     senSizeH = ["36", "24", "18"]
-#     senSizeV = ["24", "16", "13.5"]
-#     convInch = 25.4
-#     if sensorOpt == "Full Frame":
-#         senHor = float(senSizeH[0])/convInch
-#         senVer = float(senSizeV[0])/convInch
-#         crop = 1
-#     if sensorOpt == "APS-C":
-#         senHor = float(senSizeH[1])/convInch
-#         senVer = float(senSizeV[1])/convInch
-#         crop = 1.5
-#     if sensorOpt == "Micro 4/3":
-#         senHor = float(senSizeH[2])/convInch
-#         senVer = float(senSizeV[2])/convInch
-#         crop = 2
-#     return senHor, senVer, crop
-
-def focalScaling(objects):
-    sensorOpt = cmds.optionMenu('sensor', value=True, query=True)
-    senSizeH = ["36", "24", "18"]
-    senSizeV = ["24", "16", "13.5"]
-    convInch = 25.4
-    if sensorOpt == "Full Frame":
-        senHor = float(senSizeH[0])/convInch
-        senVer = float(senSizeV[0])/convInch
-        crop = 1
-    if sensorOpt == "APS-C":
-        senHor = float(senSizeH[1])/convInch
-        senVer = float(senSizeV[1])/convInch
-        crop = 1.5
-    if sensorOpt == "Micro 4/3":
-        senHor = float(senSizeH[2])/convInch
-        senVer = float(senSizeV[2])/convInch
-        crop = 2
-    for each in objects:
-        conns = cmds.listConnections("dk_Ldv:fcsCrv", plugs=True, source=True)
-        if len(conns) != 0:
-            cmds.disconnectAttr(conns[0], each + ".scaleX")
-            cmds.disconnectAttr(conns[1], each + ".scaleY")
-            cmds.disconnectAttr(conns[2], each + ".scaleZ")
-        cmds.expression(each, string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $scale = ($measuredDistance  / $distanceForOne) / {};dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;".format(crop))
-   
-
+        cmds.namespace(set=':dk_Ldv')
+        cmds.expression("dk_Ldv:fcsCrv",alwaysEvaluate = True, string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $lens = {};float $lensOne = 50;float $crop = {};float $measureFactor = $measuredDistance / $distanceForOne;float $scale = ($measureFactor / $crop) / ($lens / $lensOne);dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;".format(focalLng, crop))
+        cmds.namespace(set=':')
+        cmds.pause( seconds=0.6 )
+        cmds.setAttr("dk_Ldv:fcsCrv.translateZ", planeZ1)
+        cmds.setAttr("dk_Ldv:fcsCrv.translateZ", planeZ)
+        mel.eval("cycleCheck -e on")
+  
 def shadowChckOn(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.setAttr("dk_Ldv:shadowCatcher.visibility", 1)
@@ -890,7 +857,7 @@ def refHDR(*args):
                 prog = 0
                 cmds.progressWindow(endProgress=1)
                 break
-        cmds.pause( seconds=3 )
+        cmds.pause( seconds=1 )
         buildUI()
     else:
         cmds.warning("Operation Canceled")
@@ -908,7 +875,7 @@ def deletePrevTx(*args):
     for each in hdrtx:
             deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             cmds.sysFile(deltx, delete=True)
-    cmds.pause( seconds=3 )
+    cmds.pause( seconds=1 )
     buildUI()
 
 def hdrFol(*args):
@@ -1241,6 +1208,7 @@ def buildUI():
     cmds.menuItem(label='270mm', parent = 'focal')
     cmds.menuItem(label='400mm', parent = 'focal')
     cmds.menuItem(label='600mm', parent = 'focal')
+    cmds.optionMenu('focal', edit = True, select = 5)
 
     cmds.optionMenu('fstop', label=' f/', width=tmpRowWidth[1], annotation = "Choose lens aperture", changeCommand = fstop)
     cmds.menuItem(label='1.2', parent = 'fstop')
@@ -1252,16 +1220,15 @@ def buildUI():
     cmds.menuItem(label='8', parent = 'fstop')
     cmds.menuItem(label='11', parent = 'fstop')
     cmds.menuItem(label='16', parent = 'fstop')
+    cmds.optionMenu('fstop', edit = True, select = 3)
 
     cmds.optionMenu('sensor', label=' Sensor', width=tmpRowWidth[2], annotation = "Choose sensor size", changeCommand = sensor)
     cmds.menuItem(label='Full Frame', parent = 'sensor')
     cmds.menuItem(label='APS-C', parent = 'sensor')
     cmds.menuItem(label='Micro 4/3', parent = 'sensor')
-    
-
-
+    cmds.optionMenu('sensor', edit = True, select = 1)
+   
     cmds.setParent(mainCL)
-
 
     #Checkboxes
     cmds.rowColumnLayout(numberOfColumns=2, columnOffset=[1, "both", 70])
@@ -1333,23 +1300,6 @@ def buildUI():
     cmds.button(label='Load Checker Shader', width=tmpRowWidth[0],annotation="Load shader with checker texture - useful for checking UVs", command=checker)
     cmds.button(label='Remove Checker Shader', width=tmpRowWidth[1], annotation="Remove shader with checker texture", command=remove_checker)
     cmds.setParent(mainCL)
-
-    # cmds.text(label='--- MtoA Constant Color ---', width=winWidth, height=rowHeight)
-
-    #primvars (constant color1)
-    # cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
-    # cmds.button(label='mcc1 0', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Black", command=color_mcc10)
-    # cmds.button(label='mcc1 R', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Red",command=color_mcc1r)
-    # cmds.button(label='mcc1 G', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Green",command=color_mcc1g)
-    # cmds.button(label='mcc1 B', width=winWidth*0.25, annotation="Adds Mtoa Constant Color - Blue",command=color_mcc1b)
-    # cmds.setParent(mainCL)
-
-    # cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
-    # cmds.button(label='mcc2 0', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Black",command=color_mcc20)
-    # cmds.button(label='mcc2 R', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Red",command=color_mcc2r)
-    # cmds.button(label='mcc2 G', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Green",command=color_mcc2g)
-    # cmds.button(label='mcc2 B', width=winWidth*0.25, annotation="Adds Mtoa Constant Color2 - Blue",command=color_mcc2b)
-    # cmds.setParent(mainCL)
 
     # Display the window
     cmds.showWindow(w)
