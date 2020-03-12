@@ -189,12 +189,6 @@ def createLDV(*args):
     cmds.setAttr(cam[0] + ".DoF", camBox)
     cmds.setAttr("dk_Ldv:fcsCrv.visibility", camBox)
 
-    #camera Aperture slider read
-    cmds.undoInfo( swf=False )
-    camAper = cmds.floatSliderGrp('cam_aper', query=True, value=True)
-    cmds.setAttr(cam[0] + ".aiApertureSize", camAper)
-    cmds.undoInfo( swf=True)
-
     cmds.makeIdentity(crvGrp, translate = True, apply = True )
     cmds.setAttr(crvGrp + ".translateY",-6.7)
     cmds.makeIdentity(crvGrp, translate = True, apply = True )
@@ -677,13 +671,6 @@ def sky_vis(self, *_):
         cmds.setAttr('dk_Ldv:aiSkydomeShape.camera', value)
         cmds.undoInfo( swf=True)
 
-def cam_aper(self, *_):
-    if cmds.namespace(exists='dk_Ldv') == True:
-        cmds.undoInfo( swf=False )
-        value=cmds.floatSliderGrp('cam_aper', query=True, value=True)
-        cmds.setAttr('dk_Ldv:cameraShape1.aiApertureSize', value)
-        cmds.undoInfo( swf=True)
-
 def fstop (*args):
     fOpt = cmds.optionMenu('fstop', value=True, query=True)
     #d=f/n
@@ -751,7 +738,7 @@ def sensor (*args):
         cmds.pause( seconds=0.6 )
         cmds.setAttr("dk_Ldv:fcsCrv.translateZ", planeZ1)
         cmds.setAttr("dk_Ldv:fcsCrv.translateZ", planeZ)
-        mel.eval("cycleCheck -e on")
+        #mel.eval("cycleCheck -e on")
   
 def shadowChckOn(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
@@ -1127,7 +1114,7 @@ def buildUI():
 
     winID = 'LdvUI'
     winWidth = 350
-    winHeight = 700
+    winHeight = 669
     rowHeight = 30
     ldvTitle = "Lookdev Kit 2.0"
 
@@ -1184,11 +1171,6 @@ def buildUI():
     #Skydome camera visibility
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
     cmds.floatSliderGrp('sky_vis', label='Camera Vis.', min=0, max=1, value=skyVis, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
-    cmds.setParent(mainCL)
-
-    #Camera Aperture
-    cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
-    cmds.floatSliderGrp('cam_aper', label='Aperture', min=0, max=30, value=camAper, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=cam_aper, dragCommand=cam_aper)
     cmds.setParent(mainCL)
 
     tmpRowWidth = [winWidth*0.4, winWidth*0.18, winWidth*0.4]
