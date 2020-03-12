@@ -125,7 +125,6 @@ def createLDV(*args):
         displayResolution=1,
         )
 
-    cmds.addAttr(cam[0], longName= "DoF", attributeType= "bool" )
 
     cmds.setAttr(cam[0] + ".displayGateMaskColor", 0.1,0.1,0.1, type="double3")
     cmds.setAttr(cam[0] + ".translateY", 195)
@@ -133,7 +132,19 @@ def createLDV(*args):
     cmds.setAttr(cam[0] + ".rotateX", -10)
     cmds.setAttr(cam[0] + ".locatorScale", 15)
     cmds.setAttr(cam[0] + ".displayCameraFrustum", 1)
-    
+
+    #add additional attributes
+    cmds.addAttr(cam[0], longName= "DoF", attributeType= "bool" )
+
+    senCount = cmds.optionMenu('sensor',numberOfItems = True, query = True)
+    cmds.addAttr(cam[0], longName= "SensorCam", attributeType= "long", min = 1, max = senCount )
+
+    focCount = cmds.optionMenu('focal',numberOfItems = True, query = True)
+    cmds.addAttr(cam[0], longName= "FocalCam", attributeType= "long", min = 1, max = focCount )
+
+    fstopCount = cmds.optionMenu('fstop',numberOfItems = True, query = True)
+    cmds.addAttr(cam[0], longName= "FstopCam", attributeType= "long", min = 1, max = fstopCount )
+
     #focus plane
     fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[(-200, -8, 0), (-200, 218, 0), (200, 218, 0), (200, -8, 0), (-200, -8, 0)] )  
     fcsText = cmds.textCurves(name = "focusPlane_txt", object = True, text = "FOCUS PLANE")
@@ -201,9 +212,9 @@ def createLDV(*args):
     # cmds.setAttr(crvGrp + ".scaleX", keyable=False)
     # cmds.setAttr(crvGrp + ".scaleY", keyable=False)
     # cmds.setAttr(crvGrp + ".scaleZ", keyable=False)
-
-    fstop()
     focal()
+    fstop()
+    
     
     #create global ctrl
     ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[(-500, 0, 500), (-500, 0, -500), (500, 0, -500), (500, 0, 500), (-500, 0, 500)] )
@@ -672,19 +683,71 @@ def sky_vis(self, *_):
         cmds.undoInfo( swf=True)
 
 def fstop (*args):
-    fOpt = cmds.optionMenu('fstop', value=True, query=True)
-    #d=f/n
-    focCam = cmds.getAttr('dk_Ldv:cameraShape1.focalLength')
-    foc = focCam/10
-    dia = foc/float(fOpt)
-    cmds.setAttr('dk_Ldv:cameraShape1.aiApertureSize', dia)
+    cmds.namespace(setNamespace=':')
+    if cmds.namespace(exists='dk_Ldv') == True:
+        cmds.namespace(setNamespace=':dk_Ldv')
+
+        fOpt = cmds.optionMenu('fstop', value=True, query=True)
+        focCam = cmds.getAttr('dk_Ldv:cameraShape1.focalLength')
+        foc = focCam/10
+        dia = foc/float(fOpt)
+        cmds.setAttr('dk_Ldv:cameraShape1.aiApertureSize', dia)
+
+        if fOpt == "1.4":
+            fstopCamSet = 1
+        if fOpt == "2":
+            fstopCamSet = 2
+        if fOpt == "2.8":
+            fstopCamSet = 3
+        if fOpt == "4":
+            fstopCamSet = 4
+        if fOpt == "5.6":
+            fstopCamSet = 5
+        if fOpt == "8":
+            fstopCamSet = 6
+        if fOpt == "11":
+            fstopCamSet = 7
+        if fOpt == "16":
+            fstopCamSet = 8
+
+        cmds.setAttr("dk_Ldv:camera1.FstopCam", fstopCamSet)
 
 def focal (*args):
-    focalOpt = cmds.optionMenu('focal', value=True, query=True)
-    focalLng = focalOpt[:-2]
-    cmds.setAttr('dk_Ldv:cameraShape1.focalLength', float(focalLng))
-    fstop()
-    sensor()
+    cmds.namespace(setNamespace=':')
+    if cmds.namespace(exists='dk_Ldv') == True:
+        cmds.namespace(setNamespace=':dk_Ldv')
+
+        focalOpt = cmds.optionMenu('focal', value=True, query=True)
+        focalLng = focalOpt[:-2]
+        cmds.setAttr('dk_Ldv:cameraShape1.focalLength', float(focalLng))
+
+        if focalLng == "14":
+            focalCamSet = 1
+        if focalLng == "18":
+            focalCamSet = 2
+        if focalLng == "24":
+            focalCamSet = 3
+        if focalLng == "35":
+            focalCamSet = 4
+        if focalLng == "50":
+            focalCamSet = 5
+        if focalLng == "70":
+            focalCamSet = 6
+        if focalLng == "90":
+            focalCamSet = 7
+        if focalLng == "105":
+            focalCamSet = 8
+        if focalLng == "135":
+            focalCamSet = 9
+        if focalLng == "200":
+            focalCamSet = 10
+        if focalLng == "270":
+            focalCamSet = 11
+
+        cmds.setAttr("dk_Ldv:camera1.FocalCam", focalCamSet)
+
+        fstop()
+        sensor()
 
 def sensor (*args):
     mel.eval("cycleCheck -e off")
@@ -702,17 +765,21 @@ def sensor (*args):
         if sensorOpt == "Full Frame":
             senHor = float(senSizeH[0])/convInch
             senVer = float(senSizeV[0])/convInch
+            sensorCamSet = 1
             crop = 1
         if sensorOpt == "APS-C":
             senHor = float(senSizeH[1])/convInch
             senVer = float(senSizeV[1])/convInch
             crop = 1.5
+            sensorCamSet = 2
         if sensorOpt == "Micro 4/3":
             senHor = float(senSizeH[2])/convInch
             senVer = float(senSizeV[2])/convInch
             crop = 2
+            sensorCamSet = 3
         cmds.setAttr('dk_Ldv:cameraShape1.horizontalFilmAperture', senHor)
         cmds.setAttr('dk_Ldv:cameraShape1.verticalFilmAperture', senVer)
+        cmds.setAttr("dk_Ldv:camera1.SensorCam", sensorCamSet)
         conns = cmds.listConnections("dk_Ldv:fcsCrv", plugs=True, source=True)
         connsObj = cmds.listConnections("dk_Ldv:fcsCrv", source=True)
         try:
@@ -1059,15 +1126,28 @@ def buildUI():
         skyVis = 1
 
     if cmds.namespace(exists='dk_Ldv') == True:
-        camAper = cmds.getAttr('dk_Ldv:cameraShape1.aiApertureSize')
-    else:
-        camAper = 1
-
-    if cmds.namespace(exists='dk_Ldv') == True:
         skyRotOffset = cmds.getAttr('dk_Ldv:aiSkydomeShape.rotOffset')
         skyOff = skyRotOffset
     else:
         skyOff = 0
+
+    if cmds.namespace(exists='dk_Ldv') == True:
+        sensorCamGet = cmds.getAttr("dk_Ldv:camera1.SensorCam")
+        sensorSelect = sensorCamGet
+    else:
+        sensorSelect = 1
+
+    if cmds.namespace(exists='dk_Ldv') == True:
+        focalCamGet = cmds.getAttr("dk_Ldv:camera1.FocalCam")
+        focalSelect = focalCamGet
+    else:
+        focalSelect = 5
+
+    if cmds.namespace(exists='dk_Ldv') == True:
+        fStopCamGet = cmds.getAttr("dk_Ldv:camera1.FstopCam")
+        fStopSelect = fStopCamGet
+    else:
+        fStopSelect = 2
 
     if cmds.namespace(exists='dk_Ldv') == True:
         checkBoxState = cmds.getAttr("dk_Ldv:shadowCatcher.shadowChckVis")
@@ -1188,12 +1268,9 @@ def buildUI():
     cmds.menuItem(label='135mm', parent = 'focal')
     cmds.menuItem(label='200mm', parent = 'focal')
     cmds.menuItem(label='270mm', parent = 'focal')
-    cmds.menuItem(label='400mm', parent = 'focal')
-    cmds.menuItem(label='600mm', parent = 'focal')
-    cmds.optionMenu('focal', edit = True, select = 5)
+    cmds.optionMenu('focal', edit = True, select = focalSelect)
 
     cmds.optionMenu('fstop', label=' f/', width=tmpRowWidth[1], annotation = "Choose lens aperture", changeCommand = fstop)
-    cmds.menuItem(label='1.2', parent = 'fstop')
     cmds.menuItem(label='1.4', parent = 'fstop')
     cmds.menuItem(label='2', parent = 'fstop')
     cmds.menuItem(label='2.8', parent = 'fstop')
@@ -1202,13 +1279,13 @@ def buildUI():
     cmds.menuItem(label='8', parent = 'fstop')
     cmds.menuItem(label='11', parent = 'fstop')
     cmds.menuItem(label='16', parent = 'fstop')
-    cmds.optionMenu('fstop', edit = True, select = 3)
+    cmds.optionMenu('fstop', edit = True, select = fStopSelect)
 
     cmds.optionMenu('sensor', label=' Sensor', width=tmpRowWidth[2], annotation = "Choose sensor size", changeCommand = sensor)
     cmds.menuItem(label='Full Frame', parent = 'sensor')
     cmds.menuItem(label='APS-C', parent = 'sensor')
     cmds.menuItem(label='Micro 4/3', parent = 'sensor')
-    cmds.optionMenu('sensor', edit = True, select = 1)
+    cmds.optionMenu('sensor', edit = True, select = sensorSelect)
    
     cmds.setParent(mainCL)
 
