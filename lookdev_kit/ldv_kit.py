@@ -1096,6 +1096,38 @@ def bucket_size64(*args):
 def bucket_size128(*args):
     cmds.setAttr("defaultArnoldRenderOptions.bucketSize", 128)
 
+def color_mcc1(*args):
+    sel = cmds.ls(sl=True)
+    shapeSel = cmds.listRelatives(sel, s=True)
+    for each in shapeSel:
+        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
+            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
+
+        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
+            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
+
+        cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
+        cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
+        cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
+        cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
+        cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 0, typ='double3')
+        cmds.setAttr(each + '.mtoa_constant_color', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
+        cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
+
+def texture_mc(*args):
+    sel = cmds.ls(sl=True)
+    shapeSel = cmds.listRelatives(sel, s=True)
+    for each in shapeSel:
+        if cmds.attributeQuery('mtoa_constant_texture' ,node=each, exists=True) == True:
+            cmds.deleteAttr( each, attribute='mtoa_constant_texture' )
+
+        cmds.addAttr(each, ln="mtoa_constant_texture",dt="string")
+        cmds.setAttr(each + '.mtoa_constant_texture', k=True)
+
+
+
 def checker(*args):
     if cmds.namespace(exists='dk_chck:') == True:
         cmds.warning('Checker shader is already loaded')
@@ -1202,7 +1234,7 @@ def buildUI():
 
     winID = 'LdvUI'
     winWidth = 350
-    winHeight = 669
+    winHeight = 725
     rowHeight = 30
     ldvTitle = "Lookdev Kit 2.0"
 
@@ -1358,6 +1390,15 @@ def buildUI():
     cmds.setParent(mainCL)
 
     #UTILITIES
+
+    cmds.text(label='--- MtoA Constants ---', width=winWidth, height=rowHeight)
+
+    #primvars (constant color1)
+    cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
+    cmds.button(label='Color', width=winWidth*0.25, annotation="Adds Mtoa Constant Color", command=color_mcc1)
+    cmds.button(label='Texture', width=winWidth*0.25, annotation="Adds Mtoa Constant Texture", command=texture_mc)
+
+    cmds.setParent(mainCL)
 
     cmds.text(label='--- Utilities ---', width=winWidth, height=rowHeight)
 
