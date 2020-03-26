@@ -12,6 +12,7 @@ import mtoa.core as core
 import os
 import subprocess
 import sys
+import math
 
 LOOKDEV_KIT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "mini").replace("\\", "/")
@@ -209,17 +210,17 @@ def createLDV(*args):
     cmds.setAttr(crvGrp + ".rotateX", keyable=False, lock = True)
     cmds.setAttr(crvGrp + ".rotateY", keyable=False, lock = True)
     cmds.setAttr(crvGrp + ".rotateZ", keyable=False, lock = True)
-    # cmds.setAttr(crvGrp + ".scaleX", keyable=False)
-    # cmds.setAttr(crvGrp + ".scaleY", keyable=False)
-    # cmds.setAttr(crvGrp + ".scaleZ", keyable=False)
-    focal()
-    fstop()
-    
+    cmds.setAttr(crvGrp + ".scaleX", keyable=False)
+    cmds.setAttr(crvGrp + ".scaleY", keyable=False)
+    cmds.setAttr(crvGrp + ".scaleZ", keyable=False)
     
     #create global ctrl
     ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[(-500, 0, 500), (-500, 0, -500), (500, 0, -500), (500, 0, 500), (-500, 0, 500)] )
     cmds.parent(ldvCtrl, LDVgroup)
     cmds.scaleConstraint(ldvCtrl, LDVctrlgroup, maintainOffset=True, weight=1)
+
+    focal()
+    fstop()
 
     #remove and lock attributes
     cmds.setAttr(sky_name + ".translateX", keyable=False)
@@ -800,7 +801,7 @@ def sensor (*args):
             cmds.setAttr("dk_Ldv:fcsCrv.scaleY", 1)
             cmds.setAttr("dk_Ldv:fcsCrv.scaleZ", 1)
         cmds.namespace(set=':dk_Ldv')
-        cmds.expression("dk_Ldv:fcsCrv",alwaysEvaluate = True, string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $lens = {};float $lensOne = 50;float $crop = {};float $measureFactor = $measuredDistance / $distanceForOne;float $scale = ($measureFactor / $crop) / ($lens / $lensOne);dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;".format(focalLng, crop))
+        cmds.expression("dk_Ldv:fcsCrv",alwaysEvaluate = True, string = "float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $lens = {};float $lensOne = 50;float $crop = {};float $ctrlScale = dk_Ldv:ldvGlobal_ctrl.scaleX;float $measureFactor = $measuredDistance / $distanceForOne;float $scale = (($measureFactor / $crop) / ($lens / $lensOne)) / $ctrlScale;dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;".format(focalLng, crop))
         cmds.namespace(set=':')
         cmds.pause( seconds=0.6 )
         cmds.setAttr("dk_Ldv:fcsCrv.translateZ", planeZ1)
@@ -877,15 +878,19 @@ def refHDR(*args):
             extJpg = base + ".jpg"
             miniPath = os.path.join(MINI_HDR_FOLDER, extJpg).replace("\\", "/")
             numhdr = len(hdrList)
-            maxNumBake = 100/int(numhdr)
+            maxNumBake = 100/float(numhdr)
 
             oiio_convert = subprocess.Popen([oiio, hdrPath, "--resize", "300x150", "--cpow", "0.454,0.454,0.454,1.0", "-o", miniPath], shell=True)
             oiio_convert.wait()          
             
-            prog += maxNumBake
+            prog += float(maxNumBake)
             cmds.progressWindow(edit=True, progress=prog, status='Baking HDR preview images, please wait. ' )
-            #cmds.pause( seconds=1 )
-            if cmds.progressWindow(query=True, progress=True) == 100:
+            cmds.pause( seconds=0.5 )
+
+            progCeil1 = cmds.progressWindow(query=True, progress=True)
+
+            if math.ceil(progCeil1) >= 98:
+                cmds.pause( seconds=0.5 )
                 prog = 0
                 cmds.progressWindow(endProgress=1)
                 break
@@ -903,15 +908,18 @@ def refHDR(*args):
             outfile = base + ".tx"
             out = os.path.join(HDR_FOLDER, outfile).replace("\\", "/")
             baketx = subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdrPath, "-o", out], shell=True)
-            prog += maxNumBake
+            
+            prog += float(maxNumBake)
+            
             cmds.progressWindow(edit=True, progress=prog, status='Converting textures to TX, please wait. ' )
             baketx.wait()
-            if cmds.progressWindow(query=True, progress=True) == 100:
-                cmds.pause( seconds=5 )
+            progCeil2 = cmds.progressWindow(query=True, progress=True)
+            if math.ceil(progCeil2) >= 98:
+                cmds.pause( seconds=0.5 )
                 prog = 0
                 cmds.progressWindow(endProgress=1)
                 break
-        cmds.pause( seconds=1 )
+        cmds.pause( seconds=0.5 )
         buildUI()
     else:
         cmds.warning("Operation Canceled")
