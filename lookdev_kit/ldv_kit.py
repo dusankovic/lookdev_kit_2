@@ -841,7 +841,7 @@ def refHDR(*args):
     oiio = os.path.join(OIIO_FOLDER, "oiiotool.exe").replace("\\", "/")
     prog = 0
     
-    dialog = cmds.confirmDialog(title = "Lookdev Kit 2.0 - Rebuild", message = "This will delete all files in miniHDRs folder and refresh HDR files. Please wait.", button=["Yes", "No"], cancelButton="No", dismissString = "No")
+    dialog = cmds.confirmDialog(title = "Lookdev Kit 2.0 - Rebuild", message = "This will update all HDR preview images and .tx files. Please wait.", button=["Yes", "No"], cancelButton="No", dismissString = "No")
     if len(miniList) == 0 and len(hdrList) == 0:
         cmds.warning("HDR folder is empty")
         return
@@ -860,16 +860,13 @@ def refHDR(*args):
         if cmds.namespace(exists='dk_bake') == True:
             cmds.namespace(removeNamespace='dk_bake', deleteNamespaceContent=True)
 
-        cmds.namespace(add='dk_bake')
-        cmds.namespace(set=':dk_bake')
-
         #delete mini hdrs
         for each in miniList:
-                delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
-                cmds.sysFile(delPath, delete=True)
+            delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
+            cmds.sysFile(delPath, delete=True)
         for each in hdrtx:
-                deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
-                cmds.sysFile(deltx, delete=True)
+            deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
+            cmds.sysFile(deltx, delete=True)
         cmds.progressWindow(title='LookdevKit 2.0', progress=prog, status='Baking HDR preview images, please wait.' )
 
         for each in hdrList:
@@ -894,9 +891,6 @@ def refHDR(*args):
                 prog = 0
                 cmds.progressWindow(endProgress=1)
                 break
-
-        cmds.namespace(removeNamespace=':dk_bake',deleteNamespaceContent=True)
-        cmds.namespace(set=':')
         
         cmds.progressWindow(title='LookdevKit 2.0', progress=prog, status='Converting textures to TX, please wait.' )
         for each in hdrList:
@@ -929,20 +923,40 @@ def deletePrevTx(*args):
     minijpg = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpg')
     minijpeg = cmds.getFileList( folder=MINI_HDR_FOLDER, filespec='*.jpeg')
     miniList = minijpg + minijpeg
-    cmds.arnoldFlushCache(textures=True)
-    cmds.pause(seconds=2)
-    for each in miniList:
-                delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
-                cmds.sysFile(delPath, delete=True)
-    for each in hdrtx:
+
+    dialog = cmds.confirmDialog(title = "Lookdev Kit 2.0 - Delete", message = "This will delete all HDR preview images and .tx files.", button=["Yes", "No"], cancelButton="No", dismissString = "No")
+    
+    if len(miniList) == 0 and len(hdrList) == 0:
+        cmds.warning("HDR folder is empty")
+        return
+
+    if dialog == "Yes":
+        cmds.arnoldFlushCache(textures=True)
+        cmds.pause( seconds=2 )
+
+        if cmds.namespace(exists='dk_Ldv') == True:
+            cmds.namespace(removeNamespace='dk_Ldv', deleteNamespaceContent=True)
+        if cmds.namespace(exists='mac') == True:
+            cmds.namespace(removeNamespace='mac', deleteNamespaceContent=True)
+        if cmds.namespace(exists='dk_turn') == True:
+            cmds.namespace(removeNamespace='dk_turn', deleteNamespaceContent=True)
+        if cmds.namespace(exists='dk_bake') == True:
+            cmds.namespace(removeNamespace='dk_bake', deleteNamespaceContent=True)
+
+        for each in miniList:
+            delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
+            cmds.sysFile(delPath, delete=True)
+        for each in hdrtx:
             deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             cmds.sysFile(deltx, delete=True)
-    cmds.pause( seconds=1 )
-    buildUI()
+
+        cmds.pause( seconds=0.5 )
+        buildUI()
 
 def hdrFol(*args):
-    dir = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "hdr")
-    os.popen('start explorer "%s" ' % dir)
+    dirHDR = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "hdr")
+    path = os.path.realpath(dirHDR)
+    os.startfile(path)
 
 def objOffset(self, *_):
     if cmds.namespace(exists='dk_turn') == True:
@@ -1125,8 +1139,6 @@ def texture_mc(*args):
 
         cmds.addAttr(each, ln="mtoa_constant_texture",dt="string")
         cmds.setAttr(each + '.mtoa_constant_texture', k=True)
-
-
 
 def checker(*args):
     if cmds.namespace(exists='dk_chck:') == True:
@@ -1412,4 +1424,4 @@ def buildUI():
     # Display the window
     cmds.showWindow(w)
     cmds.window(w, edit=True, widthHeight=(winWidth, winHeight))
-
+    return
