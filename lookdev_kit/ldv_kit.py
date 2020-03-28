@@ -926,8 +926,8 @@ def deletePrevTx(*args):
 
     dialog = cmds.confirmDialog(title = "Lookdev Kit 2.0 - Delete", message = "This will delete all HDR preview images and .tx files.", button=["Yes", "No"], cancelButton="No", dismissString = "No")
     
-    if len(miniList) == 0 and len(hdrList) == 0:
-        cmds.warning("HDR folder is empty")
+    if len(miniList) == 0 and len(hdrtx) == 0:
+        cmds.warning("folder is empty")
         return
 
     if dialog == "Yes":
@@ -981,13 +981,13 @@ def turntableButton(*args):
     macRem = cmds.sets(macSel, split = setInit)
     camRem = cmds.sets(camSel, split = setInit)
 
-    #assetTemp = cmds.listRelatives(setInit)
     assetSel = cmds.sets(setInit, query = True)
+    assetNum = [assetSel]
 
     cmds.delete(setInit, ldvRem, macRem, camRem)
 
-    if len(assetSel) == 0:
-        cmds.confirmDialog(title=ldvTitle, message="Please first select your asset. It would be best that all asset elements are in the single group." ,messageAlign="center",button="Ok",defaultButton="Ok",icon="warning")
+    if assetSel is None:
+        cmds.confirmDialog(title=ldvTitle, message="Please first select your asset." ,messageAlign="center",button="Ok",defaultButton="Ok",icon="warning")
     else:
         if cmds.namespace(exists='dk_turn') == True:
             cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
@@ -1110,35 +1110,46 @@ def bucket_size64(*args):
 def bucket_size128(*args):
     cmds.setAttr("defaultArnoldRenderOptions.bucketSize", 128)
 
-def color_mcc1(*args):
+def mtoa_constant(*args):
     sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    for each in shapeSel:
-        if cmds.attributeQuery('mtoa_constant_color' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color' )
+    shape = cmds.listRelatives(sel, s=True)
+    shapeSel = cmds.ls(shape)
+    attName = cmds.textField("constField", query=True, text=True)
+    attType = cmds.optionMenu("constData", value=True, query=True)
 
-        if cmds.attributeQuery('mtoa_constant_color2' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_color2' )
+    if len(shapeSel) == 0:
+        cmds.warning("Please select object")
+        return
 
-        cmds.addAttr(each, ln='mtoa_constant_color', at='double3')
-        cmds.addAttr(each, ln='mtoa_constant_colorX', at='double', p='mtoa_constant_color')
-        cmds.addAttr(each, ln='mtoa_constant_colorY', at='double', p='mtoa_constant_color')
-        cmds.addAttr(each, ln='mtoa_constant_colorZ', at='double', p='mtoa_constant_color')
-        cmds.setAttr(each + '.mtoa_constant_color', 0, 0, 0, typ='double3')
-        cmds.setAttr(each + '.mtoa_constant_color', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorX', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorY', k=True)
-        cmds.setAttr(each + '.mtoa_constant_colorZ', k=True)
+    if len(attName) == 0:
+        cmds.warning("Please type the attribute name in the text field")
+        return
 
-def texture_mc(*args):
-    sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    for each in shapeSel:
-        if cmds.attributeQuery('mtoa_constant_texture' ,node=each, exists=True) == True:
-            cmds.deleteAttr( each, attribute='mtoa_constant_texture' )
+    for each in shape:
+        if cmds.attributeQuery(('mtoa_constant_{}').format(attName),node=each, exists=True) == True:
+            cmds.deleteAttr(each, attribute=('mtoa_constant_{}').format(attName))
+        if attType == "vector":
+            cmds.addAttr(each, ln=("mtoa_constant_{}").format(attName), at="double3")
+            cmds.addAttr(each, ln=("mtoa_constant_{}" + "X").format(attName), at="double", p=("mtoa_constant_{}").format(attName))
+            cmds.addAttr(each, ln=("mtoa_constant_{}" + "Y").format(attName), at="double", p=("mtoa_constant_{}").format(attName))
+            cmds.addAttr(each, ln=("mtoa_constant_{}" + "Z").format(attName), at="double", p=("mtoa_constant_{}").format(attName))
+            cmds.setAttr(each + (".mtoa_constant_{}").format(attName), 0, 0, 0, typ='double3')
+            cmds.setAttr(each + (".mtoa_constant_{}").format(attName), k=True)
+            cmds.setAttr(each + (".mtoa_constant_{}" + "X").format(attName), k=True)
+            cmds.setAttr(each + (".mtoa_constant_{}" + "Y").format(attName), k=True)
+            cmds.setAttr(each + (".mtoa_constant_{}" + "Z").format(attName), k=True)
 
-        cmds.addAttr(each, ln="mtoa_constant_texture",dt="string")
-        cmds.setAttr(each + '.mtoa_constant_texture', k=True)
+        if attType == "float":
+            if cmds.attributeQuery(('mtoa_constant_{}').format(attName),node=each, exists=True) == True:
+                cmds.deleteAttr(each, attribute=('mtoa_constant_{}').format(attName))
+            cmds.addAttr(each, ln=("mtoa_constant_{}").format(attName), dv=0, at="double")
+            cmds.setAttr(each + (".mtoa_constant_{}").format(attName), k=True)
+
+        if attType == "string":
+            if cmds.attributeQuery(('mtoa_constant_{}').format(attName),node=each, exists=True) == True:
+                cmds.deleteAttr(each, attribute=('mtoa_constant_{}').format(attName))
+            cmds.addAttr(each, ln=("mtoa_constant_{}").format(attName), dt="string")
+            cmds.setAttr(each + (".mtoa_constant_{}").format(attName), k=True)
 
 def checker(*args):
     if cmds.namespace(exists='dk_chck:') == True:
@@ -1405,11 +1416,14 @@ def buildUI():
 
     cmds.text(label='--- MtoA Constants ---', width=winWidth, height=rowHeight)
 
-    #primvars (constant color1)
-    cmds.rowLayout(numberOfColumns=4, columnWidth=[4, winWidth*0.25])
-    cmds.button(label='Color', width=winWidth*0.25, annotation="Adds Mtoa Constant Color", command=color_mcc1)
-    cmds.button(label='Texture', width=winWidth*0.25, annotation="Adds Mtoa Constant Texture", command=texture_mc)
-
+    tmpRowWidth = [winWidth*0.34, winWidth*0.33, winWidth*0.33]
+    cmds.rowLayout(numberOfColumns=3)
+    cmds.textField("constField", annotation = "Type in a name of the attribute", text = "", width=tmpRowWidth[0] )
+    cmds.optionMenu("constData", width=tmpRowWidth[1])
+    cmds.menuItem(label="vector")
+    cmds.menuItem(label="float")
+    cmds.menuItem(label="string")
+    cmds.button(label="Create", width=tmpRowWidth[2], annotation="Creates MtoA Constant Attribute on the selected objects with name from the text field and data dype from drop down menu", command=mtoa_constant)
     cmds.setParent(mainCL)
 
     cmds.text(label='--- Utilities ---', width=winWidth, height=rowHeight)
