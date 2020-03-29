@@ -927,7 +927,7 @@ def deletePrevTx(*args):
     dialog = cmds.confirmDialog(title = "Lookdev Kit 2.0 - Delete", message = "This will delete all HDR preview images and .tx files.", button=["Yes", "No"], cancelButton="No", dismissString = "No")
     
     if len(miniList) == 0 and len(hdrtx) == 0:
-        cmds.warning("folder is empty")
+        cmds.warning("No preview images or .tx files. Refresh HDRs")
         return
 
     if dialog == "Yes":
@@ -1112,7 +1112,7 @@ def bucket_size128(*args):
 
 def mtoa_constant(*args):
     sel = cmds.ls(sl=True)
-    shape = cmds.listRelatives(sel, s=True)
+    shape = cmds.listRelatives(sel, s=True, fullPath = True)
     shapeSel = cmds.ls(shape)
     attName = cmds.textField("constField", query=True, text=True)
     attType = cmds.optionMenu("constData", value=True, query=True)
@@ -1313,7 +1313,7 @@ def buildUI():
 
     #Skydome camera visibility
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
-    cmds.floatSliderGrp('sky_vis', label='Camera Vis.', min=0, max=1, value=skyVis, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
+    cmds.floatSliderGrp('sky_vis', label='Sky Vis.', min=0, max=1, value=skyVis, step=0.001, field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
     cmds.setParent(mainCL)
 
     tmpRowWidth = [winWidth*0.4, winWidth*0.18, winWidth*0.4]
