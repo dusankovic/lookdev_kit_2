@@ -60,6 +60,9 @@ If some stuff doesn't look exactly like in video, I probably changed some things
 
 Also, you can check out my web page for future updates and blog posts about Lookdev Kit.
 
+HDR images taken from hdrihaven.com
+
+
 Created by Dusan Kovic - dusankovic.com
 
 Thanks to Aleksandar Kocic (aleksandarkocic.com) for some tips to make this more usable. Also thanks to all my friends who "beta tested" Lookdev kit.
