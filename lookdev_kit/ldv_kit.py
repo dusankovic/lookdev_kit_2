@@ -936,11 +936,14 @@ def refHDR(*args):
         # delete mini hdrs
         for each in miniList:
             delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
+            delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
+            delPathDesel = os.path.join(MINI_HDR_FOLDER, "mini_desel", each).replace("\\", "/")
             cmds.sysFile(delPath, delete=True)
+            cmds.sysFile(delPathDesel, delete=True)
         for each in hdrtx:
             deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             cmds.sysFile(deltx, delete=True)
-        cmds.progressWindow(title='LookdevKit 2.0', progress=prog,
+        cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,
                             status='Baking HDR preview images, please wait.')
 
         for each in hdrList:
@@ -973,7 +976,7 @@ def refHDR(*args):
                 cmds.progressWindow(endProgress=1)
                 break
 
-        cmds.progressWindow(title='LookdevKit 2.0', progress=prog,
+        cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,
                             status='Converting textures to TX, please wait.')
         for each in hdrList:
             hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
@@ -1031,7 +1034,9 @@ def deletePrevTx(*args):
 
         for each in miniList:
             delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
+            delPathDesel = os.path.join(MINI_HDR_FOLDER, "mini_desel", each).replace("\\", "/")
             cmds.sysFile(delPath, delete=True)
+            cmds.sysFile(delPathDesel, delete=True)
         for each in hdrtx:
             deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             cmds.sysFile(deltx, delete=True)
