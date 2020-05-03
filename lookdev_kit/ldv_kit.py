@@ -1257,12 +1257,12 @@ def setTurntable(objects):
     addFr = FrRange - numFr
     subFr = numFr - FrRange
     if numFr < FrRange:
-        cmds.playbackOptions(maxTime=timeMax + addFr + timeAdd)
-        cmds.playbackOptions(animationEndTime=timeMax + addFr + timeAdd)
+        cmds.playbackOptions(maxTime=timeMax + addFr + timeAdd - 1)
+        cmds.playbackOptions(animationEndTime=timeMax + addFr + timeAdd - 1)
 
     if numFr > FrRange:
-        cmds.playbackOptions(maxTime=timeMax - subFr + timeAdd)
-        cmds.playbackOptions(animationEndTime=timeMax - subFr + timeAdd)
+        cmds.playbackOptions(maxTime=timeMax - subFr + timeAdd - 1)
+        cmds.playbackOptions(animationEndTime=timeMax - subFr + timeAdd - 1)
 
     cmds.playbackOptions(minTime=timeMin + timeAdd)
     cmds.currentTime(timeMin + timeAdd)
@@ -1579,11 +1579,20 @@ def txt_write(assets):
         the_file.write(("KICK_PATH = \'{}\'\n").format(mtoa_kick))
         the_file.write(("ASS_PATH= \'{}\'\n").format(ass_path))
         the_file.write(("PY_PATH= \'{}\'\n").format(py_path))
+        the_file.write(("LDV_VER= \'{}\'\n").format(LDV_VER))
         the_file.write(("RDR_PATH= \'{}\'\n\n").format(out_path))
 
         the_file.write(("rdr_names = {}\n\n").format(rdr_assets))
 
+        the_file.write("cur_frame = 0\n")
+
         the_file.write("for each in rdr_names:\n")
+
+        the_file.write("    num_fr = len(rdr_names)\n")
+        the_file.write("    percent = cur_frame*100/num_fr\n")
+
+        the_file.write(
+            "    os.system(('title Lookdev Kit {} Rendering - Progress: {}/{} - {}%').format(LDV_VER, cur_frame+1,num_fr, percent))\n")
         the_file.write("    ass_path = os.path.join(ASS_PATH, each).replace('\\\\', '/')\n")
         the_file.write(
             "    outPath = os.path.join(RDR_PATH, each[:-4] + '.exr').replace('\\\\', '/')\n\n")
@@ -1591,6 +1600,8 @@ def txt_write(assets):
         the_file.write(
             ("    kick_run = subprocess.Popen([\'{}\', '-i', ass_path, '-dp', '-dw', '-v', '2', '-o', outPath], shell=False, cwd = \'{}\')\n").format(mtoa_kick, mtoa_bin))
         the_file.write("    kick_run.wait()\n\n")
+
+        the_file.write("    cur_frame = cur_frame+1\n")
 
         the_file.write("    try:\n")
         the_file.write("        os.remove(ass_path)\n")
@@ -2011,6 +2022,4 @@ def buildUI():
     cmds.setParent(mainCL)
 
     # Display the window
-    cmds.showWindow(w)
-
     cmds.showWindow(w)
