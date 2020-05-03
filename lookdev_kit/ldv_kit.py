@@ -25,6 +25,10 @@ LDV_VER = "2.1"
 
 
 def LDVbutton(*args):
+    hdrs = hdr_list()[0]
+    if len(hdrs) == 0:
+        cmds.warning("Please run Refresh HDRs command")
+        return
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.warning("Lookdev kit is already loaded")
         return
@@ -41,8 +45,23 @@ def LDVbutton(*args):
 
 
 def createLDV(*args):
+    try:
+        scale_factor = bounding()[0]
+    except:
+        scale_factor = 1
+    try:
+        asset_center = bounding()[1]
+    except:
+        pass
+
+    try:
+        asset = bounding()[2]
+    except:
+        pass
+
     cmds.namespace(add='dk_Ldv')
     cmds.namespace(set=':dk_Ldv')
+
     LDVgroup = cmds.group(name='lookdevkit_grp', empty=True)
     LDVctrlgroup = cmds.group(name='lookdev_ctrl_grp', empty=True)
     cmds.parent(LDVctrlgroup, LDVgroup)
@@ -61,6 +80,9 @@ def createLDV(*args):
     cmds.addAttr(skydome_shape[0], longName="start", dataType="string")
     start_val = cmds.optionMenu("chck_1001", query=True, select=True)
     cmds.setAttr(skydome_shape[0] + ".start", start_val, type="string")
+
+    cmds.addAttr(skydome_shape[0], longName="ldv_ver", dataType="string")
+    cmds.setAttr(skydome_shape[0] + ".ldv_ver", LDV_VER, type="string")
 
     # read rotation offset slider
     rotOff = cmds.floatSliderGrp("rotOff", query=True, value=True)
@@ -101,8 +123,8 @@ def createLDV(*args):
     cmds.setAttr(imageNode + '.colorSpace', 'Raw', type='string')
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
 
-    shCatchMain = cmds.polyPlane(n='shadowCatcher', w=900, h=900, sx=10,
-                                 sy=10, cuv=2, ax=[0, 1, 0], ch=False)
+    shCatchMain = cmds.polyPlane(n='shadowCatcher', w=1500, h=1500, sx=1,
+                                 sy=1, cuv=2, ax=[0, 1, 0], ch=False)
     shCatch = shCatchMain[0]
     cmds.addAttr(shCatchMain, longName="shadowChckVis", attributeType="bool")
     shadowStr = cmds.shadingNode('aiShadowMatte', asShader=True)
@@ -216,6 +238,10 @@ def createLDV(*args):
     cmds.parent(crvGrp, cam[0])
     cmds.parent(cam[0], "dk_Ldv:lookdev_ctrl_grp")
 
+    cmds.setAttr(cam[0] + ".translateY", 200)
+    cmds.setAttr(cam[0] + ".translateZ", 565)
+    cmds.setAttr(cam[0] + ".rotateX", -11)
+
     # camera DoF checkbox read
     camBox = cmds.checkBox("camDoF", query=True, value=True)
     cmds.setAttr(cam[0] + ".DoF", camBox)
@@ -236,9 +262,14 @@ def createLDV(*args):
 
     # create global ctrl
     ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[
-                         (-500, 0, 500), (-500, 0, -500), (500, 0, -500), (500, 0, 500), (-500, 0, 500)])
+                         (-850, 0, 850), (-850, 0, -850), (850, 0, -850), (850, 0, 850), (-850, 0, 850)])
+
     cmds.parent(ldvCtrl, LDVgroup)
     cmds.scaleConstraint(ldvCtrl, LDVctrlgroup, maintainOffset=True, weight=1)
+
+    cmds.setAttr(ldvCtrl + ".scaleX", scale_factor)
+    cmds.setAttr(ldvCtrl + ".scaleY", scale_factor)
+    cmds.setAttr(ldvCtrl + ".scaleZ", scale_factor)
 
     focal()
     fstop()
@@ -259,7 +290,20 @@ def createLDV(*args):
         cmds.setAttr(each + ".rotateY", keyable=False, lock=True)
         cmds.setAttr(each + ".rotateZ", keyable=False, lock=True)
 
+    try:
+        cmds.viewLookAt(cam[1], pos=asset_center)
+    except:
+        pass
+
     cmds.namespace(set=':')
+
+    try:
+
+        cmds.select(asset)
+        turntableButton()
+    except:
+        pass
+
     cmds.select(clear=True)
 
 
@@ -268,17 +312,21 @@ def removeLDV(*args):
     if cmds.namespace(exists='dk_Ldv') == False:
         cmds.warning("Nothing to remove")
         return
-    if cmds.namespace(exists='dk_Ldv') == True:
-        cmds.namespace(removeNamespace='dk_Ldv', deleteNamespaceContent=True)
     if cmds.namespace(exists='mac') == True:
         cmds.namespace(removeNamespace='mac', deleteNamespaceContent=True)
     if cmds.namespace(exists='dk_turn') == True:
         cmds.namespace(removeNamespace='dk_turn', deleteNamespaceContent=True)
     if cmds.namespace(exists='dk_bake') == True:
         cmds.namespace(removeNamespace='dk_bake', deleteNamespaceContent=True)
+    if cmds.namespace(exists='dk_Ldv') == True:
+        cmds.namespace(removeNamespace='dk_Ldv', deleteNamespaceContent=True)
 
 
 def Macbutton(*args):
+    hdrs = hdr_list()[0]
+    if len(hdrs) == 0:
+        cmds.warning("Please run Refresh HDRs command")
+        return
     if cmds.namespace(exists=':mac') == True:
         cmds.warning("Macbeth chart and spheres are already loaded")
         return
@@ -1062,8 +1110,7 @@ def objOffset(self, *_):
         cmds.undoInfo(swf=True)
 
 
-def turntableButton(*args):
-    title = ("Lookdev Kit {}").format(LDV_VER)
+def selected_asset(*args):
     initSel = cmds.ls(selection=True, transforms=True, long=True)
     ldvSel = cmds.ls("dk_Ldv:*", selection=True, transforms=True, long=True)
     macSel = cmds.ls("mac:*", selection=True, transforms=True, long=True)
@@ -1075,24 +1122,103 @@ def turntableButton(*args):
     macRem = cmds.sets(macSel, split=setInit)
     camRem = cmds.sets(camSel, split=setInit)
 
-    assetSel = cmds.sets(setInit, query=True)
-    assetNum = [assetSel]
+    asset_sel = cmds.sets(setInit, query=True)
 
     cmds.delete(setInit, ldvRem, macRem, camRem)
 
-    if assetSel is None:
-        cmds.confirmDialog(title=title, message="Please first select your asset.",
+    return asset_sel
+
+
+def bounding(*args):
+    asset_sel = selected_asset()
+    asset_shape = cmds.listRelatives(asset_sel, allDescendents=True, shapes=True)
+
+    def_box = cmds.polyCube(width=250, height=190, depth=250, createUVs=4,
+                            axis=[0, 1, 0], ch=False, name="dkdefaultBox")
+    cmds.setAttr("dkdefaultBox.translateY", 95)
+
+    def_box_bbox = cmds.exactWorldBoundingBox(def_box)
+    def_box_xmin = abs(def_box_bbox[0])
+    def_box_ymin = abs(def_box_bbox[1])
+    def_box_zmin = abs(def_box_bbox[2])
+    def_box_xmax = abs(def_box_bbox[3])
+    def_box_ymax = abs(def_box_bbox[4])
+    def_box_zmax = abs(def_box_bbox[5])
+
+    cmds.delete("dkdefaultBox")
+
+    asset_box1 = cmds.geomToBBox(asset_sel, combineMesh=True, keepOriginal=True)
+    asset_box = cmds.geomToBBox(asset_box1, combineMesh=True, keepOriginal=True)
+
+    asset_box_bbox = cmds.exactWorldBoundingBox(asset_box)
+
+    asset_center = cmds.objectCenter(asset_box)
+
+    xmin = abs(asset_box_bbox[0])
+    ymin = abs(asset_box_bbox[1])
+    zmin = abs(asset_box_bbox[2])
+    xmax = abs(asset_box_bbox[3])
+    ymax = abs(asset_box_bbox[4])
+    zmax = abs(asset_box_bbox[5])
+
+    cmds.delete(asset_box)
+    cmds.delete(asset_box1)
+
+    try:
+        xmin_factor = float(xmin) / float(def_box_xmin)
+    except:
+        xmin_factor = 0
+    try:
+        ymin_factor = float(ymin) / float(def_box_ymin)
+    except:
+        ymin_factor = 0
+    try:
+        zmin_factor = float(zmin) / float(def_box_zmin)
+    except:
+        zmin_factor = 0
+    try:
+        xmax_factor = float(xmax) / float(def_box_xmax)
+    except:
+        xmax_factor = 0
+    try:
+        ymax_factor = float(ymax) / float(def_box_ymax)
+    except:
+        ymax_factor = 0
+    try:
+        zmax_factor = float(zmax) / float(def_box_zmax)
+    except:
+        zmax_factor = 0
+
+    factor = [xmin_factor, ymin_factor, zmin_factor, xmax_factor, ymax_factor, zmax_factor]
+
+    scale_factor = max(factor)
+
+    cmds.select(asset_sel)
+
+    return (scale_factor, asset_center, asset_sel)
+
+
+def turntableButton(*args):
+    hdrs = hdr_list()[0]
+    if len(hdrs) == 0:
+        cmds.warning("Please run Refresh HDRs command")
+        return
+
+    asset_sel = selected_asset()
+
+    if asset_sel is None:
+        cmds.confirmDialog(title=("Lookdev Kit {}").format(LDV_VER), message="Please first select your asset.",
                            messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
         return
     else:
         if cmds.namespace(exists='dk_turn') == True:
             cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
         if cmds.namespace(exists='dk_Ldv') == True:
-            setTurntable(assetSel)
+            setTurntable(asset_sel)
             cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
         if cmds.namespace(exists='dk_Ldv') == False:
             createLDV()
-            setTurntable(assetSel)
+            setTurntable(asset_sel)
             cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
 
     # objOffset(args)
@@ -1105,41 +1231,41 @@ def turntableButton(*args):
     cmds.undoInfo(swf=True)
 
     cmds.select(clear=True)
-    cmds.select(assetSel)
+    cmds.select(asset_sel)
 
 
 def removeTurntable(*args):
+    timeAdd = int(cmds.optionMenu("chck_1001", value=True, query=True))-1
     cmds.namespace(set=':')
     if cmds.namespace(exists=':dk_turn') == False:
         cmds.warning('Nothing to remove')
     if cmds.namespace(exists=':dk_turn') == True:
         cmds.namespace(removeNamespace=':dk_turn', deleteNamespaceContent=True)
+    cmds.playbackOptions(minTime=1+timeAdd)
+    cmds.playbackOptions(maxTime=100+timeAdd)
 
 
 def setTurntable(objects):
+    cmds.playbackOptions(minTime=1)
+    cmds.playbackOptions(maxTime=100)
     timeMin = cmds.playbackOptions(minTime=True, query=True)
     timeMax = cmds.playbackOptions(maxTime=True, query=True)
-    FrNum = cmds.optionMenu('autott', select=True, query=True)
-    if FrNum == 1:
-        FrRange = 25
-    if FrNum == 2:
-        FrRange = 50
-    if FrNum == 3:
-        FrRange = 100
-    if FrNum == 4:
-        FrRange = 200
+    FrRange = int(cmds.optionMenu('autott', value=True, query=True))
+    timeAdd = int(cmds.optionMenu("chck_1001", value=True, query=True))-1
+
     numFr = timeMax - timeMin
     addFr = FrRange - numFr
     subFr = numFr - FrRange
     if numFr < FrRange:
-        cmds.playbackOptions(maxTime=timeMax + addFr)
-        cmds.playbackOptions(animationEndTime=timeMax + addFr)
+        cmds.playbackOptions(maxTime=timeMax + addFr + timeAdd)
+        cmds.playbackOptions(animationEndTime=timeMax + addFr + timeAdd)
 
     if numFr > FrRange:
-        cmds.playbackOptions(maxTime=timeMax - subFr)
-        cmds.playbackOptions(animationEndTime=timeMax - subFr)
+        cmds.playbackOptions(maxTime=timeMax - subFr + timeAdd)
+        cmds.playbackOptions(animationEndTime=timeMax - subFr + timeAdd)
 
-    cmds.currentTime(timeMin)
+    cmds.playbackOptions(minTime=timeMin + timeAdd)
+    cmds.currentTime(timeMin + timeAdd)
 
     # create locators
     cmds.namespace(add='dk_turn')
@@ -1158,8 +1284,8 @@ def setTurntable(objects):
     cmds.setAttr(skyLoc[0] + ".visibility", 0)
     # animate locators
     objRotMin = cmds.playbackOptions(minTime=True, query=True)
-    objRotMax = timeMin + FrRange / 2
-    skyRotMin = timeMin + FrRange / 2
+    objRotMax = timeMin + timeAdd + FrRange / 2
+    skyRotMin = timeMin + timeAdd + FrRange / 2
     skyRotMax = cmds.playbackOptions(maxTime=True, query=True)
     cmds.setKeyframe(objLoc[0], attribute='rotateY', inTangentType="linear",
                      outTangentType="linear", time=objRotMin, value=0)
@@ -1349,12 +1475,28 @@ def batch(*args):
     ass_path = os.path.join(out_path, "ass_temp").replace("\\", "/")
     py_path = os.path.join(out_path, "py_temp").replace("\\", "/")
     scene_query = cmds.file(query=True, sceneName=True, shortName=True)
-    scene_name, ext = os.path.splitext(scene_query)
+    scene_n, ext = os.path.splitext(scene_query)
+    batch_mode = cmds.optionMenu("batch_mode", query=True, value=True)
 
-    timeMin = cmds.playbackOptions(minTime=True, query=True)
-    timeMax = cmds.playbackOptions(maxTime=True, query=True)
+    if len(scene_n) == 0:
+        scene_name = "lookdev_test"
+    if len(scene_n) != 0:
+        scene_name = scene_n
 
-    path = [ass_path, py_path, out_rdr]
+    if batch_mode == "Single Frame":
+        timeMin = 1
+        timeMax = 1
+
+    if batch_mode == "Turntable":
+        if cmds.namespace(exists='dk_turn') == False:
+            cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, run a Setup Turntable command.",
+                               messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
+            return
+        else:
+            timeMin = cmds.playbackOptions(minTime=True, query=True)
+            timeMax = cmds.playbackOptions(maxTime=True, query=True)
+
+    path = [ass_path, py_path]
 
     maya_path = os.path.join(os.environ["MAYA_LOCATION"], "bin")
     mayapy_path = os.path.join(maya_path, "mayapy.exe").replace("\\", "/")
@@ -1375,24 +1517,21 @@ def batch(*args):
 
     batch_hdr = []
 
-    for each in hdrs:
-        value = cmds.symbolCheckBox("chck_" + each[:-4], query=True, value=True)
+    for idx, each in enumerate(hdrs):
+        value = cmds.symbolCheckBox("chck_" + str(idx).zfill(2), query=True, value=True)
         if value is True:
             batch_hdr.append(each[:-4])
 
     if len(batch_hdr) == 0:
-        cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, first select at least one Asset and one HDR.",
+        cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, first select at least one HDR.",
                            messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
         return
-
     else:
-
         for each in batch_hdr:
-
             hdr_name = each
             hdr_ext = each + ".tx"
             hdr_path = os.path.join(HDR_FOLDER, hdr_ext).replace("\\", "/")
-            cmds.setAttr("dk_Ldv:hdrTextures" + ".filename", hdr_path, type="string")
+            cmds.setAttr("dk_Ldv:hdrTextures" + ".fileTextureName", hdr_path, type="string")
 
             ass_exp = os.path.join(ass_path, scene_name + "_" +
                                    hdr_name + ".ass").replace("\\", "/")
@@ -1434,12 +1573,13 @@ def txt_write(assets):
         the_file.write("maya.standalone.initialize(name='python')\n")
         the_file.write("import os\n")
         the_file.write("import subprocess\n")
+        the_file.write("import shutil\n")
         the_file.write("import maya.cmds as cmds\n\n")
 
         the_file.write(("KICK_PATH = \'{}\'\n").format(mtoa_kick))
         the_file.write(("ASS_PATH= \'{}\'\n").format(ass_path))
         the_file.write(("PY_PATH= \'{}\'\n").format(py_path))
-        the_file.write(("RDR_PATH= \'{}\'\n\n").format(out_rdr))
+        the_file.write(("RDR_PATH= \'{}\'\n\n").format(out_path))
 
         the_file.write(("rdr_names = {}\n\n").format(rdr_assets))
 
@@ -1458,93 +1598,116 @@ def txt_write(assets):
         the_file.write("        pass\n")
 
         the_file.write("try:\n")
-        the_file.write("    os.removedirs(PY_PATH)\n")
-        the_file.write("    os.removedirs(ASS_PATH)\n")
+        the_file.write("    shutil.rmtree(PY_PATH)\n")
+        the_file.write("    shutil.rmtree(ASS_PATH)\n")
         the_file.write("except:\n")
         the_file.write("    pass\n")
+        the_file.write("path = os.path.realpath(RDR_PATH)\n")
+        the_file.write("os.startfile(path)\n")
 
         the_file.write("maya.standalone.uninitialize()\n")
 
 
 def batch_choose(*args):
-    # if cmds.namespace(exists="dk_Ldv") is False:
-    #     cmds.confirmDialog(title=("Lookdev kit {} - Batch").format(LDV_VER), message="Before running batch, load LDVkit, set turntable and frame your asset",
-    #                        messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
+    if cmds.namespace(exists='dk_Ldv') == False:
+        cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, load Lookdev Kit.",
+                           messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
+        return
+    else:
 
-    win_id = "batchUI"
-    win_width = 300
-    win_height = 600
-    row_height = 30
-    win_title = ("Lookdev kit {} - Batch").format(LDV_VER)
+        win_id = "batchUI"
+        win_width = 300
+        win_height = 600
+        row_height = 30
+        win_title = ("Lookdev kit {} - Batch").format(LDV_VER)
 
-    hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
-    hdrs = hdr_list()[0]
-    miniFile = hdr_list()[1]
+        hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
+        hdrs = hdr_list()[0]
+        miniFile = hdr_list()[1]
 
-    if cmds.window(win_id, exists=True):
-        cmds.deleteUI(win_id)
+        if cmds.window(win_id, exists=True):
+            cmds.deleteUI(win_id)
 
-    if cmds.windowPref(win_id, exists=True):
-        cmds.windowPref(win_id, remove=True)
+        if cmds.windowPref(win_id, exists=True):
+            cmds.windowPref(win_id, remove=True)
 
-    b = cmds.window(win_id, title=win_title, resizeToFitChildren=True)
+        b = cmds.window(win_id, title=win_title, resizeToFitChildren=True)
 
-    main_cl = cmds.rowColumnLayout(numberOfColumns=1, columnWidth=[
-                                   (1, win_width*1.1), (2, win_width*0.75)], columnOffset=[1, "left", 30])
+        main_cl = cmds.rowColumnLayout(numberOfColumns=1, columnWidth=[
+                                       (1, win_width*1.1), (2, win_width*0.75)], columnOffset=[1, "left", 30])
 
-    cmds.text(label="Select HDRs:", height=row_height)
-    cmds.setParent(main_cl)
+        cmds.text(label="Select HDRs:", height=row_height)
+        cmds.setParent(main_cl)
 
-    cmds.scrollLayout("scroll_hdrs", height=win_height*0.9, width=win_width*1)
+        cmds.scrollLayout("scroll_hdrs", height=win_height*0.9, width=win_width*1)
+        index_list = []
+        for idx, each in enumerate(miniFile):
+            index_list.append(idx)
+            mini_path = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
+            mini_desel = os.path.join(MINI_HDR_FOLDER, "mini_desel", each).replace("\\", "/")
 
-    for each in miniFile:
-        mini_path = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
-        mini_desel = os.path.join(MINI_HDR_FOLDER, "mini_desel", each).replace("\\", "/")
-        cmds.symbolCheckBox("chck_" + each[:-4], value=0, onImage=mini_path, offImage=mini_desel,
-                            width=250, height=125, parent="scroll_hdrs")
-    cmds.symbolCheckBox("chck_" + miniFile[hdr_num-1][:-4], edit=True, value=1)
+            cmds.symbolCheckBox("chck_" + str(idx).zfill(2), value=0, onImage=mini_path, offImage=mini_desel,
+                                width=250, height=125, parent="scroll_hdrs")
+        cmds.symbolCheckBox("chck_" + str(index_list[hdr_num-1]).zfill(2), edit=True, value=1)
 
-    d = cmds.scrollLayout("scroll_hdrs", query=True, childArray=True)
-    print d
+        # d = cmds.scrollLayout("scroll_hdrs", query=True, childArray=True)
+        # print d
 
-    cmds.setParent(main_cl)
+        cmds.setParent(main_cl)
 
-    cmds.text(label="", height=row_height*0.5)
+        cmds.text(label="", height=row_height*0.5)
 
-    proj = find_project()
-    img_path = os.path.join(proj, "images").replace("\\", "/")
+        proj = find_project()
+        img_path = os.path.join(proj, "images").replace("\\", "/")
 
-    cmds.rowLayout(numberOfColumns=2, columnWidth=[
-                   (1, win_width*0.7), (2, win_width*0.1)], columnAttach=[(1, "left", -90), (2, "right", 0)])
-    cmds.textFieldGrp("rdr_path", label="Output", text=img_path)
-    cmds.button(label="...", width=win_width*0.1, command=browse_batch)
+        cmds.rowLayout(numberOfColumns=2, columnWidth=[
+                       (1, win_width*0.7), (2, win_width*0.1)], columnAttach=[(1, "left", -90), (2, "right", 0)])
+        cmds.textFieldGrp("rdr_path", label="Output", text=img_path)
+        cmds.button(label="...", width=win_width*0.1,
+                    annotation="Choose render output path. NOTE: By default it will choose images folder in your project path", command=browse_batch)
 
-    cmds.setParent(main_cl)
+        cmds.setParent(main_cl)
 
-    cmds.text(label="", height=row_height*0.5)
+        cmds.text(label="", height=row_height*0.5)
 
-    cmds.rowLayout(numberOfColumns=1, columnWidth=[
-                   (1, win_width*0.8)], columnAttach=[(1, "left", 35)])
-    cmds.optionMenu("batch_mode", label="Render mode", annotation="Choose rendering mode")
-    cmds.menuItem(label="Signle Frame", parent="batch_mode")
-    cmds.menuItem(label="Turntable", parent="batch_mode")
-    cmds.setParent(main_cl)
+        cmds.rowLayout(numberOfColumns=1, columnWidth=[
+                       (1, win_width*0.8)], columnAttach=[(1, "left", 35)])
+        cmds.optionMenu("batch_mode", label="Render mode", annotation="Choose rendering mode")
+        cmds.menuItem(label="Single Frame", parent="batch_mode")
+        cmds.menuItem(label="Turntable", parent="batch_mode")
+        cmds.setParent(main_cl)
 
-    cmds.text(label="", height=row_height*0.5)
+        cmds.text(label="", height=row_height*0.5)
 
-    cmds.rowLayout(numberOfColumns=2, columnWidth=[
-                   (1, win_width*0.4), (2, win_width*0.4)], columnAttach=[(1, "left", 15), (2, "left", 15)])
-    cmds.button(label="RENDER", width=win_width*0.33, command=batch)
-    cmds.checkBox("sel_all_hdr", label="Select all HDRs", recomputeSize=True,
-                  onCommand=select_all_hdrs, offCommand=deselect_all_hdrs)
-    cmds.setParent(main_cl)
+        cmds.rowLayout(numberOfColumns=2, columnWidth=[
+                       (1, win_width*0.4), (2, win_width*0.4)], columnAttach=[(1, "left", 15), (2, "left", 15)])
+        cmds.button(label="RENDER", width=win_width*0.33,
+                    annotation="Batch render current scene with selected HDRs", command=batch)
+        cmds.checkBox("sel_all_hdr", label="Select all HDRs", recomputeSize=True,
+                      onCommand=select_all_hdrs, offCommand=deselect_all_hdrs)
+        cmds.setParent(main_cl)
 
-    cmds.text(label="", height=row_height*0.5)
+        cmds.text(label="", height=row_height*0.5)
 
-    cmds.showWindow(b)
+        cmds.showWindow(b)
 
 
 def buildUI():
+    if cmds.namespace(exists='dk_Ldv') == True:
+        ldv_vr = []
+        try:
+            ldv_vr = cmds.getAttr("dk_Ldv:aiSkydomeShape.ldv_ver")
+        except:
+            pass
+        try:
+            if len(ldv_vr) == 0:
+                removeLDV()
+
+            elif float(ldv_vr) < float(LDV_VER):
+                removeLDV()
+        except:
+            pass
+
     if cmds.namespace(exists='dk_Ldv') == True:
         skyExpo = cmds.getAttr('dk_Ldv:aiSkydome.exposure')
     else:
@@ -1631,6 +1794,11 @@ def buildUI():
 
     if cmds.windowPref(win_id, exists=True):
         cmds.windowPref(win_id, remove=True)
+
+    try:
+        cmds.deleteUI("batchUI")
+    except:
+        pass
 
     w = cmds.window(win_id, title=title, resizeToFitChildren=True)
 
@@ -1759,7 +1927,7 @@ def buildUI():
     # Auto Turntable
 
     cmds.text(label='--- Turntable ---', width=win_width, height=row_height)
-    tmpRowWidth = [win_width*0.3, win_width*0.35, win_width*0.35]
+    tmpRowWidth = [win_width*0.33, win_width*0.34, win_width*0.33]
     cmds.rowLayout(numberOfColumns=3)
     cmds.optionMenu('autott', label='Length', width=tmpRowWidth[0])
     cmds.menuItem(label='25')
@@ -1773,7 +1941,7 @@ def buildUI():
     cmds.setParent(mainCL)
 
     cmds.rowColumnLayout(numberOfColumns=1, columnOffset=[1, "both", 8])
-    cmds.optionMenu("chck_1001", label="Start:", width=tmpRowWidth[0]-8, changeCommand=start_fr)
+    cmds.optionMenu("chck_1001", label=" Start", width=tmpRowWidth[0]-8, changeCommand=start_fr)
     cmds.menuItem(label="1")
     cmds.menuItem(label="1001")
     cmds.optionMenu("chck_1001", edit=True, select=int(start))
@@ -1842,10 +2010,7 @@ def buildUI():
                 width=tmpRowWidth[1], annotation="Remove shader with checker texture", command=remove_checker)
     cmds.setParent(mainCL)
 
-    try:
-        cmds.deleteUI("batchUI")
-    except:
-        pass
-
     # Display the window
+    cmds.showWindow(w)
+
     cmds.showWindow(w)
