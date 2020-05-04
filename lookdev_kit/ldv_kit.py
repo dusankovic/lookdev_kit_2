@@ -13,6 +13,8 @@ import os
 import subprocess
 import sys
 import math
+import time
+import glob
 
 LOOKDEV_KIT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "mini").replace("\\", "/")
@@ -90,7 +92,7 @@ def createLDV(*args):
     cmds.setAttr(skydome_shape[0] + ".rotOffset", rotOff)
     cmds.undoInfo(swf=True)
 
-    hdrtx = cmds.getFileList(folder=HDR_FOLDER, filespec='*.tx')
+    hdrtx = hdr_list()[0]
     hdrskynum = len(hdrtx)
     cmds.addAttr(skydome_shape[0], longName="hdrsl", min=1,
                  max=hdrskynum, defaultValue=1, attributeType="long")
@@ -108,15 +110,13 @@ def createLDV(*args):
     cmds.parent(sky_name, LDVctrlgroup)
     imageNode = cmds.shadingNode("file", asTexture=True, n="hdrTextures")
     hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
-    file = cmds.getFileList(folder=HDR_FOLDER, filespec='*.tx')
-    file_hdr = cmds.getFileList(folder=HDR_FOLDER, filespec='*.hdr')
-    file_exr = cmds.getFileList(folder=HDR_FOLDER, filespec='*.exr')
-    hdr_file = file_hdr + file_exr
+    file = hdr_list()[0]
+    hdr_file = hdr_list()[2]
 
     if len(file) == 0:
         new_hdr = os.path.join(TEX_FOLDER, "no_prev.tx").replace("\\", "/")
     else:
-        new_hdr = os.path.join(HDR_FOLDER, hdr_file[hdr_num-1]).replace("\\", "/")
+        new_hdr = os.path.join(HDR_FOLDER, file[hdr_num-1]).replace("\\", "/")
 
     cmds.setAttr("dk_Ldv:hdrTextures" + ".fileTextureName", new_hdr, type="string")
     cmds.setAttr(imageNode + '.aiAutoTx', 0)
@@ -729,14 +729,13 @@ def removeMAC(*args):
 
 def hdrSw(self, *_):
     hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
-    file = cmds.getFileList(folder=HDR_FOLDER, filespec='*.tx')
-    file_hdr = cmds.getFileList(folder=HDR_FOLDER, filespec='*.hdr')
-    file_exr = cmds.getFileList(folder=HDR_FOLDER, filespec='*.exr')
-    hdr_file = file_hdr + file_exr
-    miniFile = cmds.getFileList(folder=MINI_HDR_FOLDER, filespec='*.jpg')
+    file = hdr_list()[0]
+    hdr_file = hdr_list()[2]
+
+    miniFile = hdr_list()[1]
 
     if cmds.namespace(exists='dk_Ldv') == True and len(file) != 0:
-        new_hdr = os.path.join(HDR_FOLDER, hdr_file[hdr_num-1]).replace("\\", "/")
+        new_hdr = os.path.join(HDR_FOLDER, file[hdr_num-1]).replace("\\", "/")
         minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[hdr_num-1]).replace("\\", "/")
         cmds.image("hdrSym", edit=True, image=minIntFile)
         cmds.setAttr("dk_Ldv:hdrTextures" + ".fileTextureName", new_hdr, type="string")
@@ -913,7 +912,7 @@ def sensor(*args):
         cmds.namespace(set=':dk_Ldv')
         cmds.expression("dk_Ldv:fcsCrv", alwaysEvaluate=True, string="float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $lens = {};float $lensOne = 50;float $crop = {};float $ctrlScale = dk_Ldv:ldvGlobal_ctrl.scaleX;float $measureFactor = $measuredDistance / $distanceForOne;float $scale = (($measureFactor / $crop) / ($lens / $lensOne)) / $ctrlScale;dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;".format(focalLng, crop))
         cmds.namespace(set=':')
-        cmds.pause(seconds=0.6)
+        time.sleep(0.6)
         cmds.setAttr("dk_Ldv:fcsCrv.translateZ", planeZ1)
         cmds.setAttr("dk_Ldv:fcsCrv.translateZ", planeZ)
         # mel.eval("cycleCheck -e on")
@@ -951,13 +950,10 @@ def DoFOff(self, *_):
 
 
 def refHDR(*args):
-    hdrexr = cmds.getFileList(folder=HDR_FOLDER, filespec='*.exr')
-    hdrhdr = cmds.getFileList(folder=HDR_FOLDER, filespec='*.hdr')
-    hdrtx = cmds.getFileList(folder=HDR_FOLDER, filespec='*.tx')
-    minijpg = cmds.getFileList(folder=MINI_HDR_FOLDER, filespec='*.jpg')
-    minijpeg = cmds.getFileList(folder=MINI_HDR_FOLDER, filespec='*.jpeg')
-    hdrList = hdrhdr + hdrexr
-    miniList = minijpg + minijpeg
+    hdrtx = hdr_list()[0]
+    hdrList = hdr_list()[2]
+
+    miniList = hdr_list()[1]
     oiio = os.path.join(OIIO_FOLDER, "oiiotool.exe").replace("\\", "/")
     prog = 0
 
@@ -970,7 +966,7 @@ def refHDR(*args):
     if dialog == "Yes":
         cmds.warning("Rebuilding HDRs")
         cmds.arnoldFlushCache(textures=True)
-        cmds.pause(seconds=2)
+        time.sleep(2)
 
         if cmds.namespace(exists='dk_Ldv') == True:
             cmds.namespace(removeNamespace='dk_Ldv', deleteNamespaceContent=True)
@@ -984,81 +980,118 @@ def refHDR(*args):
         # delete mini hdrs
         for each in miniList:
             delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
-            delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
             delPathDesel = os.path.join(MINI_HDR_FOLDER, "mini_desel", each).replace("\\", "/")
-            cmds.sysFile(delPath, delete=True)
-            cmds.sysFile(delPathDesel, delete=True)
+            os.remove(delPath)
+            os.remove(delPathDesel)
         for each in hdrtx:
             deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
-            cmds.sysFile(deltx, delete=True)
+            os.remove(deltx)
+
+        n = cmds.threadCount(n=True, query=True)/2
+        # n = 4
+
+        hdr_chunks = [hdrList[i:i + n] for i in xrange(0, len(hdrList), n)]
+        proc_num = len(hdr_chunks)
+
+        maxNumBake = 100/float(proc_num)
+
         cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,
                             status='Baking HDR preview images, please wait.')
 
-        for each in hdrList:
-            hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
-            base, ext = os.path.splitext(each)
-            extJpg = base + ".jpg"
-            miniPath = os.path.join(MINI_HDR_FOLDER, extJpg).replace("\\", "/")
-            desel_path = os.path.join(MINI_HDR_FOLDER, "mini_desel", extJpg).replace("\\", "/")
-            numhdr = len(hdrList)
-            maxNumBake = 100/float(numhdr)
+        for chunk in hdr_chunks:
+            max_proc_num = len(chunk) - 1
 
-            oiio_convert = subprocess.Popen(
-                [oiio, hdrPath, "--resize", "300x150", "--cpow", "0.454,0.454,0.454,1.0", "-o", miniPath], shell=True)
-            oiio_convert.wait()
+            for idx, each in enumerate(chunk):
+                mini_max = "mini" + str(max_proc_num)
+                hdr = os.path.join(HDR_FOLDER, each).replace("\\", "/")
+                miniPath = os.path.join(MINI_HDR_FOLDER, each[:-4] + ".jpg").replace("\\", "/")
+                proc_mini = "mini" + str(idx)
 
-            oiio_desel = subprocess.Popen(
-                [oiio, miniPath, "--cmul", "0.3", "-o", desel_path], shell=True)
-            oiio_desel.wait()
+                vars()[proc_mini] = subprocess.Popen([oiio, hdr, "--resize", "300x150",
+                                                      "--cpow", "0.454,0.454,0.454,1.0", "-o", miniPath], shell=True)
+
+                try:
+                    vars()[mini_max].wait()
+                except:
+                    pass
+
+            time.sleep(2)
+
+            for idx, each in enumerate(chunk):
+                desel_max = "desel" + str(max_proc_num)
+                miniPath = os.path.join(MINI_HDR_FOLDER, each[:-4] + ".jpg").replace("\\", "/")
+                desel_path = os.path.join(MINI_HDR_FOLDER, "mini_desel",
+                                          each[:-4] + ".jpg").replace("\\", "/")
+
+                proc_desel = "desel" + str(idx)
+
+                vars()[proc_desel] = subprocess.Popen(
+                    [oiio, miniPath, "--cmul", "0.3", "-o", desel_path], shell=True)
+
+                try:
+                    vars()[desel_max].wait()
+                except:
+                    pass
 
             prog += float(maxNumBake)
             cmds.progressWindow(edit=True, progress=prog,
                                 status='Baking HDR preview images, please wait. ')
-            cmds.pause(seconds=0.5)
+            time.sleep(0.5)
 
             progCeil1 = cmds.progressWindow(query=True, progress=True)
 
             if math.ceil(progCeil1) >= 98:
-                cmds.pause(seconds=0.5)
+                time.sleep(0.5)
                 prog = 0
                 cmds.progressWindow(endProgress=1)
                 break
 
         cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,
                             status='Converting textures to TX, please wait.')
-        for each in hdrList:
-            hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
-            mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True)
-            mtoa_root = os.path.dirname(os.path.dirname(mtoa_plugin))
-            mtoa_maketx = os.path.join(mtoa_root, "bin", "maketx").replace("\\", "/")
-            base, ext = os.path.splitext(each)
-            outfile = base + ".tx"
-            out = os.path.join(HDR_FOLDER, outfile).replace("\\", "/")
-            baketx = subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect",
-                                       "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdrPath, "-o", out], shell=True)
+
+        mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True)
+        mtoa_root = os.path.dirname(os.path.dirname(mtoa_plugin))
+        mtoa_maketx = os.path.join(mtoa_root, "bin", "maketx").replace("\\", "/")
+
+        for chunk in hdr_chunks:
+
+            max_proc_num = len(chunk) - 1
+
+            for idx, each in enumerate(chunk):
+                bake_max = "baketx" + str(max_proc_num)
+                hdr = os.path.join(HDR_FOLDER, each).replace("\\", "/")
+                out = os.path.join(HDR_FOLDER, each[:-4] + ".tx").replace("\\", "/")
+                proc_name = "baketx" + str(idx)
+                vars()[proc_name] = subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect",
+                                                      "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdr, "-o", out], shell=True)
+                try:
+                    vars()[bake_max].wait()
+                except:
+                    pass
 
             prog += float(maxNumBake)
 
             cmds.progressWindow(edit=True, progress=prog,
                                 status='Converting textures to TX, please wait. ')
-            baketx.wait()
+
             progCeil2 = cmds.progressWindow(query=True, progress=True)
             if math.ceil(progCeil2) >= 98:
-                cmds.pause(seconds=0.5)
+                time.sleep(0.5)
                 prog = 0
                 cmds.progressWindow(endProgress=1)
                 break
-        cmds.pause(seconds=0.5)
+
+        time.sleep(2)
+
         buildUI()
+
     else:
         cmds.warning("Operation Canceled")
 
 
 def deletePrevTx(*args):
-    hdrtx = cmds.getFileList(folder=HDR_FOLDER, filespec='*.tx')
-    minijpg = cmds.getFileList(folder=MINI_HDR_FOLDER, filespec='*.jpg')
-    minijpeg = cmds.getFileList(folder=MINI_HDR_FOLDER, filespec='*.jpeg')
-    miniList = minijpg + minijpeg
+    hdrtx = hdr_list()[0]
+    miniList = hdr_list()[1]
 
     dialog = cmds.confirmDialog(title=("Lookdev Kit {} - Delete").format(LDV_VER), message="This will delete all HDR preview images and .tx files.",
                                 button=["Yes", "No"], cancelButton="No", dismissString="No")
@@ -1069,7 +1102,7 @@ def deletePrevTx(*args):
 
     if dialog == "Yes":
         cmds.arnoldFlushCache(textures=True)
-        cmds.pause(seconds=2)
+        time.sleep(2)
 
         if cmds.namespace(exists='dk_Ldv') == True:
             cmds.namespace(removeNamespace='dk_Ldv', deleteNamespaceContent=True)
@@ -1083,13 +1116,14 @@ def deletePrevTx(*args):
         for each in miniList:
             delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
             delPathDesel = os.path.join(MINI_HDR_FOLDER, "mini_desel", each).replace("\\", "/")
-            cmds.sysFile(delPath, delete=True)
-            cmds.sysFile(delPathDesel, delete=True)
+            os.remove(delPath)
+            os.remove(delPathDesel)
+
         for each in hdrtx:
             deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
-            cmds.sysFile(deltx, delete=True)
+            os.remove(deltx)
 
-        cmds.pause(seconds=0.5)
+        time.sleep(2)
         buildUI()
 
 
@@ -1305,30 +1339,38 @@ def setTurntable(objects):
 
 
 def subd_off(*args):
-    sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, s=True)
-    for each in shapeSel:
-        cmds.setAttr(each + '.aiSubdivType', 0)
+    try:
+        sel = cmds.ls(sl=True)
+        shapeSel = cmds.listRelatives(sel, s=True, fullPath=True)
+        for each in shapeSel:
+            cmds.setAttr(each + '.aiSubdivType', 0)
+    except:
+        pass
 
 
 def catclark_on(*args):
-    value = cmds.intSliderGrp('subIter', query=True, value=True)
-    sel = cmds.ls(sl=True)
-    shapeSel = cmds.listRelatives(sel, shapes=True)
-    for each in shapeSel:
-        cmds.setAttr(each + '.aiSubdivType', 1)
-        cmds.setAttr(each + '.aiSubdivIterations', value)
+    try:
+        value = cmds.intSliderGrp('subIter', query=True, value=True)
+        sel = cmds.ls(sl=True)
+        shapeSel = cmds.listRelatives(sel, shapes=True, fullPath=True)
+        for each in shapeSel:
+            cmds.setAttr(each + '.aiSubdivType', 1)
+            cmds.setAttr(each + '.aiSubdivIterations', value)
+    except:
+        pass
 
 
 def subd_iter(self, *_):
-    if cmds.namespace(exists='dk_Ldv') == True:
+    try:
         cmds.undoInfo(swf=False)
         sel = cmds.ls(sl=True)
-        shapeSel = cmds.listRelatives(sel, s=True)
+        shapeSel = cmds.listRelatives(sel, s=True, fullPath=True)
         value = cmds.intSliderGrp('subIter', query=True, value=True)
         for each in shapeSel:
             cmds.setAttr(each + '.aiSubdivIterations', value)
             cmds.undoInfo(swf=True)
+    except:
+        pass
 
 
 def bucket_size16(*args):
@@ -1444,9 +1486,27 @@ def deselect_all_hdrs(*args):
 
 
 def hdr_list(*args):
-    hdr_list = cmds.getFileList(folder=HDR_FOLDER, filespec='*.tx')
-    mini_list = cmds.getFileList(folder=MINI_HDR_FOLDER, filespec='*.jpg')
-    return (hdr_list, mini_list)
+    tx_list = []
+    hdrs_list = []
+    mini_list = []
+    desel_list = []
+    files = glob.glob(("{}/*").format(HDR_FOLDER))
+    for hdr in files:
+        if hdr.endswith(".hdr") or hdr.endswith(".exr"):
+            hdrs_list.append(os.path.split(hdr)[1])
+        if hdr.endswith(".tx"):
+            tx_list.append(os.path.split(hdr)[1])
+
+    mini_path = glob.glob(("{}/*.jpg").format(MINI_HDR_FOLDER))
+    for each in mini_path:
+        mini_list.append(os.path.split(each)[1])
+
+    desel_path = glob.glob(
+        ("{}/*.jpg").format(os.path.join(MINI_HDR_FOLDER, "mini_desel").replace("\\", "/")))
+    for each in desel_path:
+        desel_list.append(os.path.split(each)[1])
+
+    return (tx_list, mini_list, hdrs_list, desel_list)
 
 
 def find_project(*args):
@@ -1506,7 +1566,7 @@ def batch(*args):
         ass_del = cmds.getFileList(folder=ass_path, filespec="*.ass")
         for each in ass_del:
             delpath = os.path.join(ass_path, each).replace("\\", "/")
-            cmds.sysFile(delpath, delete=True)
+            os.remove(delpath)
     except:
         pass
 
@@ -1759,8 +1819,8 @@ def buildUI():
     else:
         checkBoxDoF = False
 
-    miniFile = cmds.getFileList(folder=MINI_HDR_FOLDER, filespec='*.jpg')
-    hdrtx = cmds.getFileList(folder=HDR_FOLDER, filespec='*.tx')
+    miniFile = hdr_list()[1]
+    hdrtx = hdr_list()[0]
 
     if cmds.namespace(exists='dk_Ldv') == True and len(hdrtx) != 0:
         hdrslide = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')
@@ -1777,12 +1837,9 @@ def buildUI():
         hdrswitch = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')-1
         minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[hdrswitch]).replace("\\", "/")
     if len(miniFile) != 0:
-        miniFile = cmds.getFileList(folder=MINI_HDR_FOLDER, filespec='*.jpg')
         minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[0]).replace("\\", "/")
         txIntFile = os.path.join(HDR_FOLDER, hdrtx[0]).replace("\\", "/")
-
     else:
-        miniFile = cmds.getFileList(folder=MINI_HDR_FOLDER, filespec='*.jpg')
         minIntFile = os.path.join(TEX_FOLDER, "no_prev.jpg").replace("\\", "/")
 
     if cmds.namespace(exists='dk_turn') == True:
