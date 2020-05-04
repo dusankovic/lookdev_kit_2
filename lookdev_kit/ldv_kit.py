@@ -116,7 +116,7 @@ def createLDV(*args):
     if len(file) == 0:
         new_hdr = os.path.join(TEX_FOLDER, "no_prev.tx").replace("\\", "/")
     else:
-        new_hdr = os.path.join(HDR_FOLDER, file[hdr_num-1]).replace("\\", "/")
+        new_hdr = os.path.join(HDR_FOLDER, hdr_file[hdr_num-1]).replace("\\", "/")
 
     cmds.setAttr("dk_Ldv:hdrTextures" + ".fileTextureName", new_hdr, type="string")
     cmds.setAttr(imageNode + '.aiAutoTx', 0)
@@ -727,23 +727,26 @@ def removeMAC(*args):
         cmds.namespace(removeNamespace=':mac', deleteNamespaceContent=True)
 
 
-def hdrSw(self, *_):
-    hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
-    file = hdr_list()[0]
+def hdrSw(*args):
+    hdr_num = cmds.intSliderGrp("hdrSw", query=True, value=True)
+    tx_file = hdr_list()[0]
     hdr_file = hdr_list()[2]
+    mini_file = hdr_list()[1]
 
-    miniFile = hdr_list()[1]
-
-    if cmds.namespace(exists='dk_Ldv') == True and len(file) != 0:
-        new_hdr = os.path.join(HDR_FOLDER, file[hdr_num-1]).replace("\\", "/")
-        minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[hdr_num-1]).replace("\\", "/")
-        cmds.image("hdrSym", edit=True, image=minIntFile)
-        cmds.setAttr("dk_Ldv:hdrTextures" + ".fileTextureName", new_hdr, type="string")
-        cmds.setAttr('dk_Ldv:aiSkydomeShape.hdrsl', hdr_num)
-    if len(file) != 0:
-        minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[hdr_num-1]).replace("\\", "/")
-        cmds.image("hdrSym", edit=True, image=minIntFile)
-
+    if cmds.namespace(exists="dk_Ldv") == True and len(tx_file) != 0:
+        new_hdr = os.path.join(HDR_FOLDER, hdr_file[hdr_num-1]).replace("\\", "/")
+        mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[hdr_num-1]).replace("\\", "/")
+        cmds.image("hdrSym", edit=True, image=mini_int_file)
+        cmds.setAttr("dk_Ldv:hdrTextures.fileTextureName", new_hdr, type="string")
+        cmds.setAttr("dk_Ldv:aiSkydomeShape.hdrsl", hdr_num)
+        cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", "Raw", type="string")
+    if len(tx_file) != 0:
+        mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[hdr_num-1]).replace("\\", "/")
+        cmds.image("hdrSym", edit=True, image=mini_int_file)
+        try:
+            cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", "Raw", type="string")
+        except:
+            pass
     else:
         cmds.warning("Refresh HDRs")
 
@@ -760,10 +763,9 @@ def rotOffset(self, *_):
     if cmds.namespace(exists='dk_Ldv') == True:
         skyRot = cmds.getAttr("dk_Ldv:aiSkydome.rotateY")
         cmds.undoInfo(swf=False)
-        skyValue = cmds.floatSliderGrp("rotOff", query=True, value=True)
-        skyAddedRot = skyValue
+        skyAddedRot = cmds.floatSliderGrp("rotOff", query=True, value=True)
         cmds.setAttr('dk_Ldv:aiSkydome.rotateY', skyAddedRot)
-        cmds.setAttr("dk_Ldv:aiSkydomeShape.rotOffset", skyValue)
+        cmds.setAttr("dk_Ldv:aiSkydomeShape.rotOffset", skyAddedRot)
         cmds.undoInfo(swf=True)
 
 
@@ -783,17 +785,17 @@ def fstop(*args):
         unit = worldUnit()
 
         if unit == "mm":
-            unitConv = 1
+            unit_conv = 1
         if unit == "cm":
-            unitConv = 10
+            unit_conv = 10
         if unit == "m":
-            unitConv = 1000
+            unit_conv = 1000
         if unit == "in":
-            unitConv = 25.
+            unit_conv = 25.
         if unit == "ft":
-            unitConv = 304.8
+            unit_conv = 304.8
         if unit == "yd":
-            unitConv = 914.4
+            unit_conv = 914.4
 
         fOpt = cmds.optionMenu('fstop', value=True, query=True)
         focCam = cmds.getAttr('dk_Ldv:cameraShape1.focalLength')
@@ -1470,19 +1472,23 @@ def start_fr(*args):
 
 
 # UI
-
 def select_all_hdrs(*args):
     hdrs = hdr_list()[1]
-    for each in hdrs:
-        cmds.symbolCheckBox("chck_" + each[:-4], edit=True, value=1)
+    hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
+    index_list = []
+    for idx, each in enumerate(hdrs):
+        index_list.append(idx)
+        cmds.symbolCheckBox("chck_" + str(idx).zfill(2), edit=True, value=1)
 
 
 def deselect_all_hdrs(*args):
-    hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
     hdrs = hdr_list()[1]
-    for each in hdrs:
-        cmds.symbolCheckBox("chck_" + each[:-4], edit=True, value=0)
-    cmds.symbolCheckBox("chck_" + hdrs[hdr_num-1][:-4], edit=True, value=1)
+    hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
+    index_list = []
+    for idx, each in enumerate(hdrs):
+        index_list.append(idx)
+        cmds.symbolCheckBox("chck_" + str(idx).zfill(2), edit=True, value=0)
+    cmds.symbolCheckBox("chck_" + str(index_list[hdr_num-1]).zfill(2), edit=True, value=1)
 
 
 def hdr_list(*args):
@@ -1694,7 +1700,7 @@ def batch_choose(*args):
 
         hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
         hdrs = hdr_list()[0]
-        miniFile = hdr_list()[1]
+        mini_file = hdr_list()[1]
 
         if cmds.window(win_id, exists=True):
             cmds.deleteUI(win_id)
@@ -1712,7 +1718,7 @@ def batch_choose(*args):
 
         cmds.scrollLayout("scroll_hdrs", height=win_height*0.9, width=win_width*1)
         index_list = []
-        for idx, each in enumerate(miniFile):
+        for idx, each in enumerate(mini_file):
             index_list.append(idx)
             mini_path = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
             mini_desel = os.path.join(MINI_HDR_FOLDER, "mini_desel", each).replace("\\", "/")
@@ -1819,28 +1825,28 @@ def buildUI():
     else:
         checkBoxDoF = False
 
-    miniFile = hdr_list()[1]
+    mini_file = hdr_list()[1]
     hdrtx = hdr_list()[0]
 
-    if cmds.namespace(exists='dk_Ldv') == True and len(hdrtx) != 0:
-        hdrslide = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')
-        hdrCount = len(hdrtx)
     if len(hdrtx) != 0:
         hdrslide = 1
         hdrCount = len(hdrtx)
-
     else:
         hdrslide = 1
         hdrCount = 1
 
-    if cmds.namespace(exists='dk_Ldv') == True and len(miniFile) != 0:
-        hdrswitch = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')-1
-        minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[hdrswitch]).replace("\\", "/")
-    if len(miniFile) != 0:
-        minIntFile = os.path.join(MINI_HDR_FOLDER, miniFile[0]).replace("\\", "/")
-        txIntFile = os.path.join(HDR_FOLDER, hdrtx[0]).replace("\\", "/")
+    if cmds.namespace(exists='dk_Ldv') == True and len(hdrtx) != 0:
+        hdrslide = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')
+        hdrCount = len(hdrtx)
+
+    if len(mini_file) != 0:
+        mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[0]).replace("\\", "/")
     else:
-        minIntFile = os.path.join(TEX_FOLDER, "no_prev.jpg").replace("\\", "/")
+        mini_int_file = os.path.join(TEX_FOLDER, "no_prev.jpg").replace("\\", "/")
+
+    if cmds.namespace(exists='dk_Ldv') == True and len(mini_file) != 0:
+        hdrswitch = int(cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl'))-1
+        mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[hdrswitch]).replace("\\", "/")
 
     if cmds.namespace(exists='dk_turn') == True:
         objOff = cmds.getAttr('dk_turn:obj_tt_Offloc.rotateY')
@@ -1906,7 +1912,7 @@ def buildUI():
     # image
     tmpRowWidth = [win_width*0.84, win_width*0.08]
     cmds.rowLayout(numberOfColumns=1, columnOffset1=tmpRowWidth[1], columnAttach1="both")
-    cmds.image("hdrSym", image=minIntFile, width=tmpRowWidth[0])
+    cmds.image("hdrSym", image=mini_int_file, width=tmpRowWidth[0])
     cmds.setParent(mainCL)
 
     # Skydome Exposure
