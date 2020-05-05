@@ -15,6 +15,7 @@ import sys
 import math
 import time
 import glob
+import webbrowser
 
 LOOKDEV_KIT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "mini").replace("\\", "/")
@@ -24,6 +25,10 @@ OIIO_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "oiio", "bin").replace("\\", "/")
 LDV_VER = "2.1"
 
 # COMMANDS
+
+
+def web(*args):
+    webbrowser.open("https://dusankovic.artstation.com/pages/lookdev-kit")
 
 
 def LDVbutton(*args):
@@ -65,7 +70,11 @@ def createLDV(*args):
     cmds.namespace(set=':dk_Ldv')
 
     LDVgroup = cmds.group(name='lookdevkit_grp', empty=True)
+    cmds.setAttr(LDVgroup + ".useOutlinerColor", 1)
+    cmds.setAttr(LDVgroup + ".outlinerColor", 1, 1, 0)
     LDVctrlgroup = cmds.group(name='lookdev_ctrl_grp', empty=True)
+    cmds.setAttr(LDVctrlgroup + ".useOutlinerColor", 1)
+    cmds.setAttr(LDVctrlgroup + ".outlinerColor", 0, 1, 1)
     cmds.parent(LDVctrlgroup, LDVgroup)
     skydome = mutils.createLocator('aiSkyDomeLight', asLight=True)
     sky_name = cmds.rename(skydome[1], 'aiSkydome')
@@ -102,7 +111,7 @@ def createLDV(*args):
     cmds.setAttr('dk_Ldv:aiSkydomeShape.exposure', value)
     cmds.undoInfo(swf=True)
 
-    cmds.setAttr('dk_Ldv:aiSkydomeShape.skyRadius', 3000)
+    cmds.setAttr('dk_Ldv:aiSkydomeShape.skyRadius', 5000)
     cmds.setAttr('dk_Ldv:aiSkydomeShape.resolution', 2048)
     cmds.setAttr('dk_Ldv:aiSkydome.overrideEnabled', 1)
     cmds.setAttr('dk_Ldv:aiSkydome.overrideDisplayType', 2)
@@ -123,7 +132,7 @@ def createLDV(*args):
     cmds.setAttr(imageNode + '.colorSpace', 'Raw', type='string')
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
 
-    shCatchMain = cmds.polyPlane(n='shadowCatcher', w=1500, h=1500, sx=1,
+    shCatchMain = cmds.polyPlane(n='shadowCatcher', w=4000, h=4000, sx=1,
                                  sy=1, cuv=2, ax=[0, 1, 0], ch=False)
     shCatch = shCatchMain[0]
     cmds.addAttr(shCatchMain, longName="shadowChckVis", attributeType="bool")
@@ -262,7 +271,7 @@ def createLDV(*args):
 
     # create global ctrl
     ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[
-                         (-850, 0, 850), (-850, 0, -850), (850, 0, -850), (850, 0, 850), (-850, 0, 850)])
+                         (-2050, 0, 2050), (-2050, 0, -2050), (2050, 0, -2050), (2050, 0, 2050), (-2050, 0, 2050)])
 
     cmds.parent(ldvCtrl, LDVgroup)
     cmds.scaleConstraint(ldvCtrl, LDVctrlgroup, maintainOffset=True, weight=1)
@@ -320,6 +329,8 @@ def removeLDV(*args):
         cmds.namespace(removeNamespace='dk_bake', deleteNamespaceContent=True)
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.namespace(removeNamespace='dk_Ldv', deleteNamespaceContent=True)
+
+    cmds.lookThru("persp")
 
 
 def Macbutton(*args):
@@ -925,30 +936,38 @@ def worldUnit(*args):
     return unit
 
 
-def shadowChckOn(self, *_):
-    if cmds.namespace(exists='dk_Ldv') == True:
+def shadowChckOn(*args):
+    try:
         cmds.setAttr("dk_Ldv:shadowCatcher.visibility", 1)
         cmds.setAttr('dk_Ldv:shadowCatcher.shadowChckVis', 1)
+    except:
+        pass
 
 
-def shadowChckOff(self, *_):
-    if cmds.namespace(exists='dk_Ldv') == True:
+def shadowChckOff(*args):
+    try:
         cmds.setAttr("dk_Ldv:shadowCatcher.visibility", 0)
         cmds.setAttr('dk_Ldv:shadowCatcher.shadowChckVis', 0)
+    except:
+        pass
 
 
-def DoFOn(self, *_):
-    if cmds.namespace(exists='dk_Ldv') == True:
+def DoFOn(*args):
+    try:
         cmds.setAttr("dk_Ldv:cameraShape1.aiEnableDOF", 1)
         cmds.setAttr("dk_Ldv:camera1.DoF", 1)
         cmds.setAttr("dk_Ldv:fcsCrv.visibility", 1)
+    except:
+        pass
 
 
-def DoFOff(self, *_):
-    if cmds.namespace(exists='dk_Ldv') == True:
+def DoFOff(*args):
+    try:
         cmds.setAttr("dk_Ldv:cameraShape1.aiEnableDOF", 0)
         cmds.setAttr("dk_Ldv:camera1.DoF", 0)
         cmds.setAttr("dk_Ldv:fcsCrv.visibility", 0)
+    except:
+        pass
 
 
 def refHDR(*args):
@@ -1183,8 +1202,10 @@ def bounding(*args):
 
     cmds.delete("dkdefaultBox")
 
-    asset_box1 = cmds.geomToBBox(asset_sel, combineMesh=True, keepOriginal=True)
-    asset_box = cmds.geomToBBox(asset_box1, combineMesh=True, keepOriginal=True)
+    asset_box1 = cmds.geomToBBox(asset_sel, combineMesh=True,
+                                 keepOriginal=True, name="dk_88assetBox_01")
+    asset_box = cmds.geomToBBox(asset_box1, combineMesh=True,
+                                keepOriginal=True, name="dk_88worldBox_02")
 
     asset_box_bbox = cmds.exactWorldBoundingBox(asset_box)
 
@@ -1197,8 +1218,8 @@ def bounding(*args):
     ymax = abs(asset_box_bbox[4])
     zmax = abs(asset_box_bbox[5])
 
-    cmds.delete(asset_box)
-    cmds.delete(asset_box1)
+    cmds.delete("dk_88assetBox_*")
+    cmds.delete("dk_88worldBox_*")
 
     try:
         xmin_factor = float(xmin) / float(def_box_xmin)
@@ -1708,7 +1729,11 @@ def batch_choose(*args):
         if cmds.windowPref(win_id, exists=True):
             cmds.windowPref(win_id, remove=True)
 
-        b = cmds.window(win_id, title=win_title, resizeToFitChildren=True)
+        view_width = int(viewport_resolution()[0]) * 0.75
+        view_heigth = int(viewport_resolution()[1]) * 0.3
+
+        b = cmds.window(win_id, title=win_title, resizeToFitChildren=True,
+                        topLeftCorner=[view_heigth, view_width])
 
         main_cl = cmds.rowColumnLayout(numberOfColumns=1, columnWidth=[
                                        (1, win_width*1.1), (2, win_width*0.75)], columnOffset=[1, "left", 30])
@@ -1767,6 +1792,13 @@ def batch_choose(*args):
         cmds.text(label="", height=row_height*0.5)
 
         cmds.showWindow(b)
+
+
+def viewport_resolution(*args):
+    focus_pane = cmds.getPanel(withFocus=True)
+    viewport_width = cmds.control(focus_pane, query=True, width=True)
+    viewport_height = cmds.control(focus_pane, query=True, height=True)
+    return (viewport_width, viewport_height)
 
 
 def buildUI():
@@ -1874,7 +1906,11 @@ def buildUI():
     except:
         pass
 
-    w = cmds.window(win_id, title=title, resizeToFitChildren=True)
+    view_width = int(viewport_resolution()[0]) * 1.01
+    view_heigth = int(viewport_resolution()[1]) * 0.3
+
+    w = cmds.window(win_id, title=title, resizeToFitChildren=True,
+                    topLeftCorner=[view_heigth, view_width])
 
     # Main layout refs
     mainCL = cmds.columnLayout()
