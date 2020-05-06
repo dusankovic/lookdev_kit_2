@@ -49,6 +49,11 @@ ldv_kit.buildUI()
 You can always select that code in script editor and middle-click-drag it to your shelf to create a button, so you can call it when needed.
 
 
+DOCUMENTATION PAGE:
+
+https://dusankovic.artstation.com/pages/lookdev-kit
+
+
 
 OTHER:
 
