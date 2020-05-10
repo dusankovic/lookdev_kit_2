@@ -4,6 +4,7 @@
 # So you wanted to check my code! Before you go on, let me quote my TD friend Aleksandar:
 # "Your code is crap, but it works... more or less"
 # Remmeber those words while you read the rest of the code...
+# test
 
 import maya.cmds as cmds
 import maya.mel as mel
