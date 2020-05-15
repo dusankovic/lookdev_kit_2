@@ -179,6 +179,7 @@ def createLDV(*args):
     )
 
     cmds.lookThru(cam)
+    cmds.setAttr(cam[0] + ".renderable", 1)
 
     cmds.setAttr(cam[0] + ".displayGateMaskColor", 0.1, 0.1, 0.1, type="double3")
     cmds.setAttr(cam[0] + ".translateY", 195)
@@ -202,7 +203,7 @@ def createLDV(*args):
     # focus plane
     fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[
                           (-200, -8, 0), (-200, 218, 0), (200, 218, 0), (200, -8, 0), (-200, -8, 0)])
-    fcsText = cmds.textCurves(name="focusPlane_txt", object=True, text="FOCUS PLANE")
+    fcsText = cmds.textCurves(name="focusPlane_txt", object=True, text="FOCUS PLANE", font = "Times-Roman" )
     fcsGrp = cmds.ls(fcsText, long=True)
 
     cmds.setAttr(fcsGrp[0] + ".scaleX", 12)
@@ -1848,44 +1849,44 @@ def buildUI():
         except:
             pass
 
-    if cmds.namespace(exists='dk_Ldv') == True:
+    try:
         skyExpo = cmds.getAttr('dk_Ldv:aiSkydome.exposure')
-    else:
+    except:
         skyExpo = 0
 
-    if cmds.namespace(exists='dk_Ldv') == True:
+    try:
         skyVis = cmds.getAttr('dk_Ldv:aiSkydome.camera')
-    else:
+    except:
         skyVis = 1
 
-    if cmds.namespace(exists='dk_Ldv') == True:
+    try:
         skyOff = cmds.getAttr('dk_Ldv:aiSkydomeShape.rotOffset')
-    else:
+    except:
         skyOff = 0
 
-    if cmds.namespace(exists='dk_Ldv') == True:
+    try:
         sensorSelect = cmds.getAttr("dk_Ldv:camera1.SensorCam")
-    else:
+    except:
         sensorSelect = 1
 
-    if cmds.namespace(exists='dk_Ldv') == True:
+    try:
         focalSelect = cmds.getAttr("dk_Ldv:camera1.FocalCam")
-    else:
+    except:
         focalSelect = 5
 
-    if cmds.namespace(exists='dk_Ldv') == True:
+    try:
         fStopSelect = cmds.getAttr("dk_Ldv:camera1.FstopCam")
-    else:
+    except:
         fStopSelect = 2
 
-    if cmds.namespace(exists='dk_Ldv') == True:
+    try:
         checkBoxVal = cmds.getAttr("dk_Ldv:shadowCatcher.shadowChckVis")
-    else:
+    except:
         checkBoxVal = True
 
-    if cmds.namespace(exists='dk_Ldv') == True:
+    try:
         checkBoxDoF = cmds.getAttr("dk_Ldv:camera1.DoF")
-    else:
+    except:
         checkBoxDoF = False
 
     mini_file = hdr_list()[1]
@@ -1911,14 +1912,14 @@ def buildUI():
         hdrswitch = int(cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl'))-1
         mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[hdrswitch]).replace("\\", "/")
 
-    if cmds.namespace(exists='dk_turn') == True:
+    try:
         objOff = cmds.getAttr('dk_turn:obj_tt_Offloc.objOffset')
-    else:
+    except:
         objOff = 0
 
-    if cmds.namespace(exists="dk_Ldv") == True:
+    try:
         start = cmds.getAttr("dk_Ldv:aiSkydomeShape.start")
-    else:
+    except:
         start = 1
 
     try:
