@@ -1812,8 +1812,7 @@ def batch_choose(*args):
                        (1, win_width*0.4), (2, win_width*0.4)], columnAttach=[(1, "left", 15), (2, "left", 15)])
         cmds.button(label="RENDER", width=win_width*0.33,
                     annotation="Batch render current scene with selected HDRs", command=batch)
-        cmds.checkBox("sel_all_hdr", label="Select all HDRs", recomputeSize=True,
-                      onCommand=select_all_hdrs, offCommand=deselect_all_hdrs)
+        cmds.checkBox("sel_all_hdr", label="Select all HDRs", recomputeSize=True, onCommand=select_all_hdrs, offCommand=deselect_all_hdrs)
         cmds.setParent(main_cl)
 
         cmds.text(label="", height=row_height*0.5)
@@ -2056,10 +2055,8 @@ def buildUI():
 
     # Checkboxes
     cmds.rowColumnLayout(numberOfColumns=2, columnOffset=[1, "both", 70])
-    cmds.checkBox("shMatte", label="Shadow Matte", value=checkBoxVal,
-                  recomputeSize=True, onCommand=shadowChckOn, offCommand=shadowChckOff)
-    cmds.checkBox("camDoF", label="DoF", value=checkBoxDoF,
-                  recomputeSize=True, onCommand=DoFOn, offCommand=DoFOff)
+    cmds.checkBox("shMatte", label="Shadow Matte", value=checkBoxVal, recomputeSize=True, onCommand=shadowChckOn, offCommand=shadowChckOff)
+    cmds.checkBox("camDoF", label="DoF", value=checkBoxDoF, recomputeSize=True, onCommand=DoFOn, offCommand=DoFOff)
     cmds.setParent(mainCL)
 
     # refresh HDRs
