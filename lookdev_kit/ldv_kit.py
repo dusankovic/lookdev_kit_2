@@ -52,6 +52,11 @@ def LDVbutton(*args):
         createLDV()
 
 
+def check_cm_config(*args):
+    config_check = cmds.colorManagementPrefs(query = True,cmConfigFileEnabled = True)
+    return config_check
+
+
 def createLDV(*args):
     try:
         bounding_out = bounding()
@@ -132,7 +137,12 @@ def createLDV(*args):
 
     cmds.setAttr("dk_Ldv:hdrTextures" + ".fileTextureName", new_hdr, type="string")
     cmds.setAttr(imageNode + '.aiAutoTx', 0)
-    cmds.setAttr(imageNode + '.colorSpace', 'Raw', type='string')
+
+    if check_cm_config() == True:
+        cmds.setAttr(imageNode + '.colorSpace', 'Utility - Raw', type='string')
+    if check_cm_config() == False:
+        cmds.setAttr(imageNode + '.colorSpace', 'Raw', type='string')
+
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
 
     shCatchMain = cmds.polyPlane(n='shadowCatcher', w=4000, h=4000, sx=1,
@@ -201,20 +211,22 @@ def createLDV(*args):
     cmds.addAttr(cam[0], longName="FstopCam", attributeType="long", min=1, max=fstopCount)
 
     # focus plane
+    focus_text_import = os.path.join(TEX_FOLDER, "ldv_fcs_font.ma").replace("\\", "/")
     fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[
                           (-200, -8, 0), (-200, 218, 0), (200, 218, 0), (200, -8, 0), (-200, -8, 0)])
-    fcsText = cmds.textCurves(name="focusPlane_txt", object=True, text="FOCUS PLANE", font = "Times-Roman" )
-    fcsGrp = cmds.ls(fcsText, long=True)
+    #fcsText = cmds.textCurves(name="focusPlane_txt", object=True, text="FOCUS PLANE" )
+    fcsText = cmds.file( focus_text_import, i=True )
+    fcsGrp = cmds.ls("dk_Ldv:focusPlane_txtShape", long=True)
 
     cmds.setAttr(fcsGrp[0] + ".scaleX", 12)
     cmds.setAttr(fcsGrp[0] + ".scaleY", 12)
     cmds.setAttr(fcsGrp[0] + ".scaleZ", 12)
     cmds.setAttr(fcsGrp[0] + ".translateX", 126.5)
     cmds.setAttr(fcsGrp[0] + ".translateY", 220)
-    cmds.makeIdentity(fcsText, translate=True, scale=True, apply=True)
+    cmds.makeIdentity(fcsGrp, translate=True, scale=True, apply=True)
 
-    fcsSel = cmds.listRelatives(fcsText, allDescendents=True)
-    fcsSel2 = cmds.listRelatives(fcsSel, shapes=True)
+    fcsSel = cmds.listRelatives(fcsGrp, allDescendents=True, fullPath=True)
+    fcsSel2 = cmds.listRelatives(fcsSel, shapes=True, fullPath=True)
     fcsSelPlane = cmds.listRelatives(fcsPlane, allDescendents=True)
     fcsSelPlane2 = cmds.ls(fcsSelPlane, shapes=True, long=True)
     fcsSelMain = fcsSel2 + fcsSelPlane2
@@ -1496,6 +1508,10 @@ def checker(*args):
         chckImage = core.createArnoldNode('aiImage', name='checkerTexture')
         checker_tex = (TEX_FOLDER + '/' + 'checker.jpg')
         cmds.setAttr(chckImage + '.filename', checker_tex, type="string")
+        if check_cm_config() == True:
+            cmds.setAttr(chckImage + '.colorSpace', 'Utility - sRGB - Texture', type='string')
+        if check_cm_config() == False:
+            cmds.setAttr(chckImage + '.colorSpace', 'sRGB', type='string')
         cmds.setAttr(chckImage + '.colorSpace', 'sRGB', type='string')
         cmds.setAttr(chckImage + '.autoTx', 0)
         cmds.setAttr(chckImage + '.ignoreColorSpaceFileRules', 1)
