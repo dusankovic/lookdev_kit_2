@@ -1197,9 +1197,9 @@ def bounding(*args):
 
     asset_ln = str(len(asset_sel)).zfill(8)
     asset_shape = cmds.listRelatives(asset_sel, allDescendents=True, shapes=True)
+    asset_trns = cmds.listRelatives(asset_sel, allDescendents=True)
 
-    def_box = cmds.polyCube(width=250, height=190, depth=250, createUVs=4,
-                            axis=[0, 1, 0], ch=False, name="dkdefaultBox")
+    def_box = cmds.polyCube(width=250, height=190, depth=250, createUVs=4, axis=[0, 1, 0], ch=False, name="dkdefaultBox")
     cmds.setAttr("dkdefaultBox.translateY", 95)
 
     def_box_bbox = cmds.exactWorldBoundingBox(def_box)
@@ -1212,13 +1212,11 @@ def bounding(*args):
 
     cmds.delete("dkdefaultBox")
 
-    asset_box1 = cmds.geomToBBox(asset_sel, combineMesh=True,
-                                 keepOriginal=True, name="dk_88assetBox_00000001")
+    asset_box1 = cmds.geomToBBox(asset_trns, combineMesh=True,keepOriginal=True, name="dk_88assetBox_00000001")
 
     box_name = "dk_88assetBox_" + str(asset_ln)
 
-    asset_box = cmds.geomToBBox(box_name, combineMesh=True,
-                                keepOriginal=True, name="dk_88worldBox_01")
+    asset_box = cmds.geomToBBox(box_name, combineMesh=True,keepOriginal=True, name="dk_88worldBox_01")
 
     asset_box_bbox = cmds.exactWorldBoundingBox(asset_box)
 
