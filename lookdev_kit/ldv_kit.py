@@ -23,7 +23,7 @@ MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "mini").repla
 TEX_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages").replace("\\", "/")
 HDR_FOLDER = os.path.join(TEX_FOLDER, "hdr").replace("\\", "/")
 OIIO_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "oiio", "bin").replace("\\", "/")
-LDV_VER = "2.1"
+LDV_VER = "2.2"
 
 # COMMANDS
 
@@ -85,8 +85,7 @@ def createLDV(*args):
     skyVis = cmds.floatSliderGrp("sky_vis", query=True, value=True)
     cmds.setAttr(skydome_shape[0] + ".camera", skyVis)
 
-    cmds.addAttr(skydome_shape[0], longName="rotOffset", min=0,
-                 max=360, defaultValue=0, attributeType="double")
+    cmds.addAttr(skydome_shape[0], longName="rotOffset", min=0,max=360, defaultValue=0, attributeType="double")
 
     cmds.addAttr(skydome_shape[0], longName="start", dataType="string")
     start_val = cmds.optionMenu("chck_1001", query=True, select=True)
@@ -111,8 +110,7 @@ def createLDV(*args):
 
     hdrtx = hdr_list()[0]
     hdrskynum = len(hdrtx)
-    cmds.addAttr(skydome_shape[0], longName="hdrsl", min=1,
-                 max=hdrskynum, defaultValue=1, attributeType="long")
+    cmds.addAttr(skydome_shape[0], longName="hdrsl", min=1,max=hdrskynum, defaultValue=1, attributeType="long")
     cmds.setAttr('dk_Ldv:aiSkydomeShape.aiSamples', 3)
     # read exposure slider
     value = cmds.floatSliderGrp('exp', query=True, value=True)
@@ -292,9 +290,9 @@ def createLDV(*args):
     cmds.parent(ldvCtrl, LDVgroup)
     cmds.scaleConstraint(ldvCtrl, LDVctrlgroup, maintainOffset=True, weight=1)
 
-    cmds.setAttr(ldvCtrl + ".scaleX", scale_factor)
-    cmds.setAttr(ldvCtrl + ".scaleY", scale_factor)
-    cmds.setAttr(ldvCtrl + ".scaleZ", scale_factor)
+    #cmds.setAttr(ldvCtrl + ".scaleX", scale_factor)
+    #cmds.setAttr(ldvCtrl + ".scaleY", scale_factor)
+    #cmds.setAttr(ldvCtrl + ".scaleZ", scale_factor)
 
     focal()
     fstop()
@@ -314,6 +312,20 @@ def createLDV(*args):
         cmds.setAttr(each + ".rotateX", keyable=False, lock=True)
         cmds.setAttr(each + ".rotateY", keyable=False, lock=True)
         cmds.setAttr(each + ".rotateZ", keyable=False, lock=True)
+
+    #camera autoframe move
+
+    world_loc = cmds.spaceLocator(name="world_loc", position=[0, 0, 0])
+    cam_loc = cmds.spaceLocator(name="cam_loc", position=[0, 200, 565])
+    cmds.parent(cam_loc, world_loc)
+    cmds.setAttr(world_loc[0] + ".scaleX", scale_factor)
+    cmds.setAttr(world_loc[0] + ".scaleY", scale_factor)
+    cmds.setAttr(world_loc[0] + ".scaleZ", scale_factor)
+    cam_pos = cmds.pointPosition(cam_loc, world = True)
+    cmds.setAttr(cam[0] + ".translateX", cam_pos[0])
+    cmds.setAttr(cam[0] + ".translateY", cam_pos[1])
+    cmds.setAttr(cam[0] + ".translateZ", cam_pos[2])
+    cmds.delete(world_loc)
 
     try:
         cmds.viewLookAt(cam[1], pos=asset_center)
@@ -770,7 +782,10 @@ def hdrSw(*args):
         mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[hdr_num-1]).replace("\\", "/")
         cmds.image("hdrSym", edit=True, image=mini_int_file)
         try:
-            cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", "Raw", type="string")
+            if check_cm_config() == True:
+                cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", 'Utility - Raw', type='string')
+            if check_cm_config() == False:
+                cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", 'Raw', type='string')
         except:
             pass
     else:
@@ -1025,71 +1040,48 @@ def refHDR(*args):
             deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             os.remove(deltx)
 
+        cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,
+                            status='Baking HDR preview images, please wait.')
+
+        for each in hdrList:
+            hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
+            base, ext = os.path.splitext(each)
+            extJpg = base + ".jpg"
+            miniPath = os.path.join(MINI_HDR_FOLDER, extJpg).replace("\\", "/")
+            desel_path = os.path.join(MINI_HDR_FOLDER, "mini_desel", extJpg).replace("\\", "/")
+            numhdr = len(hdrList)
+            maxNumBake = 100/float(numhdr)
+
+            oiio_convert = subprocess.Popen([oiio, hdrPath, "--resize", "300x150", "--cpow", "0.454,0.454,0.454,1.0", "-o", miniPath], shell=True)
+            oiio_convert.wait()
+
+            oiio_desel = subprocess.Popen([oiio, miniPath, "--cmul", "0.3", "-o", desel_path], shell=True)
+            oiio_desel.wait()
+
+            prog += float(maxNumBake)
+            cmds.progressWindow(edit=True, progress=prog,status='Baking HDR preview images, please wait. ')
+            cmds.pause(seconds=0.5)
+
+            progCeil1 = cmds.progressWindow(query=True, progress=True)
+
+            if math.ceil(progCeil1) >= 98:
+                cmds.pause(seconds=0.5)
+                prog = 0
+                cmds.progressWindow(endProgress=1)
+                break
+
+        cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,status='Converting textures to TX, please wait.')
+
+        mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True)
+        mtoa_root = os.path.dirname(os.path.dirname(mtoa_plugin))
+        mtoa_maketx = os.path.join(mtoa_root, "bin", "maketx").replace("\\", "/")
+
         n = cmds.threadCount(n=True, query=True)/2
-        # n = 4
 
         hdr_chunks = [hdrList[i:i + n] for i in xrange(0, len(hdrList), n)]
         proc_num = len(hdr_chunks)
 
         maxNumBake = 100/float(proc_num)
-
-        cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,
-                            status='Baking HDR preview images, please wait.')
-
-        for chunk in hdr_chunks:
-            max_proc_num = len(chunk) - 1
-
-            for idx, each in enumerate(chunk):
-                mini_max = "mini" + str(max_proc_num)
-                hdr = os.path.join(HDR_FOLDER, each).replace("\\", "/")
-                miniPath = os.path.join(MINI_HDR_FOLDER, each[:-4] + ".jpg").replace("\\", "/")
-                proc_mini = "mini" + str(idx)
-
-                vars()[proc_mini] = subprocess.Popen([oiio, hdr, "--resize", "300x150",
-                                                      "--cpow", "0.454,0.454,0.454,1.0", "-o", miniPath], shell=True)
-
-                try:
-                    vars()[mini_max].wait()
-                except:
-                    pass
-
-            time.sleep(2)
-
-            for idx, each in enumerate(chunk):
-                desel_max = "desel" + str(max_proc_num)
-                miniPath = os.path.join(MINI_HDR_FOLDER, each[:-4] + ".jpg").replace("\\", "/")
-                desel_path = os.path.join(MINI_HDR_FOLDER, "mini_desel",
-                                          each[:-4] + ".jpg").replace("\\", "/")
-
-                proc_desel = "desel" + str(idx)
-
-                vars()[proc_desel] = subprocess.Popen(
-                    [oiio, miniPath, "--cmul", "0.3", "-o", desel_path], shell=True)
-
-                try:
-                    vars()[desel_max].wait()
-                except:
-                    pass
-
-            prog += float(maxNumBake)
-            cmds.progressWindow(edit=True, progress=prog,
-                                status='Baking HDR preview images, please wait. ')
-            time.sleep(0.5)
-
-            progCeil1 = cmds.progressWindow(query=True, progress=True)
-
-            if math.ceil(progCeil1) >= 98:
-                time.sleep(0.5)
-                prog = 0
-                cmds.progressWindow(endProgress=1)
-                break
-
-        cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,
-                            status='Converting textures to TX, please wait.')
-
-        mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True)
-        mtoa_root = os.path.dirname(os.path.dirname(mtoa_plugin))
-        mtoa_maketx = os.path.join(mtoa_root, "bin", "maketx").replace("\\", "/")
 
         for chunk in hdr_chunks:
 
@@ -1100,8 +1092,7 @@ def refHDR(*args):
                 hdr = os.path.join(HDR_FOLDER, each).replace("\\", "/")
                 out = os.path.join(HDR_FOLDER, each[:-4] + ".tx").replace("\\", "/")
                 proc_name = "baketx" + str(idx)
-                vars()[proc_name] = subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect",
-                                                      "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdr, "-o", out], shell=True)
+                vars()[proc_name] = subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdr, "-o", out], shell=True)
                 try:
                     vars()[bake_max].wait()
                 except:
@@ -1109,8 +1100,7 @@ def refHDR(*args):
 
             prog += float(maxNumBake)
 
-            cmds.progressWindow(edit=True, progress=prog,
-                                status='Converting textures to TX, please wait. ')
+            cmds.progressWindow(edit=True, progress=prog,status='Converting textures to TX, please wait. ')
 
             progCeil2 = cmds.progressWindow(query=True, progress=True)
             if math.ceil(progCeil2) >= 98:
@@ -1206,10 +1196,8 @@ def selected_asset(*args):
 
 def bounding(*args):
     asset_sel = selected_asset()
-
     asset_ln = str(len(asset_sel)).zfill(8)
-    asset_shape = cmds.listRelatives(asset_sel, allDescendents=True, shapes=True)
-    asset_trns = cmds.listRelatives(asset_sel, allDescendents=True)
+    asset_shape = cmds.listRelatives(asset_sel, children=True, fullPath=True)
 
     def_box = cmds.polyCube(width=250, height=190, depth=250, createUVs=4, axis=[0, 1, 0], ch=False, name="dkdefaultBox")
     cmds.setAttr("dkdefaultBox.translateY", 95)
@@ -1224,11 +1212,11 @@ def bounding(*args):
 
     cmds.delete("dkdefaultBox")
 
-    asset_box1 = cmds.geomToBBox(asset_trns, combineMesh=True,keepOriginal=True, name="dk_88assetBox_00000001")
+    asset_box1 = cmds.geomToBBox(asset_shape, combineMesh=True,keepOriginal=True, name="dk_88assetBox_00000001")
 
     box_name = "dk_88assetBox_" + str(asset_ln)
 
-    asset_box = cmds.geomToBBox(box_name, combineMesh=True,keepOriginal=True, name="dk_88worldBox_01")
+    asset_box = cmds.geomToBBox(box_name, keepOriginal=True, name="dk_88worldBox_01")
 
     asset_box_bbox = cmds.exactWorldBoundingBox(asset_box)
 
@@ -1907,14 +1895,14 @@ def buildUI():
 
     if len(hdrtx) != 0:
         hdrslide = 1
-        hdrCount = len(hdrtx)
+        hdrCount = len(mini_file)
     else:
         hdrslide = 1
         hdrCount = 1
 
-    if cmds.namespace(exists='dk_Ldv') == True and len(hdrtx) != 0:
+    if cmds.namespace(exists='dk_Ldv') == True and len(mini_file) != 0:
         hdrslide = cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl')
-        hdrCount = len(hdrtx)
+        hdrCount = len(mini_file)
 
     if len(mini_file) != 0:
         mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[0]).replace("\\", "/")
