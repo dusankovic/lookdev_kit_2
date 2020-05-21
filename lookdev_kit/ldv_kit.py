@@ -1212,11 +1212,14 @@ def bounding(*args):
 
     cmds.delete("dkdefaultBox")
 
-    asset_box1 = cmds.geomToBBox(asset_shape, combineMesh=True,keepOriginal=True, name="dk_88assetBox_00000001")
+    asset_box1 = cmds.geomToBBox(asset_shape, single=True,keepOriginal=True, name="dk_88assetBox_00000001")
 
-    box_name = "dk_88assetBox_" + str(asset_ln)
+    try:
+        box_combine = cmds.polyUnite("dk_88assetBox_*", name = "dk_88assetBox_combined", mergeUVSets = True, constructionHistory = False )
+    except:
+        cmds.rename("dk_88assetBox_00000001", "dk_88assetBox_combined")
 
-    asset_box = cmds.geomToBBox(box_name, keepOriginal=True, name="dk_88worldBox_01")
+    asset_box = cmds.geomToBBox("dk_88assetBox_combined", keepOriginal=True, name="dk_88worldBox_01")
 
     asset_box_bbox = cmds.exactWorldBoundingBox(asset_box)
 
