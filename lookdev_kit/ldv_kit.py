@@ -327,6 +327,10 @@ def createLDV(*args):
     cmds.setAttr(cam[0] + ".translateZ", cam_pos[2])
     cmds.delete(world_loc)
 
+    pos_diff = 560 - cam_pos[2]
+
+    cmds.setAttr(crvGrp + ".translateZ", pos_diff)
+
     try:
         cmds.viewLookAt(cam[1], pos=asset_center)
     except:
