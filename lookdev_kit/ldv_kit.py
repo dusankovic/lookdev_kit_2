@@ -272,6 +272,7 @@ def createLDV(*args):
 
     cmds.makeIdentity(crvGrp, translate=True, apply=True)
     cmds.setAttr(crvGrp + ".translateY", -6.7)
+    cmds.setAttr(crvGrp + ".translateZ", -18.4)
     cmds.makeIdentity(crvGrp, translate=True, apply=True)
 
     cmds.setAttr(crvGrp + ".translateX", keyable=False, lock=True)
@@ -289,10 +290,6 @@ def createLDV(*args):
 
     cmds.parent(ldvCtrl, LDVgroup)
     cmds.scaleConstraint(ldvCtrl, LDVctrlgroup, maintainOffset=True, weight=1)
-
-    #cmds.setAttr(ldvCtrl + ".scaleX", scale_factor)
-    #cmds.setAttr(ldvCtrl + ".scaleY", scale_factor)
-    #cmds.setAttr(ldvCtrl + ".scaleZ", scale_factor)
 
     focal()
     fstop()
@@ -314,7 +311,23 @@ def createLDV(*args):
         cmds.setAttr(each + ".rotateZ", keyable=False, lock=True)
 
     #camera autoframe move
+    auto_frame(cam, scale_factor, crvGrp, bounding_out[3], asset_center)
 
+    cmds.namespace(set=':')
+
+    try:
+        cmds.select(asset)
+        turntableButton()
+    except:
+        pass
+
+    cmds.select(clear=True)
+
+
+def auto_frame(camera, scale, curves, bbox, asset_center):
+    cam = camera
+    scale_factor = scale
+    crv = curves
     world_loc = cmds.spaceLocator(name="world_loc", position=[0, 0, 0])
     cam_loc = cmds.spaceLocator(name="cam_loc", position=[0, 200, 565])
     cmds.parent(cam_loc, world_loc)
@@ -327,24 +340,19 @@ def createLDV(*args):
     cmds.setAttr(cam[0] + ".translateZ", cam_pos[2])
     cmds.delete(world_loc)
 
-    pos_diff = 560 - cam_pos[2]
+    try:
+        zmax = bbox * 0.6
+    except:
+        zmax = 0
 
-    cmds.setAttr(crvGrp + ".translateZ", pos_diff)
+    pos_diff = 565 - cam_pos[2] + zmax
+
+    cmds.setAttr(crv + ".translateZ", pos_diff)
 
     try:
         cmds.viewLookAt(cam[1], pos=asset_center)
     except:
         pass
-
-    cmds.namespace(set=':')
-
-    try:
-        cmds.select(asset)
-        turntableButton()
-    except:
-        pass
-
-    cmds.select(clear=True)
 
 
 def removeLDV(*args):
@@ -1270,7 +1278,7 @@ def bounding(*args):
 
     cmds.select(asset_sel)
 
-    return (scale_factor, asset_center, asset_sel)
+    return (scale_factor, asset_center, asset_sel, zmax)
 
 
 def turntableButton(*args):
