@@ -63,11 +63,16 @@ def createLDV(*args):
         scale_factor = bounding_out[0]
         asset_center = bounding_out[1]
         asset = bounding_out[2]
+        box = bounding_out[3]
     except:
+        box = 0
         scale_factor = 1
+        asset_center = 0
 
     cmds.namespace(add='dk_Ldv')
     cmds.namespace(set=':dk_Ldv')
+
+    distTool = cmds.distanceDimension(startPoint=[0, 0, 550], endPoint=[0, 0, 0])
 
     LDVgroup = cmds.group(name='lookdevkit_grp', empty=True)
     cmds.setAttr(LDVgroup + ".useOutlinerColor", 1)
@@ -94,6 +99,9 @@ def createLDV(*args):
     cmds.addAttr(skydome_shape[0], longName="ldv_ver", dataType="string")
     cmds.setAttr(skydome_shape[0] + ".ldv_ver", LDV_VER, type="string")
 
+    cmds.addAttr(skydome_shape[0], longName="scale_factor", dataType="string")
+    cmds.setAttr(skydome_shape[0] + ".scale_factor", scale_factor, type="string")
+
     cmds.addAttr(skydome_shape[0], longName="turntable_fr", dataType="string")
     tr_fr = cmds.optionMenu('autott', value=True, query=True)
     cmds.setAttr(skydome_shape[0] + ".turntable_fr", tr_fr, type="string")
@@ -117,7 +125,12 @@ def createLDV(*args):
     cmds.setAttr('dk_Ldv:aiSkydomeShape.exposure', value)
     cmds.undoInfo(swf=True)
 
-    cmds.setAttr('dk_Ldv:aiSkydomeShape.skyRadius', 5000)
+    if scale_factor <= 1:
+        obj_factor = 1 
+    if scale_factor > 1:
+        obj_factor = scale_factor
+
+    cmds.setAttr('dk_Ldv:aiSkydomeShape.skyRadius', 5000 * obj_factor)
     cmds.setAttr('dk_Ldv:aiSkydomeShape.resolution', 2048)
     cmds.setAttr('dk_Ldv:aiSkydome.overrideEnabled', 1)
     cmds.setAttr('dk_Ldv:aiSkydome.overrideDisplayType', 2)
@@ -143,8 +156,7 @@ def createLDV(*args):
 
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
 
-    shCatchMain = cmds.polyPlane(n='shadowCatcher', w=4000, h=4000, sx=1,
-                                 sy=1, cuv=2, ax=[0, 1, 0], ch=False)
+    shCatchMain = cmds.polyPlane(n='shadowCatcher', w=4000 * obj_factor, h=4000 * obj_factor, sx=1, sy=1, cuv=2, ax=[0, 1, 0], ch=False)
     shCatch = shCatchMain[0]
     cmds.addAttr(shCatchMain, longName="shadowChckVis", attributeType="bool")
     shadowStr = cmds.shadingNode('aiShadowMatte', asShader=True)
@@ -190,9 +202,7 @@ def createLDV(*args):
     cmds.setAttr(cam[0] + ".renderable", 1)
 
     cmds.setAttr(cam[0] + ".displayGateMaskColor", 0.1, 0.1, 0.1, type="double3")
-    cmds.setAttr(cam[0] + ".translateY", 195)
     cmds.setAttr(cam[0] + ".translateZ", 550)
-    cmds.setAttr(cam[0] + ".rotateX", -10)
     cmds.setAttr(cam[0] + ".locatorScale", 15)
     cmds.setAttr(cam[0] + ".displayCameraFrustum", 1)
 
@@ -210,17 +220,16 @@ def createLDV(*args):
 
     # focus plane
     focus_text_import = os.path.join(TEX_FOLDER, "ldv_fcs_font.ma").replace("\\", "/")
-    fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[
-                          (-200, -8, 0), (-200, 218, 0), (200, 218, 0), (200, -8, 0), (-200, -8, 0)])
-    #fcsText = cmds.textCurves(name="focusPlane_txt", object=True, text="FOCUS PLANE" )
+    fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[(-198, -111.5, 0), (-198, 111.5, 0), (198, 111.5, 0), (198, -111.5, 0), (-198, -111.5, 0)])
     fcsText = cmds.file( focus_text_import, i=True )
     fcsGrp = cmds.ls("dk_Ldv:focusPlane_txtShape", long=True)
 
+    # text position
     cmds.setAttr(fcsGrp[0] + ".scaleX", 12)
     cmds.setAttr(fcsGrp[0] + ".scaleY", 12)
     cmds.setAttr(fcsGrp[0] + ".scaleZ", 12)
-    cmds.setAttr(fcsGrp[0] + ".translateX", 126.5)
-    cmds.setAttr(fcsGrp[0] + ".translateY", 220)
+    cmds.setAttr(fcsGrp[0] + ".translateX", 120)
+    cmds.setAttr(fcsGrp[0] + ".translateY", 112)
     cmds.makeIdentity(fcsGrp, translate=True, scale=True, apply=True)
 
     fcsSel = cmds.listRelatives(fcsGrp, allDescendents=True, fullPath=True)
@@ -236,13 +245,10 @@ def createLDV(*args):
     crvGrp = cmds.group(name="fcsCrv", empty=True)
     crvGrpa = cmds.listRelatives(crvGrp, shapes=True)
 
-    cmds.move(0, 105, 0, crvGrp + ".scalePivot", crvGrp + ".rotatePivot", absolute=True)
     cmds.parent(fcsSelMain, crvGrp, shape=True, relative=True)
     cmds.delete("dk_Ldv:focusPlane_txtShape")
     cmds.delete(fcsPlane)
-    cmds.setAttr(crvGrp + ".rotateX", -10)
 
-    distTool = cmds.distanceDimension(startPoint=[0, 195, 550], endPoint=[0, 105, 0])
     distSel = cmds.ls(distTool)
     distShape = distSel[0]
     camShape = cam[0]
@@ -251,8 +257,8 @@ def createLDV(*args):
     for each in distLoc:
         cmds.setAttr(each + ".visibility", 0)
 
-    cmds.parent(distLoc[1], crvGrp)
-    cmds.parent(distLoc[0], cam[0])
+    cmds.parent("dk_Ldv:locator2", crvGrp)
+    cmds.parent("dk_Ldv:locator1", cam[0])
 
     cmds.connectAttr(distShape + ".distance", camShape + ".aiFocusDistance", force=True)
 
@@ -271,8 +277,7 @@ def createLDV(*args):
     cmds.setAttr("dk_Ldv:fcsCrv.visibility", camBox)
 
     cmds.makeIdentity(crvGrp, translate=True, apply=True)
-    cmds.setAttr(crvGrp + ".translateY", -6.7)
-    cmds.setAttr(crvGrp + ".translateZ", -18.4)
+    cmds.setAttr(crvGrp + ".translateZ", -25.563)
     cmds.makeIdentity(crvGrp, translate=True, apply=True)
 
     cmds.setAttr(crvGrp + ".translateX", keyable=False, lock=True)
@@ -285,8 +290,8 @@ def createLDV(*args):
     cmds.setAttr(crvGrp + ".scaleZ", keyable=False)
 
     # create global ctrl
-    ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[
-                         (-2050, 0, 2050), (-2050, 0, -2050), (2050, 0, -2050), (2050, 0, 2050), (-2050, 0, 2050)])
+    ctrl_num = 2050 * obj_factor
+    ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[(-ctrl_num, 0, ctrl_num), (-ctrl_num, 0, -ctrl_num), (ctrl_num, 0, -ctrl_num), (ctrl_num, 0, ctrl_num), (-ctrl_num, 0, ctrl_num)])
 
     cmds.parent(ldvCtrl, LDVgroup)
     cmds.scaleConstraint(ldvCtrl, LDVctrlgroup, maintainOffset=True, weight=1)
@@ -311,7 +316,7 @@ def createLDV(*args):
         cmds.setAttr(each + ".rotateZ", keyable=False, lock=True)
 
     #camera autoframe move
-    auto_frame(cam, scale_factor, crvGrp, bounding_out[3], asset_center)
+    auto_frame(cam, scale_factor, crvGrp, box, asset_center)
 
     cmds.namespace(set=':')
 
@@ -328,6 +333,8 @@ def auto_frame(camera, scale, curves, bbox, asset_center):
     cam = camera
     scale_factor = scale
     crv = curves
+    crv_pos_bef = cmds.pointPosition(crv, world = True)
+
     world_loc = cmds.spaceLocator(name="world_loc", position=[0, 0, 0])
     cam_loc = cmds.spaceLocator(name="cam_loc", position=[0, 200, 565])
     cmds.parent(cam_loc, world_loc)
@@ -340,14 +347,20 @@ def auto_frame(camera, scale, curves, bbox, asset_center):
     cmds.setAttr(cam[0] + ".translateZ", cam_pos[2])
     cmds.delete(world_loc)
 
+    crv_pos_aft = cmds.pointPosition(crv, world = True)
+
     try:
-        zmax = bbox * 0.6
+        zmax = bbox * 0.5
     except:
         zmax = 0
 
-    pos_diff = 565 - cam_pos[2] + zmax
+    focus_diff = (math.sqrt((crv_pos_bef[1] - (crv_pos_aft[1]))**2 + ((crv_pos_bef[2] - (crv_pos_aft[2]))**2))) / 1.04 * 0.99894
 
-    cmds.setAttr(crv + ".translateZ", pos_diff)
+
+    if focus_diff <= 575.563:
+        cmds.setAttr(crv + ".translateZ", focus_diff + zmax)
+    else:
+        cmds.setAttr(crv + ".translateZ", -focus_diff + zmax)
 
     try:
         cmds.viewLookAt(cam[1], pos=asset_center)
@@ -391,6 +404,7 @@ def Macbutton(*args):
 def createMAC(*args):
     cmds.namespace(add='mac')
     cmds.namespace(set=':mac')
+    
     macbeth_data = [
         {
             "row": 1,
@@ -716,8 +730,7 @@ def createMAC(*args):
         cmds.hyperShade(assign=patchBscShdShaded)
 
     # macbeth control curve and constraints
-    macCtrl = cmds.curve(name="Macbeth_ctrl", degree=1, point=[
-                         (-17, -2, 0), (-17, 57, 0), (17, 57, 0), (17, -2, 0), (-17, -2, 0)])
+    macCtrl = cmds.curve(name="Macbeth_ctrl", degree=1, point=[(-17, -2, 0), (-17, 57, 0), (17, 57, 0), (17, -2, 0), (-17, -2, 0)])
     macLoc = cmds.spaceLocator(name="mac_loc", position=[0, 0, 0])
 
     cmds.parent(macCtrl, MACgroup)
@@ -735,9 +748,14 @@ def createMAC(*args):
         scale = cmds.getAttr("dk_Ldv:ldvGlobal_ctrl.scaleX")
         cmds.parentConstraint(macLoc[0], macCtrl, maintainOffset=True, weight=1)
         cmds.setAttr(macLoc[0] + ".scaleX", scale)
-        cmds.setAttr(macCtrl + ".scaleX", scale)
-        cmds.setAttr(macCtrl + ".scaleY", scale)
-        cmds.setAttr(macCtrl + ".scaleZ", scale)
+
+    scale_factor = float(cmds.getAttr("dk_Ldv:aiSkydomeShape.scale_factor"))
+    cmds.setAttr(macLoc[0] + ".scaleX", scale_factor)
+    cmds.setAttr(macLoc[0] + ".scaleY", scale_factor)
+    cmds.setAttr(macLoc[0] + ".scaleZ", scale_factor)
+    cmds.setAttr("mac:Macbeth_ctrl.scaleX", scale_factor)
+    cmds.setAttr("mac:Macbeth_ctrl.scaleY", scale_factor)
+    cmds.setAttr("mac:Macbeth_ctrl.scaleZ", scale_factor)
 
     # lock attr
     MACgrplist = [MACgroup, patchGroupFlat, MACflat, MACctrlGrp, MACshaded,
@@ -967,7 +985,7 @@ def sensor(*args):
             cmds.setAttr("dk_Ldv:fcsCrv.scaleY", 1)
             cmds.setAttr("dk_Ldv:fcsCrv.scaleZ", 1)
         cmds.namespace(set=':dk_Ldv')
-        cmds.expression("dk_Ldv:fcsCrv", alwaysEvaluate=True, string="float $distanceForOne = 557.273;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $lens = {};float $lensOne = 50;float $crop = {};float $ctrlScale = dk_Ldv:ldvGlobal_ctrl.scaleX;float $measureFactor = $measuredDistance / $distanceForOne;float $scale = (($measureFactor / $crop) / ($lens / $lensOne)) / $ctrlScale;dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;".format(focalLng, crop))
+        cmds.expression("dk_Ldv:fcsCrv", alwaysEvaluate=True, string="float $distanceForOne = 550;float $measuredDistance = dk_Ldv:distanceDimensionShape1.distance;float $lens = {};float $lensOne = 50;float $crop = {};float $ctrlScale = dk_Ldv:ldvGlobal_ctrl.scaleX;float $measureFactor = $measuredDistance / $distanceForOne;float $scale = (($measureFactor / $crop) / ($lens / $lensOne)) / $ctrlScale;dk_Ldv:fcsCrv.scaleX = $scale;dk_Ldv:fcsCrv.scaleY = $scale;dk_Ldv:fcsCrv.scaleZ = $scale;".format(focalLng, crop))
         cmds.namespace(set=':')
         time.sleep(0.6)
         cmds.setAttr("dk_Ldv:fcsCrv.translateZ", planeZ1)
@@ -1207,12 +1225,23 @@ def selected_asset(*args):
 
 
 def bounding(*args):
+    sensorOpt = cmds.optionMenu('sensor', value=True, query=True)
+    if sensorOpt == "Full Frame":
+        crop = 1
+    if sensorOpt == "APS-C":
+        crop = 1.5
+    if sensorOpt == "Micro 4/3":
+        crop = 2
+    lens_factor = (50/float(cmds.optionMenu('focal', value=True, query=True)[:-2])) / crop
     asset_sel = selected_asset()
     asset_ln = str(len(asset_sel)).zfill(8)
     asset_shape = cmds.listRelatives(asset_sel, children=True, fullPath=True)
 
-    def_box = cmds.polyCube(width=250, height=190, depth=250, createUVs=4, axis=[0, 1, 0], ch=False, name="dkdefaultBox")
+    def_box = cmds.polyCube(width=350, height=190, depth=300, createUVs=4, axis=[0, 1, 0], ch=False, name="dkdefaultBox")
     cmds.setAttr("dkdefaultBox.translateY", 95)
+    cmds.setAttr("dkdefaultBox.scaleX", lens_factor)
+    cmds.setAttr("dkdefaultBox.scaleY", lens_factor)
+    cmds.setAttr("dkdefaultBox.scaleZ", lens_factor)
 
     def_box_bbox = cmds.exactWorldBoundingBox(def_box)
     def_box_xmin = abs(def_box_bbox[0])
