@@ -64,7 +64,7 @@ def createLDV(*args):
         asset_center = bounding_out[1]
         asset = bounding_out[2]
         box = bounding_out[3]
-        y_neg = -bounding_out[4]
+        y_neg = bounding_out[4]
     except:
         box = 0
         scale_factor = 1
@@ -269,7 +269,6 @@ def createLDV(*args):
     cmds.delete("dk_Ldv:distanceDimension1")
     cmds.parent(crvGrp, cam[0])
     cmds.parent(cam[0], "dk_Ldv:lookdev_ctrl_grp")
-
     cmds.setAttr(cam[0] + ".translateY", 200)
     cmds.setAttr(cam[0] + ".translateZ", 565)
     cmds.setAttr(cam[0] + ".rotateX", -11)
@@ -320,7 +319,7 @@ def createLDV(*args):
         cmds.setAttr(each + ".rotateZ", keyable=False, lock=True)
 
     #camera autoframe move
-    auto_frame(cam, scale_factor, crvGrp, box, asset_center)
+    auto_frame(cam, scale_factor, crvGrp, box, asset_center, y_neg)
 
     cmds.namespace(set=':')
 
@@ -333,13 +332,14 @@ def createLDV(*args):
     cmds.select(clear=True)
 
 
-def auto_frame(camera, scale, curves, bbox, asset_center):
+def auto_frame(camera, scale, curves, bbox, asset_center,y_neg):
     cam = camera
     scale_factor = scale
     crv = curves
     crv_pos_bef = cmds.pointPosition(crv, world = True)
 
     world_loc = cmds.spaceLocator(name="world_loc", position=[0, 0, 0])
+    cmds.setAttr(world_loc[0] + ".translateY", y_neg/2)
     cam_loc = cmds.spaceLocator(name="cam_loc", position=[0, 200, 565])
     cmds.parent(cam_loc, world_loc)
     cmds.setAttr(world_loc[0] + ".scaleX", scale_factor)
@@ -752,8 +752,10 @@ def createMAC(*args):
         scale = cmds.getAttr("dk_Ldv:ldvGlobal_ctrl.scaleX")
         cmds.parentConstraint(macLoc[0], macCtrl, maintainOffset=True, weight=1)
         cmds.setAttr(macLoc[0] + ".scaleX", scale)
-
-    scale_factor = float(cmds.getAttr("dk_Ldv:aiSkydomeShape.scale_factor"))
+    try:
+        scale_factor = float(cmds.getAttr("dk_Ldv:aiSkydomeShape.scale_factor"))
+    except:
+        scale_factor = 1
     cmds.setAttr(macLoc[0] + ".scaleX", scale_factor)
     cmds.setAttr(macLoc[0] + ".scaleY", scale_factor)
     cmds.setAttr(macLoc[0] + ".scaleZ", scale_factor)
@@ -1241,22 +1243,6 @@ def bounding(*args):
     asset_ln = str(len(asset_sel)).zfill(8)
     asset_shape = cmds.listRelatives(asset_sel, children=True, fullPath=True)
 
-    def_box = cmds.polyCube(width=350, height=190, depth=300, createUVs=4, axis=[0, 1, 0], ch=False, name="dkdefaultBox")
-    cmds.setAttr("dkdefaultBox.translateY", 95)
-    cmds.setAttr("dkdefaultBox.scaleX", lens_factor)
-    cmds.setAttr("dkdefaultBox.scaleY", lens_factor)
-    cmds.setAttr("dkdefaultBox.scaleZ", lens_factor)
-
-    def_box_bbox = cmds.exactWorldBoundingBox(def_box)
-    def_box_xmin = abs(def_box_bbox[0])
-    def_box_ymin = abs(def_box_bbox[1])
-    def_box_zmin = abs(def_box_bbox[2])
-    def_box_xmax = abs(def_box_bbox[3])
-    def_box_ymax = abs(def_box_bbox[4])
-    def_box_zmax = abs(def_box_bbox[5])
-
-    cmds.delete("dkdefaultBox")
-
     asset_box1 = cmds.geomToBBox(asset_shape, single=True,keepOriginal=True, name="dk_88assetBox_00000001")
 
     try:
@@ -1270,44 +1256,70 @@ def bounding(*args):
 
     asset_center = cmds.objectCenter(asset_box)
 
-    xmin = abs(asset_box_bbox[0])
+    xmin = asset_box_bbox[0]
     ymin = asset_box_bbox[1]
-    zmin = abs(asset_box_bbox[2])
-    xmax = abs(asset_box_bbox[3])
-    ymax = abs(asset_box_bbox[4])
-    zmax = abs(asset_box_bbox[5])
+    zmin = asset_box_bbox[2]
+    xmax = asset_box_bbox[3]
+    ymax = asset_box_bbox[4]
+    zmax = asset_box_bbox[5]
+
+    print ymax
 
     cmds.delete("dk_88assetBox_*")
     cmds.delete("dk_88worldBox_*")
 
+    def_box = cmds.polyCube(width=350, height=190, depth=300, createUVs=4, axis=[0, 1, 0], ch=False, name="dkdefaultBox")
+    if ymin <= 0:
+        cmds.setAttr(def_box[0] + ".translateY", 95 )
+    if ymin > 0:
+        cmds.setAttr(def_box[0] + ".translateY", 95 )
+    cmds.setAttr("dkdefaultBox.scaleX", lens_factor)
+    cmds.setAttr("dkdefaultBox.scaleY", lens_factor)
+    cmds.setAttr("dkdefaultBox.scaleZ", lens_factor)
+
+    def_box_bbox = cmds.exactWorldBoundingBox(def_box)
+    def_box_xmin = def_box_bbox[0]
+    def_box_ymin = def_box_bbox[1]
+    def_box_zmin = def_box_bbox[2]
+    def_box_xmax = def_box_bbox[3]
+    def_box_ymax = def_box_bbox[4]
+    def_box_zmax = def_box_bbox[5]
+
+    print def_box_ymax
+
+    cmds.delete("dkdefaultBox")
+
     try:
-        xmin_factor = float(xmin) / float(def_box_xmin)
+        xmin_factor = float(abs(xmin)) / float(abs(def_box_xmin))
     except:
         xmin_factor = 0
     try:
-        ymin_factor = float(abs(ymin)) / float(def_box_ymin)
+        ymin_factor = float(abs(ymin)) / float(abs(def_box_ymin))
     except:
         ymin_factor = 0
     try:
-        zmin_factor = float(zmin) / float(def_box_zmin)
+        zmin_factor = float(abs(zmin)) / float(abs(def_box_zmin))
     except:
         zmin_factor = 0
     try:
-        xmax_factor = float(xmax) / float(def_box_xmax)
+        xmax_factor = float(abs(xmax)) / float(abs(def_box_xmax))
     except:
         xmax_factor = 0
     try:
-        ymax_factor = float(ymax) / float(def_box_ymax)
+        ymax_factor = float(abs(ymax)) / float(abs(def_box_ymax))
     except:
         ymax_factor = 0
     try:
-        zmax_factor = float(zmax) / float(def_box_zmax)
+        zmax_factor = float(abs(zmax)) / float(abs(def_box_zmax))
     except:
         zmax_factor = 0
 
-    factor = [xmin_factor, ymin_factor, zmin_factor, xmax_factor, ymax_factor, zmax_factor]
+    factor = [abs(xmin_factor), abs(ymin_factor), abs(zmin_factor), abs(xmax_factor), abs(ymax_factor), abs(zmax_factor)]
+    for f in factor:
+        print f
 
     scale_factor = max(factor)
+    print scale_factor
 
     cmds.select(asset_sel)
 
