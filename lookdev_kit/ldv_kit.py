@@ -339,17 +339,20 @@ def auto_frame(camera, scale, curves, bbox, asset_center,y_neg):
     crv_pos_bef = cmds.pointPosition(crv, world = True)
 
     world_loc = cmds.spaceLocator(name="world_loc", position=[0, 0, 0])
-    cmds.setAttr(world_loc[0] + ".translateY", y_neg/2)
     cam_loc = cmds.spaceLocator(name="cam_loc", position=[0, 200, 565])
     cmds.parent(cam_loc, world_loc)
     cmds.setAttr(world_loc[0] + ".scaleX", scale_factor)
     cmds.setAttr(world_loc[0] + ".scaleY", scale_factor)
     cmds.setAttr(world_loc[0] + ".scaleZ", scale_factor)
+    cmds.setAttr(world_loc[0] + ".translateY", y_neg)
     cam_pos = cmds.pointPosition(cam_loc, world = True)
-    cmds.setAttr(cam[0] + ".translateX", cam_pos[0])
-    cmds.setAttr(cam[0] + ".translateY", cam_pos[1])
+    print cam_pos
+    cmds.setAttr(cam[0] + ".translateX", cam_pos[0] + asset_center[0])
+    cmds.setAttr(cam[0] + ".translateY", cam_pos[1] + asset_center[1])
     cmds.setAttr(cam[0] + ".translateZ", cam_pos[2])
     cmds.delete(world_loc)
+
+    #distanca izmedju asset centra i kamere u onda oduzeti ili dodati na focus point
 
     crv_pos_aft = cmds.pointPosition(crv, world = True)
 
@@ -358,7 +361,7 @@ def auto_frame(camera, scale, curves, bbox, asset_center,y_neg):
     except:
         zmax = 0
 
-    focus_diff = (math.sqrt((crv_pos_bef[1] - (crv_pos_aft[1]))**2 + ((crv_pos_bef[2] - (crv_pos_aft[2]))**2))) / 1.04 * 0.99894
+    focus_diff = (math.sqrt((crv_pos_bef[1] - (crv_pos_aft[1]))**2 + ((crv_pos_bef[2] - (crv_pos_aft[2]))**2))) / 1.04 * 0.99849701152
 
 
     if focus_diff <= 575.563:
@@ -1263,16 +1266,16 @@ def bounding(*args):
     ymax = asset_box_bbox[4]
     zmax = asset_box_bbox[5]
 
-    print ymax
+    x_size = xmax - xmin
+    y_size = ymax - ymin
+    z_size = zmax - zmin
 
     cmds.delete("dk_88assetBox_*")
     cmds.delete("dk_88worldBox_*")
 
-    def_box = cmds.polyCube(width=350, height=190, depth=300, createUVs=4, axis=[0, 1, 0], ch=False, name="dkdefaultBox")
-    if ymin <= 0:
-        cmds.setAttr(def_box[0] + ".translateY", 95 )
-    if ymin > 0:
-        cmds.setAttr(def_box[0] + ".translateY", 95 )
+    def_box = cmds.polyCube(width=350, height=200, depth=200, createUVs=4, axis=[0, 1, 0], ch=False, name="dkdefaultBox")
+    cmds.setAttr(def_box[0] + ".translateY", 100 )
+
     cmds.setAttr("dkdefaultBox.scaleX", lens_factor)
     cmds.setAttr("dkdefaultBox.scaleY", lens_factor)
     cmds.setAttr("dkdefaultBox.scaleZ", lens_factor)
@@ -1285,36 +1288,26 @@ def bounding(*args):
     def_box_ymax = def_box_bbox[4]
     def_box_zmax = def_box_bbox[5]
 
-    print def_box_ymax
+    def_box_x_size = def_box_xmax - def_box_xmin
+    def_box_y_size = def_box_ymax - def_box_ymin
+    def_box_z_size = def_box_zmax - def_box_zmin
 
     cmds.delete("dkdefaultBox")
 
     try:
-        xmin_factor = float(abs(xmin)) / float(abs(def_box_xmin))
+        x_factor = float(x_size) / float(def_box_x_size)
     except:
-        xmin_factor = 0
+        x_factor = 0
     try:
-        ymin_factor = float(abs(ymin)) / float(abs(def_box_ymin))
+        y_factor = float(y_size) / float(def_box_y_size)
     except:
-        ymin_factor = 0
+        y_factor = 0
     try:
-        zmin_factor = float(abs(zmin)) / float(abs(def_box_zmin))
+        z_factor = float(z_size) / float(def_box_z_size)
     except:
-        zmin_factor = 0
-    try:
-        xmax_factor = float(abs(xmax)) / float(abs(def_box_xmax))
-    except:
-        xmax_factor = 0
-    try:
-        ymax_factor = float(abs(ymax)) / float(abs(def_box_ymax))
-    except:
-        ymax_factor = 0
-    try:
-        zmax_factor = float(abs(zmax)) / float(abs(def_box_zmax))
-    except:
-        zmax_factor = 0
+        z_factor = 0
 
-    factor = [abs(xmin_factor), abs(ymin_factor), abs(zmin_factor), abs(xmax_factor), abs(ymax_factor), abs(zmax_factor)]
+    factor = [abs(x_factor), abs(y_factor), abs(z_factor)]
     for f in factor:
         print f
 
