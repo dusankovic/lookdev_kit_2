@@ -1,10 +1,10 @@
 # Lookdev kit 2.1 by Dusan Kovic - www.dusankovic.com
-# Special thanks to Aleksandar Kocic - www.aleksandarkocic.com for being great advisor on this project
+# Special thanks to Aleksandar Kocic - www.aleksandarkocic.com - for being great advisor on this project
+# Also, thanks to Arvid Schneider - arvidschneider.com - for reporting a lot of stuff and making Lookdev Kit a better tool
 
 # So you wanted to check my code! Before you go on, let me quote my TD friend Aleksandar:
 # "Your code is crap, but it works... more or less"
 # Remmeber those words while you read the rest of the code...
-# test
 
 import maya.cmds as cmds
 import maya.mel as mel
@@ -64,10 +64,12 @@ def createLDV(*args):
         asset_center = bounding_out[1]
         asset = bounding_out[2]
         box = bounding_out[3]
+        y_neg = -bounding_out[4]
     except:
         box = 0
         scale_factor = 1
         asset_center = 0
+        y_neg = 0
 
     cmds.namespace(add='dk_Ldv')
     cmds.namespace(set=':dk_Ldv')
@@ -166,6 +168,7 @@ def createLDV(*args):
     cmds.parent(shCatch, LDVctrlgroup)
     cmds.setAttr(shCatch + ".overrideEnabled", 1)
     cmds.setAttr(shCatch + ".overrideDisplayType", 2)
+    cmds.setAttr(shCatch + ".translateY", y_neg)
 
     # read shadow matte checkbox
     shCatchBox = cmds.checkBox("shMatte", query=True, value=True)
@@ -292,6 +295,7 @@ def createLDV(*args):
     # create global ctrl
     ctrl_num = 2050 * obj_factor
     ldvCtrl = cmds.curve(name="ldvGlobal_ctrl", degree=1, point=[(-ctrl_num, 0, ctrl_num), (-ctrl_num, 0, -ctrl_num), (ctrl_num, 0, -ctrl_num), (ctrl_num, 0, ctrl_num), (-ctrl_num, 0, ctrl_num)])
+    cmds.setAttr(ldvCtrl + ".translateY", y_neg)
 
     cmds.parent(ldvCtrl, LDVgroup)
     cmds.scaleConstraint(ldvCtrl, LDVctrlgroup, maintainOffset=True, weight=1)
@@ -1307,7 +1311,7 @@ def bounding(*args):
 
     cmds.select(asset_sel)
 
-    return (scale_factor, asset_center, asset_sel, zmax)
+    return (scale_factor, asset_center, asset_sel, zmax, ymin)
 
 
 def turntableButton(*args):
