@@ -1271,7 +1271,7 @@ def bounding(*args):
     asset_center = cmds.objectCenter(asset_box)
 
     xmin = abs(asset_box_bbox[0])
-    ymin = abs(asset_box_bbox[1])
+    ymin = asset_box_bbox[1]
     zmin = abs(asset_box_bbox[2])
     xmax = abs(asset_box_bbox[3])
     ymax = abs(asset_box_bbox[4])
@@ -1285,7 +1285,7 @@ def bounding(*args):
     except:
         xmin_factor = 0
     try:
-        ymin_factor = float(ymin) / float(def_box_ymin)
+        ymin_factor = float(abs(ymin)) / float(def_box_ymin)
     except:
         ymin_factor = 0
     try:
