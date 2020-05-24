@@ -346,13 +346,10 @@ def auto_frame(camera, scale, curves, bbox, asset_center,y_neg):
     cmds.setAttr(world_loc[0] + ".scaleZ", scale_factor)
     cmds.setAttr(world_loc[0] + ".translateY", y_neg)
     cam_pos = cmds.pointPosition(cam_loc, world = True)
-    print cam_pos
-    cmds.setAttr(cam[0] + ".translateX", cam_pos[0] + asset_center[0])
-    cmds.setAttr(cam[0] + ".translateY", cam_pos[1] + asset_center[1])
+    cmds.setAttr(cam[0] + ".translateX", cam_pos[0])
+    cmds.setAttr(cam[0] + ".translateY", cam_pos[1])
     cmds.setAttr(cam[0] + ".translateZ", cam_pos[2])
     cmds.delete(world_loc)
-
-    #distanca izmedju asset centra i kamere u onda oduzeti ili dodati na focus point
 
     crv_pos_aft = cmds.pointPosition(crv, world = True)
 
@@ -361,7 +358,8 @@ def auto_frame(camera, scale, curves, bbox, asset_center,y_neg):
     except:
         zmax = 0
 
-    focus_diff = (math.sqrt((crv_pos_bef[1] - (crv_pos_aft[1]))**2 + ((crv_pos_bef[2] - (crv_pos_aft[2]))**2))) / 1.04 * 0.99849701152
+    cam_ass_dist = math.sqrt((cam_pos[2] - asset_center[2])**2 + (cam_pos[1] - asset_center[1])**2)
+    focus_diff = 575.563 - cam_ass_dist
 
 
     if focus_diff <= 575.563:
@@ -1049,8 +1047,7 @@ def refHDR(*args):
     oiio = os.path.join(OIIO_FOLDER, "oiiotool.exe").replace("\\", "/")
     prog = 0
 
-    dialog = cmds.confirmDialog(title=("Lookdev Kit {} - Rebuild").format(LDV_VER), message="This will update all HDR preview images and .tx files. Please wait.",
-                                button=["Yes", "No"], cancelButton="No", dismissString="No")
+    dialog = cmds.confirmDialog(title=("Lookdev Kit {} - Rebuild").format(LDV_VER), message="This will update all HDR preview images and .tx files. Please wait.",button=["Yes", "No"], cancelButton="No", dismissString="No")
     if len(miniList) == 0 and len(hdrList) == 0:
         cmds.warning("HDR folder is empty")
         return
@@ -1079,23 +1076,24 @@ def refHDR(*args):
             deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             os.remove(deltx)
 
-        cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,
-                            status='Baking HDR preview images, please wait.')
+        cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,status='Baking HDR preview images, please wait.')
 
-        for each in hdrList:
-            hdrPath = os.path.join(HDR_FOLDER, each).replace("\\", "/")
-            base, ext = os.path.splitext(each)
-            extJpg = base + ".jpg"
-            miniPath = os.path.join(MINI_HDR_FOLDER, extJpg).replace("\\", "/")
-            desel_path = os.path.join(MINI_HDR_FOLDER, "mini_desel", extJpg).replace("\\", "/")
-            numhdr = len(hdrList)
-            maxNumBake = 100/float(numhdr)
+        n = cmds.threadCount(n=True, query=True)-1
 
-            oiio_convert = subprocess.Popen([oiio, hdrPath, "--resize", "300x150", "--cpow", "0.454,0.454,0.454,1.0", "-o", miniPath], shell=True)
-            oiio_convert.wait()
+        hdr_chunks = [hdrList[i:i + n] for i in xrange(0, len(hdrList), n)]
+        maxNumBake = 100/float(len(hdr_chunks))
 
-            oiio_desel = subprocess.Popen([oiio, miniPath, "--cmul", "0.3", "-o", desel_path], shell=True)
-            oiio_desel.wait()
+        # JPG CONVERSION
+        for chunk in hdr_chunks:
+            cmd_list_jpg = [[oiio, os.path.join(HDR_FOLDER, file).replace("\\", "/"), "--resize", "300x150", "--cpow", "0.454,0.454,0.454,1.0", "-o", os.path.join(MINI_HDR_FOLDER, file[:-4] + ".jpg").replace("\\", "/")] for file in chunk]
+            cmd_list_desel = [[oiio, os.path.join(HDR_FOLDER, file), "--resize", "300x150", "--cpow", "0.454,0.454,0.454,1.0", "--cmul", "0.3", "-o", os.path.join(MINI_HDR_FOLDER, "mini_desel", file[:-4] + ".jpg").replace("\\", "/")] for file in chunk]
+            
+            proc_list_jpg = [subprocess.Popen(cmd, shell=True) for cmd in cmd_list_jpg]
+            proc_list_desel = [subprocess.Popen(cmd, shell=True) for cmd in cmd_list_desel]
+            for proc in proc_list_jpg:
+                proc.wait()
+            for proc in proc_list_desel:
+                proc.wait()
 
             prog += float(maxNumBake)
             cmds.progressWindow(edit=True, progress=prog,status='Baking HDR preview images, please wait. ')
@@ -1109,33 +1107,18 @@ def refHDR(*args):
                 cmds.progressWindow(endProgress=1)
                 break
 
+        #TX CONVERSION
         cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,status='Converting textures to TX, please wait.')
 
         mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True)
         mtoa_root = os.path.dirname(os.path.dirname(mtoa_plugin))
         mtoa_maketx = os.path.join(mtoa_root, "bin", "maketx").replace("\\", "/")
 
-        n = cmds.threadCount(n=True, query=True)/2
-
-        hdr_chunks = [hdrList[i:i + n] for i in xrange(0, len(hdrList), n)]
-        proc_num = len(hdr_chunks)
-
-        maxNumBake = 100/float(proc_num)
-
         for chunk in hdr_chunks:
-
-            max_proc_num = len(chunk) - 1
-
-            for idx, each in enumerate(chunk):
-                bake_max = "baketx" + str(max_proc_num)
-                hdr = os.path.join(HDR_FOLDER, each).replace("\\", "/")
-                out = os.path.join(HDR_FOLDER, each[:-4] + ".tx").replace("\\", "/")
-                proc_name = "baketx" + str(idx)
-                vars()[proc_name] = subprocess.Popen([mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", hdr, "-o", out], shell=True)
-                try:
-                    vars()[bake_max].wait()
-                except:
-                    pass
+            cmd_list = [[mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", os.path.join(HDR_FOLDER, file).replace("\\", "/"), "-o", os.path.join(HDR_FOLDER, file[:-4] + ".tx").replace("\\", "/")] for file in chunk]
+            proc_list = [subprocess.Popen(cmd, shell=True) for cmd in cmd_list]
+            for proc in proc_list:
+                proc.wait()
 
             prog += float(maxNumBake)
 
@@ -1148,8 +1131,6 @@ def refHDR(*args):
                 cmds.progressWindow(endProgress=1)
                 break
 
-        time.sleep(2)
-
         buildUI()
 
     else:
@@ -1160,8 +1141,7 @@ def deletePrevTx(*args):
     hdrtx = hdr_list()[0]
     miniList = hdr_list()[1]
 
-    dialog = cmds.confirmDialog(title=("Lookdev Kit {} - Delete").format(LDV_VER), message="This will delete all HDR preview images and .tx files.",
-                                button=["Yes", "No"], cancelButton="No", dismissString="No")
+    dialog = cmds.confirmDialog(title=("Lookdev Kit {} - Delete").format(LDV_VER), message="This will delete all HDR preview images and .tx files.",button=["Yes", "No"], cancelButton="No", dismissString="No")
 
     if len(miniList) == 0 and len(hdrtx) == 0:
         cmds.warning("No preview images or .tx files. Refresh HDRs")
@@ -1208,8 +1188,7 @@ def objOffset(*args):
         objAddedRot = float(objRot) + float(value)
         cmds.setAttr("dk_turn:obj_tt_Offloc.rotateY", objAddedRot)
         cmds.setAttr("dk_turn:obj_tt_Offloc.objOffset", value)
-        cmds.parentConstraint(
-            "dk_turn:obj_tt_loc", "dk_turn:obj_tt_Offloc_parentConstraint1", edit=True, maintainOffset=True)
+        cmds.parentConstraint("dk_turn:obj_tt_loc", "dk_turn:obj_tt_Offloc_parentConstraint1", edit=True, maintainOffset=True)
         cmds.undoInfo(swf=True)
 
 
@@ -1308,11 +1287,8 @@ def bounding(*args):
         z_factor = 0
 
     factor = [abs(x_factor), abs(y_factor), abs(z_factor)]
-    for f in factor:
-        print f
 
     scale_factor = max(factor)
-    print scale_factor
 
     cmds.select(asset_sel)
 
@@ -1643,6 +1619,9 @@ def create_folders(paths):
 
 def batch(*args):
     out_path = cmds.textFieldGrp("rdr_path", query=True, text=True)
+    if len(out_path) == 0:
+        cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, choose an output path.",messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
+        return
     out_rdr = os.path.join(out_path, "rdr_temp").replace("\\", "/")
     ass_path = os.path.join(out_path, "ass_temp").replace("\\", "/")
     py_path = os.path.join(out_path, "py_temp").replace("\\", "/")
@@ -1661,8 +1640,7 @@ def batch(*args):
 
     if batch_mode == "Turntable":
         if cmds.namespace(exists='dk_turn') == False:
-            cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, run a Setup Turntable command.",
-                               messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
+            cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, run a Setup Turntable command.",messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
             return
         else:
             timeMin = cmds.playbackOptions(minTime=True, query=True)
