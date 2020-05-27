@@ -228,7 +228,7 @@ def createLDV(*args):
     cmds.addAttr(cam[0], longName="FstopCam", attributeType="long", min=1, max=fstopCount)
 
     # focus plane
-    focus_text_import = os.path.join(TEX_FOLDER, "ldv_fcs_font.ma").replace("\\", "/")
+    focus_text_import = os.path.join(TEX_FOLDER, "ldv_fcs_font.fbx").replace("\\", "/")
     fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[(-198, -111.5, 0), (-198, 111.5, 0), (198, 111.5, 0), (198, -111.5, 0), (-198, -111.5, 0)])
     fcsText = cmds.file( focus_text_import, i=True )
     fcsGrp = cmds.ls("dk_Ldv:focusPlane_txtShape", long=True)
