@@ -1,4 +1,4 @@
-# Lookdev kit 2.1 by Dusan Kovic - www.dusankovic.com
+# Lookdev kit 2.2 by Dusan Kovic - www.dusankovic.com
 # Special thanks to Aleksandar Kocic - www.aleksandarkocic.com - for being great advisor on this project
 # Also, thanks to Arvid Schneider - arvidschneider.com - for reporting a lot of stuff and making Lookdev Kit a better tool
 
@@ -349,6 +349,10 @@ def auto_frame(camera, scale, curves, bbox, asset_center,y_neg):
     cmds.setAttr(cam[0] + ".translateX", cam_pos[0])
     cmds.setAttr(cam[0] + ".translateY", cam_pos[1])
     cmds.setAttr(cam[0] + ".translateZ", cam_pos[2])
+    try:
+        cmds.setAttr(cam[0] + ".translateX", cam_pos[0] + asset_center[0])
+    except:
+        pass
     cmds.delete(world_loc)
 
     crv_pos_aft = cmds.pointPosition(crv, world = True)
@@ -358,9 +362,11 @@ def auto_frame(camera, scale, curves, bbox, asset_center,y_neg):
     except:
         zmax = 0
 
-    cam_ass_dist = math.sqrt((cam_pos[2] - asset_center[2])**2 + (cam_pos[1] - asset_center[1])**2)
-    focus_diff = 575.563 - cam_ass_dist
-
+    try:
+        cam_ass_dist = math.sqrt((cam_pos[2] - asset_center[2])**2 + (cam_pos[1] - asset_center[1])**2)
+        focus_diff = 575.563 - cam_ass_dist
+    except:
+        focus_diff = 0
 
     if focus_diff <= 575.563:
         cmds.setAttr(crv + ".translateZ", focus_diff + zmax)
@@ -1252,7 +1258,7 @@ def bounding(*args):
     cmds.delete("dk_88assetBox_*")
     cmds.delete("dk_88worldBox_*")
 
-    def_box = cmds.polyCube(width=350, height=200, depth=200, createUVs=4, axis=[0, 1, 0], ch=False, name="dkdefaultBox")
+    def_box = cmds.polyCube(width=350, height=200, depth=220, createUVs=4, axis=[0, 1, 0], ch=False, name="dkdefaultBox")
     cmds.setAttr(def_box[0] + ".translateY", 100 )
 
     cmds.setAttr("dkdefaultBox.scaleX", lens_factor)
@@ -1706,6 +1712,7 @@ def batch(*args):
 
 def txt_write(assets):
     rdr_assets = assets
+    shut_checkbox = cmds.checkBox("shut",query=True, value=True)
 
     out_path = cmds.textFieldGrp("rdr_path", query=True, text=True)
     out_rdr = os.path.join(out_path, "rdr_temp").replace("\\", "/")
@@ -1733,6 +1740,8 @@ def txt_write(assets):
         the_file.write(("RDR_PATH= \'{}\'\n\n").format(out_path))
 
         the_file.write(("rdr_names = {}\n\n").format(rdr_assets))
+
+        the_file.write(("shut_chck= \'{}\'\n\n").format(shut_checkbox))
 
         the_file.write("cur_frame = 0\n")
 
@@ -1767,6 +1776,9 @@ def txt_write(assets):
         the_file.write("os.startfile(path)\n")
 
         the_file.write("maya.standalone.uninitialize()\n")
+
+        the_file.write("if shut_chck == 'True':\n")
+        the_file.write("    os.system('shutdown -s -t 0')\n\n")
 
 
 def batch_choose(*args):
@@ -1841,11 +1853,10 @@ def batch_choose(*args):
 
         cmds.text(label="", height=row_height*0.5)
 
-        cmds.rowLayout(numberOfColumns=2, columnWidth=[
-                       (1, win_width*0.4), (2, win_width*0.4)], columnAttach=[(1, "left", 15), (2, "left", 15)])
-        cmds.button(label="RENDER", width=win_width*0.33,
-                    annotation="Batch render current scene with selected HDRs", command=batch)
+        cmds.rowLayout(numberOfColumns=3, columnWidth=[(1, win_width*0.4), (2, win_width*0.3), (3, win_width*0.3)], columnAttach=[(1, "left", -15), (2, "left", -23), (3, "left", -10)])
+        cmds.button(label="RENDER", width=win_width*0.33,annotation="Batch render current scene with selected HDRs", command=batch)
         cmds.checkBox("sel_all_hdr", label="Select all HDRs", recomputeSize=True, onCommand=select_all_hdrs, offCommand=deselect_all_hdrs)
+        cmds.checkBox("shut", label="Shutdown", recomputeSize=True, value = 0)
         cmds.setParent(main_cl)
 
         cmds.text(label="", height=row_height*0.5)
@@ -2051,7 +2062,7 @@ def buildUI():
     cmds.rowLayout(numberOfColumns=3)
 
     cmds.optionMenu('focal', label=' Focal Length',
-                    width=tmpRowWidth[0], annotation="Choose camera focal length", changeCommand=focal)
+                    width=tmpRowWidth[0], annotation="Choose lens focal length", changeCommand=focal)
     cmds.menuItem(label='14mm', parent='focal')
     cmds.menuItem(label='18mm', parent='focal')
     cmds.menuItem(label='24mm', parent='focal')
@@ -2188,12 +2199,11 @@ def buildUI():
     cmds.text(label='--- Utilities ---', width=win_width, height=row_height)
 
     # checker shader
-    tmpRowWidth = [win_width*0.5, win_width*0.5]
-    cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
-    cmds.button(label='Load Checker Shader',
-                width=tmpRowWidth[0], annotation="Load shader with checker texture - useful for checking UVs", command=checker)
-    cmds.button(label='Remove Checker Shader',
-                width=tmpRowWidth[1], annotation="Remove shader with checker texture", command=remove_checker)
+    tmpRowWidth = [win_width*0.45, win_width*0.45]
+    cmds.rowLayout(numberOfColumns=3)
+    cmds.button(label='Load Checker Shader',width=tmpRowWidth[0], annotation="Load shader with checker texture - useful for checking UVs", command=checker)
+    cmds.button(label='Remove Checker Shader',width=tmpRowWidth[1], annotation="Remove shader with checker texture", command=remove_checker)
+    cmds.button(label='?',width = win_width*0.1,annotation="Go to Lookdev kit documentation web page", command=web)
     cmds.setParent(mainCL)
 
     # Display the window
