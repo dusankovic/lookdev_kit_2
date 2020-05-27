@@ -68,7 +68,7 @@ def createLDV(*args):
     except:
         box = 0
         scale_factor = 1
-        asset_center = 0
+        asset_center = [0,0,0]
         y_neg = 0
 
     cmds.namespace(add='dk_Ldv')
@@ -103,6 +103,12 @@ def createLDV(*args):
 
     cmds.addAttr(skydome_shape[0], longName="scale_factor", dataType="string")
     cmds.setAttr(skydome_shape[0] + ".scale_factor", scale_factor, type="string")
+
+    cmds.addAttr(skydome_shape[0], longName="asset_center", dataType="string")
+    cmds.setAttr(skydome_shape[0] + ".asset_center", asset_center, type="string")
+
+    cmds.addAttr(skydome_shape[0], longName="y_neg", dataType="string")
+    cmds.setAttr(skydome_shape[0] + ".y_neg", y_neg, type="string")
 
     cmds.addAttr(skydome_shape[0], longName="turntable_fr", dataType="string")
     tr_fr = cmds.optionMenu('autott', value=True, query=True)
@@ -763,12 +769,24 @@ def createMAC(*args):
         scale_factor = float(cmds.getAttr("dk_Ldv:aiSkydomeShape.scale_factor"))
     except:
         scale_factor = 1
+    try:
+        get_cent = cmds.getAttr("dk_Ldv:aiSkydomeShape.asset_center")
+        asset_center = list(get_cent.split(","))
+    except:
+        asset_center = [0,0,0]
+    try:
+        y_min = cmds.getAttr("dk_Ldv:aiSkydomeShape.y_neg")
+    except:
+        y_min = 0
+
     cmds.setAttr(macLoc[0] + ".scaleX", scale_factor)
     cmds.setAttr(macLoc[0] + ".scaleY", scale_factor)
     cmds.setAttr(macLoc[0] + ".scaleZ", scale_factor)
     cmds.setAttr("mac:Macbeth_ctrl.scaleX", scale_factor)
     cmds.setAttr("mac:Macbeth_ctrl.scaleY", scale_factor)
     cmds.setAttr("mac:Macbeth_ctrl.scaleZ", scale_factor)
+    cmds.setAttr("mac:mac_loc.translateX", float(asset_center[0][1:]))
+    cmds.setAttr("mac:mac_loc.translateY", float(y_min))
 
     # lock attr
     MACgrplist = [MACgroup, patchGroupFlat, MACflat, MACctrlGrp, MACshaded,
