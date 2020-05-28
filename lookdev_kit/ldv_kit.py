@@ -364,7 +364,10 @@ def auto_frame(camera, scale, curves, bbox, asset_center,y_neg):
     crv_pos_aft = cmds.pointPosition(crv, world = True)
 
     try:
-        zmax = bbox * 0.5
+        if zmax >= 0:
+            zmax = asset_center[2] + bbox * 0.5
+        if zmax < 0:
+            zmax = -asset_center[2] + bbox * 0.5
     except:
         zmax = 0
 
@@ -1628,8 +1631,7 @@ def find_project(*args):
 
 def browse_batch(*args):
     proj = find_project()
-    out_path = cmds.fileDialog2(caption=("Lookdev kit {} - Choose output folder").format(LDV_VER), okCaption="Select Folder",
-                                dialogStyle=2, startingDirectory=proj, fileMode=3)
+    out_path = cmds.fileDialog2(caption=("Lookdev kit {} - Choose output folder").format(LDV_VER), okCaption="Select Folder",dialogStyle=2, startingDirectory=proj, fileMode=3)
     try:
         cmds.textFieldGrp("rdr_path", edit=True, text=out_path[0])
     except:
