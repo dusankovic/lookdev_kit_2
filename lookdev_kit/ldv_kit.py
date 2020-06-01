@@ -23,7 +23,7 @@ MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "mini").repla
 TEX_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages").replace("\\", "/")
 HDR_FOLDER = os.path.join(TEX_FOLDER, "hdr").replace("\\", "/")
 OIIO_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "oiio", "bin").replace("\\", "/")
-LDV_VER = "2.2"
+LDV_VER = "2.3"
 
 # COMMANDS
 
@@ -68,7 +68,7 @@ def createLDV(*args):
     except:
         box = 0
         scale_factor = 1
-        asset_center = [0,0,0]
+        asset_center = [0,90.175,0]
         y_neg = 0
 
     cmds.namespace(add='dk_Ldv')
@@ -154,7 +154,7 @@ def createLDV(*args):
     else:
         new_hdr = os.path.join(HDR_FOLDER, hdr_file[hdr_num-1]).replace("\\", "/")
 
-    cmds.setAttr("dk_Ldv:hdrTextures" + ".fileTextureName", new_hdr, type="string")
+    cmds.setAttr("dk_Ldv:hdrTextures.fileTextureName", new_hdr, type="string")
     cmds.setAttr(imageNode + '.aiAutoTx', 0)
 
     if check_cm_config() == True:
@@ -429,149 +429,150 @@ def createMAC(*args):
         {
             "row": 1,
             "column": 1,
-            "name": "Patch 01 Dark Skin",
+            "name": "Patch_01_Dark_Skin",
             "base_color": (0.13574, 0.08508, 0.05844),
         },
         {
             "row": 1,
             "column": 2,
-            "name": "Patch 02 Light Skin",
+            "name": "Patch_02_Light_Skin",
             "base_color": (0.44727, 0.29639, 0.22607),
         },
         {
             "row": 1,
             "column": 3,
-            "name": "Patch 03 Blue Sky",
+            "name": "Patch_03_Blue_Sky",
             "base_color": (0.14404, 0.18530, 0.30762),
         },
         {
             "row": 1,
             "column": 4,
-            "name": "Patch 04 Foliage",
+            "name": "Patch_04_Foliage",
             "base_color": (0.11804, 0.14587, 0.06372),
         },
         {
             "row": 1,
             "column": 5,
-            "name": "Patch 05 Blue Flower",
+            "name": "Patch_05_Blue_Flower",
             "base_color": (0.23254, 0.21704, 0.39697),
         },
         {
             "row": 1,
             "column": 6,
-            "name": "Patch 06 Bluish Green",
+            "name": "Patch_06_Bluish_Green",
             "base_color": (0.26196, 0.47803, 0.41626),
         },
         {
             "row": 2,
             "column": 1,
-            "name": "Patch 07 Orange",
+            "name": "Patch_07_Orange",
             "base_color": (0.52686, 0.23767, 0.06519),
         },
         {
             "row": 2,
             "column": 2,
-            "name": "Patch 08 Purplish Blue",
+            "name": "Patch_08_Purplish_Blue",
             "base_color": (0.08972, 0.10303, 0.34717),
         },
         {
             "row": 2,
             "column": 3,
-            "name": "Patch 09 Moderate Red",
+            "name": "Patch_09_Moderate_Red",
             "base_color": (0.37646, 0.11469, 0.11987),
         },
         {
             "row": 2,
             "column": 4,
-            "name": "Patch 10 Purple",
+            "name": "Patch_10_Purple",
             "base_color": (0.08813, 0.04837, 0.12622),
         },
         {
             "row": 2,
             "column": 5,
-            "name": "Patch 11 Yellow Green",
+            "name": "Patch_11_Yellow_Green",
             "base_color": (0.37329, 0.47803, 0.10223),
         },
         {
             "row": 2,
             "column": 6,
-            "name": "Patch 12 Orange Yellow",
+            "name": "Patch_12_Orange_Yellow",
             "base_color": (0.59424, 0.38135, 0.07593),
         },
         {
             "row": 3,
             "column": 1,
-            "name": "Patch 13 Blue",
+            "name": "Patch_13_Blue",
             "base_color": (0.04327, 0.04965, 0.25073),
         },
         {
             "row": 3,
             "column": 2,
-            "name": "Patch 14 Green",
+            "name": "Patch_14_Green",
             "base_color": (0.12939, 0.27075, 0.08832),
         },
         {
             "row": 3,
             "column": 3,
-            "name": "Patch 15 Red",
+            "name": "Patch_15_Red",
             "base_color": (0.28809, 0.06543, 0.04855),
         },
         {
             "row": 3,
             "column": 4,
-            "name": "Patch 16 Yellow",
+            "name": "Patch_16_Yellow",
             "base_color": (0.70947, 0.58350, 0.08929),
         },
         {
             "row": 3,
             "column": 5,
-            "name": "Patch 17 Magenta",
+            "name": "Patch_17_Magenta",
             "base_color": (0.36133, 0.11279, 0.26929),
         },
         {
             "row": 3,
             "column": 6,
-            "name": "Patch 18 Cyan",
+            "name": "Patch_18_Cyan",
             "base_color": (0.07062, 0.21643, 0.35132),
         },
         {
             "row": 4,
             "column": 1,
-            "name": "Patch 19 White 9.5 005D",
+            "name": "Patch_19_White_9_5_005D",
             "base_color": (0.87891, 0.88379, 0.84131),
         },
         {
             "row": 4,
             "column": 2,
-            "name": "Patch 20 Neutral 8 023D",
+            "name": "Patch_20_Neutral_8_023D",
             "base_color": (0.58691, 0.59131, 0.58545),
         },
         {
             "row": 4,
             "column": 3,
-            "name": "Patch 21 Neutral 6.5 044D",
+            "name": "Patch_21_Neutral_6_5_044D",
             "base_color": (0.36133, 0.36646, 0.36523),
         },
         {
             "row": 4,
             "column": 4,
-            "name": "Patch 22 Neutral 5 070D",
+            "name": "Patch_22_Neutral_5_070D",
             "base_color": (0.19031, 0.19080, 0.18994),
         },
         {
             "row": 4,
             "column": 5,
-            "name": "Patch 23 Neutral 3.5 1.05D",
+            "name": "Patch_23_Neutral_3_5_1_05D",
             "base_color": (0.08710, 0.08856, 0.08960),
         },
         {
             "row": 4,
             "column": 6,
-            "name": "Patch 24 Black 2 1.5D",
+            "name": "Patch_24_Black_2_1_5D",
             "base_color": (0.03146, 0.03149, 0.03220),
         },
     ]
 
+    cmds.scriptEditorInfo(suppressWarnings=1,si=1,sr=1, ssw=1)
     MACgroup = cmds.group(name='macbeth_spheres_grp', empty=True)
     patchGroupFlat = cmds.group(name='macbethPatchesFlat_grp', empty=True)
     MACflat = cmds.group(name='macbethFlat_grp', empty=True)
@@ -662,10 +663,10 @@ def createMAC(*args):
         cmds.setAttr(each[0] + ".overrideDisplayType", 2)
 
     # PATCHES FLAT
+    
     for each in macbeth_data:
         # geo
-        patch = cmds.polyCube(name=(each["name"] + "Flat"), width=4.2,
-                              height=4.2, depth=0.3, createUVs=4, axis=[0, 1, 0], ch=False)
+        patch = cmds.polyCube(name=(each["name"] + "Flat"), width=4.2,height=4.2, depth=0.3, createUVs=4, axis=[0, 1, 0], ch=False)
         patchDOsel = cmds.ls(patch)
         cmds.setAttr(patch[0] + ".translateX", (each["column"])*mtp)
         cmds.setAttr(patch[0] + ".translateY", (each["row"])*-mtp)
@@ -695,18 +696,21 @@ def createMAC(*args):
         cmds.setAttr(patch[0] + ".rotateY", keyable=False, lock=True)
         cmds.setAttr(patch[0] + ".rotateZ", keyable=False, lock=True)
         cmds.parent(patch[0], patchGroupFlat)
+
         # shader
-        patchBscShd = cmds.shadingNode('aiFlat', asShader=True, name="ai" + (each["name"] + "Flat"))
-        cmds.setAttr(patchBscShd + ".color", each["base_color"][0],
-                     each["base_color"][1], each["base_color"][2], type='double3')
+        mat_name = each["name"] + "Flat"
+        sg_name = mat_name + "SG"
+        patchBscShd = cmds.shadingNode('aiFlat', asShader=True, name=mat_name)
+        SG = cmds.sets(name= sg_name, empty=True, renderable=True, noSurfaceShader=True)
+        cmds.connectAttr(patchBscShd + ".outColor", SG + ".surfaceShader")
+        cmds.setAttr(patchBscShd + ".color", each["base_color"][0],each["base_color"][1], each["base_color"][2], type='double3')
         cmds.select(patch[0])
         cmds.hyperShade(assign=patchBscShd)
 
         # PATCHES SHADED
     for each in macbeth_data:
         # geo
-        patchShaded = cmds.polyCube(name=(
-            each["name"] + "Shaded"), width=4.2, height=4.2, depth=0.3, createUVs=4, axis=[0, 1, 0], ch=False)
+        patchShaded = cmds.polyCube(name=(each["name"] + "Shaded"), width=4.2, height=4.2, depth=0.3, createUVs=4, axis=[0, 1, 0], ch=False)
         patchShadedDOsel = cmds.ls(patchShaded)
         cmds.setAttr(patchShaded[0] + ".translateX", (each["column"])*mtp)
         cmds.setAttr(patchShaded[0] + ".translateY", (each["row"])*-mtp)
@@ -715,8 +719,7 @@ def createMAC(*args):
         cmds.setAttr(patchShaded[0] + ".translateX", xpos-15.75)
         cmds.setAttr(patchShaded[0] + ".translateY", ypos+43.25)
         cmds.makeIdentity(patchShaded[0], translate=True, apply=True)
-        cmds.move(0, 0, 0, patchShaded[0] + ".scalePivot",
-                  patchShaded[0] + ".rotatePivot", absolute=True)
+        cmds.move(0, 0, 0, patchShaded[0] + ".scalePivot",patchShaded[0] + ".rotatePivot", absolute=True)
         cmds.setAttr(patchShaded[0] + ".receiveShadows", 0)
         cmds.setAttr(patchShaded[0] + ".motionBlur", 0)
         cmds.setAttr(patchShaded[0] + ".castsShadows", 0)
@@ -739,15 +742,18 @@ def createMAC(*args):
         cmds.parent(patchShaded[0], patchGroupShaded)
 
         # shader
-        patchBscShdShaded = cmds.shadingNode(
-            'aiStandardSurface', asShader=True, name="ai" + (each["name"] + "Shaded"))
+        mat_name = each["name"] + "Shaded"
+        patchBscShdShaded = cmds.shadingNode('aiStandardSurface', asShader=True, name=mat_name)
         cmds.setAttr(patchBscShdShaded + ".base", 1)
-        cmds.setAttr(patchBscShdShaded + ".baseColor",
-                     each["base_color"][0], each["base_color"][1], each["base_color"][2], type='double3')
+        cmds.setAttr(patchBscShdShaded + ".baseColor",each["base_color"][0], each["base_color"][1], each["base_color"][2], type='double3')
         cmds.setAttr(patchBscShdShaded + ".specular", 0)
         cmds.setAttr(patchBscShdShaded + ".specularRoughness", 0.7)
+        sg_name = mat_name + "SG"
+        SG = cmds.sets(name= sg_name, empty=True, renderable=True, noSurfaceShader=True)
+        cmds.connectAttr(patchBscShdShaded + ".outColor", SG + ".surfaceShader")
         cmds.select(patchShaded[0])
         cmds.hyperShade(assign=patchBscShdShaded)
+    
 
     # macbeth control curve and constraints
     macCtrl = cmds.curve(name="Macbeth_ctrl", degree=1, point=[(-17, -2, 0), (-17, 57, 0), (17, 57, 0), (17, -2, 0), (-17, -2, 0)])
@@ -774,7 +780,8 @@ def createMAC(*args):
         scale_factor = 1
     try:
         get_cent = cmds.getAttr("dk_Ldv:aiSkydomeShape.asset_center")
-        asset_center = list(get_cent.split(","))
+        aset_data = list(get_cent.split(","))
+        asset_center = [aset_data[0][1:],aset_data[1],aset_data[2]]
     except:
         asset_center = [0,0,0]
     try:
@@ -788,8 +795,9 @@ def createMAC(*args):
     cmds.setAttr("mac:Macbeth_ctrl.scaleX", scale_factor)
     cmds.setAttr("mac:Macbeth_ctrl.scaleY", scale_factor)
     cmds.setAttr("mac:Macbeth_ctrl.scaleZ", scale_factor)
-    cmds.setAttr("mac:mac_loc.translateX", float(asset_center[0][1:]))
+    cmds.setAttr("mac:mac_loc.translateX", float(asset_center[0]))
     cmds.setAttr("mac:mac_loc.translateY", float(y_min))
+    cmds.setAttr("mac:mac_loc.visibility", 0)
 
     # lock attr
     MACgrplist = [MACgroup, patchGroupFlat, MACflat, MACctrlGrp, MACshaded,
@@ -816,6 +824,8 @@ def createMAC(*args):
         cmds.setAttr(each + ".aiVisibleInSpecularTransmission", 0)
         cmds.setAttr(each + ".aiVisibleInVolume", 0)
         cmds.setAttr(each + ".aiSelfShadows", 0)
+
+    cmds.scriptEditorInfo(suppressWarnings=0, si=0,sr=0,ssw=0)
 
     cmds.namespace(set=':')
     cmds.select(clear=True)
@@ -1843,8 +1853,7 @@ def batch_choose(*args):
             mini_path = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
             mini_desel = os.path.join(MINI_HDR_FOLDER, "mini_desel", each).replace("\\", "/")
 
-            cmds.symbolCheckBox("chck_" + str(idx).zfill(2), value=0, onImage=mini_path, offImage=mini_desel,
-                                width=250, height=125, parent="scroll_hdrs")
+            cmds.symbolCheckBox("chck_" + str(idx).zfill(2), value=0, onImage=mini_path, offImage=mini_desel,width=250, height=125, parent="scroll_hdrs")
         cmds.symbolCheckBox("chck_" + str(index_list[hdr_num-1]).zfill(2), edit=True, value=1)
 
         cmds.setParent(main_cl)
@@ -1889,6 +1898,12 @@ def viewport_resolution(*args):
     viewport_width = cmds.control(focus_pane, query=True, width=True)
     viewport_height = cmds.control(focus_pane, query=True, height=True)
     return (viewport_width, viewport_height)
+
+def shd_gen(*args):
+    import dk_shd
+
+    reload(dk_shd)
+    dk_shd.buildUI()
 
 
 def buildUI():
@@ -2007,11 +2022,16 @@ def buildUI():
     if cmds.window(win_id, exists=True):
         cmds.deleteUI(win_id)
 
-    if cmds.windowPref(win_id, exists=True):
-        cmds.windowPref(win_id, remove=True)
+    # if cmds.windowPref(win_id, exists=True):
+    #     cmds.windowPref(win_id, remove=True)
 
     try:
         cmds.deleteUI("batchUI")
+    except:
+        pass
+
+    try:
+        cmds.deleteUI("shdUI")
     except:
         pass
 
@@ -2037,10 +2057,8 @@ def buildUI():
     # Buttons - MacBeth and spheres
     tmpRowWidth = [win_width*0.5, win_width*0.5]
     cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
-    cmds.button(label='Load MAC',
-                width=tmpRowWidth[0], annotation="Load Macbeth Chart, chrome and gray spheres", command=Macbutton)
-    cmds.button(label='Remove MAC',
-                width=tmpRowWidth[0], annotation="Remove Macbeth chart and spheres", command=removeMAC)
+    cmds.button(label='Load MAC',width=tmpRowWidth[0], annotation="Load Macbeth Chart, chrome and gray spheres", command=Macbutton)
+    cmds.button(label='Remove MAC',width=tmpRowWidth[0], annotation="Remove Macbeth chart and spheres", command=removeMAC)
     cmds.setParent(mainCL)
 
     cmds.text(label='--- HDR Controls ---', width=win_width, height=row_height)
@@ -2074,15 +2092,13 @@ def buildUI():
 
     # Skydome camera visibility
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
-    cmds.floatSliderGrp('sky_vis', label='Sky Vis.', min=0, max=1, value=skyVis, step=0.001,
-                        field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
+    cmds.floatSliderGrp('sky_vis', label='Sky Vis.', min=0, max=1, value=skyVis, step=0.001,field=True, columnWidth3=(tmpRowWidth), changeCommand=sky_vis, dragCommand=sky_vis)
     cmds.setParent(mainCL)
 
     tmpRowWidth = [win_width*0.4, win_width*0.18, win_width*0.4]
     cmds.rowLayout(numberOfColumns=3)
 
-    cmds.optionMenu('focal', label=' Focal Length',
-                    width=tmpRowWidth[0], annotation="Choose lens focal length", changeCommand=focal)
+    cmds.optionMenu('focal', label=' Focal Length',width=tmpRowWidth[0], annotation="Choose lens focal length", changeCommand=focal)
     cmds.menuItem(label='14mm', parent='focal')
     cmds.menuItem(label='18mm', parent='focal')
     cmds.menuItem(label='24mm', parent='focal')
@@ -2126,18 +2142,14 @@ def buildUI():
     # refresh HDRs
     tmpRowWidth = [win_width*0.5, win_width*0.5]
     cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
-    cmds.button(label='Refresh HDRs',
-                width=tmpRowWidth[0], annotation="Recreate .jpg preview images and .tx files from existing HDRs", command=refHDR)
-    cmds.button(label='Open HDR folder',
-                width=tmpRowWidth[1], annotation="Open folder with HDR files", command=hdrFol)
+    cmds.button(label='Refresh HDRs',width=tmpRowWidth[0], annotation="Recreate .jpg preview images and .tx files from existing HDRs", command=refHDR)
+    cmds.button(label='Open HDR folder',width=tmpRowWidth[1], annotation="Open folder with HDR files", command=hdrFol)
     cmds.setParent(mainCL)
 
     tmpRowWidth = [win_width*0.5, win_width*0.5]
     cmds.rowLayout(numberOfColumns=2, columnWidth2=tmpRowWidth)
-    cmds.button(label='Del Tx/jpg',
-                width=tmpRowWidth[1], annotation="Delete .jpg preview images and .tx files", command=deletePrevTx)
-    cmds.button(label="Batch",
-                width=tmpRowWidth[1], annotation="Run a batch rendering UI", command=batch_choose)
+    cmds.button(label='Del Tx/jpg',width=tmpRowWidth[1], annotation="Delete .jpg preview images and .tx files", command=deletePrevTx)
+    cmds.button(label="Batch",width=tmpRowWidth[1], annotation="Run a batch rendering UI", command=batch_choose)
     cmds.setParent(mainCL)
 
     # Auto Turntable
@@ -2151,10 +2163,8 @@ def buildUI():
     cmds.menuItem(label='100')
     cmds.menuItem(label='200')
     cmds.optionMenu("autott", edit=True, value=str(turn_fr))
-    cmds.button(label='Setup Turntable',
-                width=tmpRowWidth[1], annotation="Create a turntable setup based on the selected objects and chosen number of frames. NOTE: Turntable won't be applied on the LDV kit objects.", command=turntableButton)
-    cmds.button(label='Remove Turntable',
-                width=tmpRowWidth[2], annotation="Remove turntable setup", command=removeTurntable)
+    cmds.button(label='Setup Turntable',width=tmpRowWidth[1], annotation="Create a turntable setup based on the selected objects and chosen number of frames. NOTE: Turntable won't be applied on the LDV kit objects.", command=turntableButton)
+    cmds.button(label='Remove Turntable',width=tmpRowWidth[2], annotation="Remove turntable setup", command=removeTurntable)
     cmds.setParent(mainCL)
 
     cmds.rowColumnLayout(numberOfColumns=1, columnOffset=[1, "both", 8])
@@ -2167,8 +2177,7 @@ def buildUI():
     # Object Rotation offset
     tmpRowWidth = [win_width*0.3, win_width*0.15, win_width*0.45]
     cmds.rowLayout(numberOfColumns=1, adjustableColumn=True)
-    cmds.floatSliderGrp('objOff', label='Obj. Rot. Offset', columnWidth3=(tmpRowWidth), min=0, max=360, value=objOff,
-                        step=0.001, fieldMinValue=0, fieldMaxValue=360, field=True, changeCommand=objOffset, dragCommand=objOffset)
+    cmds.floatSliderGrp('objOff', label='Obj. Rot. Offset', columnWidth3=(tmpRowWidth), min=0, max=360, value=objOff,step=0.001, fieldMinValue=0, fieldMaxValue=360, field=True, changeCommand=objOffset, dragCommand=objOffset)
     cmds.setParent(mainCL)
 
     # SUBD CONTROLS
@@ -2177,12 +2186,9 @@ def buildUI():
 
     tmpRowWidth = [win_width*0.25, win_width*0.25, win_width*0.48]
     cmds.rowLayout(numberOfColumns=3, columnWidth3=tmpRowWidth)
-    cmds.button(label='SubD Off',
-                width=tmpRowWidth[0], annotation="Turn off render-time subdivisions on the selected objects", command=subd_off)
-    cmds.button(label='SubD On',
-                width=tmpRowWidth[1], annotation="Turn on render-time subdivisions on the selected objects", command=catclark_on)
-    cmds.intSliderGrp('subIter', minValue=0, maxValue=10, value=3, step=1,
-                      field=True, width=tmpRowWidth[2], changeCommand=subd_iter)
+    cmds.button(label='SubD Off',width=tmpRowWidth[0], annotation="Turn off render-time subdivisions on the selected objects", command=subd_off)
+    cmds.button(label='SubD On',width=tmpRowWidth[1], annotation="Turn on render-time subdivisions on the selected objects", command=catclark_on)
+    cmds.intSliderGrp('subIter', minValue=0, maxValue=10, value=3, step=1,field=True, width=tmpRowWidth[2], changeCommand=subd_iter)
     cmds.setParent(mainCL)
 
     # BUCKET SIZE
@@ -2190,14 +2196,10 @@ def buildUI():
     cmds.text(label='--- Bucket Size ---', width=win_width, height=row_height)
 
     cmds.rowLayout(numberOfColumns=4, columnWidth=[4, win_width*0.25])
-    cmds.button(label='16', width=win_width*0.25,
-                annotation="Sets bucket size to 16", command=bucket_size16)
-    cmds.button(label='32', width=win_width*0.25,
-                annotation="Sets bucket size to 32", command=bucket_size32)
-    cmds.button(label='64', width=win_width*0.25,
-                annotation="Sets bucket size to 64", command=bucket_size64)
-    cmds.button(label='128', width=win_width*0.25,
-                annotation="Sets bucket size to 128", command=bucket_size128)
+    cmds.button(label='16', width=win_width*0.25,annotation="Sets bucket size to 16", command=bucket_size16)
+    cmds.button(label='32', width=win_width*0.25,annotation="Sets bucket size to 32", command=bucket_size32)
+    cmds.button(label='64', width=win_width*0.25,annotation="Sets bucket size to 64", command=bucket_size64)
+    cmds.button(label='128', width=win_width*0.25,annotation="Sets bucket size to 128", command=bucket_size128)
     cmds.setParent(mainCL)
 
     # UTILITIES
@@ -2206,23 +2208,22 @@ def buildUI():
 
     tmpRowWidth = [win_width*0.34, win_width*0.33, win_width*0.33]
     cmds.rowLayout(numberOfColumns=3)
-    cmds.textField("constField", annotation="Type in a name of the attribute",
-                   text="", width=tmpRowWidth[0])
+    cmds.textField("constField", annotation="Type in a name of the attribute",text="", width=tmpRowWidth[0])
     cmds.optionMenu("constData", width=tmpRowWidth[1])
     cmds.menuItem(label="vector")
     cmds.menuItem(label="float")
     cmds.menuItem(label="string")
-    cmds.button(label="Create",
-                width=tmpRowWidth[2], annotation="Creates MtoA Constant Attribute on the selected objects with name from the text field and data dype from drop down menu", command=mtoa_constant)
+    cmds.button(label="Create",width=tmpRowWidth[2], annotation="Creates MtoA Constant Attribute on the selected objects with name from the text field and data dype from drop down menu", command=mtoa_constant)
     cmds.setParent(mainCL)
 
     cmds.text(label='--- Utilities ---', width=win_width, height=row_height)
 
     # checker shader
-    tmpRowWidth = [win_width*0.45, win_width*0.45]
-    cmds.rowLayout(numberOfColumns=3)
-    cmds.button(label='Load Checker Shader',width=tmpRowWidth[0], annotation="Load shader with checker texture - useful for checking UVs", command=checker)
-    cmds.button(label='Remove Checker Shader',width=tmpRowWidth[1], annotation="Remove shader with checker texture", command=remove_checker)
+    tmpRowWidth = [win_width*0.349, win_width*0.2]
+    cmds.rowLayout(numberOfColumns=4)
+    cmds.button(label='Load Checker Shd',width=tmpRowWidth[0], annotation="Load shader with checker texture - useful for checking UVs", command=checker)
+    cmds.button(label='Remove Checker Shd',width=tmpRowWidth[0], annotation="Remove shader with checker texture", command=remove_checker)
+    cmds.button(label="SHD GEN",width=tmpRowWidth[1], annotation="Start Shader generator Ui", command=shd_gen)
     cmds.button(label='?',width = win_width*0.1,annotation="Go to Lookdev kit documentation web page", command=web)
     cmds.setParent(mainCL)
 
