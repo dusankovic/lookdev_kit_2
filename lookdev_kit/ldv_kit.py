@@ -1,4 +1,4 @@
-# Lookdev kit 2.2 by Dusan Kovic - www.dusankovic.com
+# Lookdev kit 2.3 by Dusan Kovic - www.dusankovic.com
 # Special thanks to Aleksandar Kocic - www.aleksandarkocic.com - for being great advisor on this project
 # Also, thanks to Arvid Schneider - arvidschneider.com - for reporting a lot of stuff and making Lookdev Kit a better tool
 
@@ -17,6 +17,7 @@ import math
 import time
 import glob
 import webbrowser
+import dk_shd
 
 LOOKDEV_KIT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "mini").replace("\\", "/")
@@ -158,9 +159,9 @@ def createLDV(*args):
     cmds.setAttr(imageNode + '.aiAutoTx', 0)
 
     if check_cm_config() == True:
-        cmds.setAttr(imageNode + '.colorSpace', 'Utility - Raw', type='string')
+        cmds.setAttr(imageNode + '.colorSpace', 'Utility - Linear - sRGB', type='string')
     if check_cm_config() == False:
-        cmds.setAttr(imageNode + '.colorSpace', 'Raw', type='string')
+        cmds.setAttr(imageNode + '.colorSpace', 'scene-linear Rec 709/sRGB', type='string')
 
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
 
@@ -1900,8 +1901,6 @@ def viewport_resolution(*args):
     return (viewport_width, viewport_height)
 
 def shd_gen(*args):
-    import dk_shd
-
     reload(dk_shd)
     dk_shd.buildUI()
 

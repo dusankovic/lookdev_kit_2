@@ -2,7 +2,7 @@ import maya.cmds as cmds
 import mtoa.core as core
 import maya.mel as mel
 
-LDV_VER = "2.2"
+LDV_VER = "2.3"
 
 #ui
 def buildUI(*args):
