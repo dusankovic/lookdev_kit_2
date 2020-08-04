@@ -1569,6 +1569,8 @@ def checker(*args):
             cmds.setAttr(chckImage + '.colorSpace', 'sRGB', type='string')
         cmds.setAttr(chckImage + '.colorSpace', 'sRGB', type='string')
         cmds.setAttr(chckImage + '.autoTx', 0)
+        cmds.setAttr(chckImage + '.sscale', 3)
+        cmds.setAttr(chckImage + '.tscale', 3)
         cmds.setAttr(chckImage + '.ignoreColorSpaceFileRules', 1)
         cmds.connectAttr(chckImage + '.outColor', chckShader + '.baseColor', force=True)
         cmds.namespace(set=':')
