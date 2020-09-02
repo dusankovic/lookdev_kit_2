@@ -28,7 +28,6 @@ LDV_VER = "2.3"
 
 # COMMANDS
 
-
 def web(*args):
     webbrowser.open("https://dusankovic.artstation.com/pages/lookdev-kit")
 
@@ -652,8 +651,8 @@ def createMAC(*args):
     grayShd = cmds.shadingNode('aiStandardSurface', asShader=True, name="aiGray")
     cmds.setAttr(grayShd + ".base", 1)
     cmds.setAttr(grayShd + ".baseColor", 0.18, 0.18, 0.18, type='double3')
-    cmds.setAttr(grayShd + ".specular", 0)
-    cmds.setAttr(grayShd + ".specularRoughness", 0.7)
+    cmds.setAttr(grayShd + ".specular", 1)
+    cmds.setAttr(grayShd + ".specularRoughness", 0.65)
     cmds.select(gray[0])
     cmds.hyperShade(assign=grayShd)
 
@@ -1085,7 +1084,7 @@ def refHDR(*args):
     oiio = os.path.join(OIIO_FOLDER, "oiiotool.exe").replace("\\", "/")
     prog = 0
 
-    dialog = cmds.confirmDialog(title=("Lookdev Kit {} - Rebuild").format(LDV_VER), message="This will update all HDR preview images and .tx files. Please wait.",button=["Yes", "No"], cancelButton="No", dismissString="No")
+    dialog = cmds.confirmDialog(title=("Lookdev Kit {} - Refresh HDRs").format(LDV_VER), message="This will update all HDR preview images and .tx files. Please wait.",button=["Yes", "No"], cancelButton="No", dismissString="No")
     if len(miniList) == 0 and len(hdrList) == 0:
         cmds.warning("HDR folder is empty")
         return
@@ -1150,10 +1149,10 @@ def refHDR(*args):
 
         mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True)
         mtoa_root = os.path.dirname(os.path.dirname(mtoa_plugin))
-        mtoa_maketx = os.path.join(mtoa_root, "bin", "maketx").replace("\\", "/")
+        mtoa_maketx = os.path.join(mtoa_root, "bin", "maketx.exe").replace("\\", "/")
 
         for chunk in hdr_chunks:
-            cmd_list = [[mtoa_maketx, "-v",  "-u",  "--oiio", "--stats", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", os.path.join(HDR_FOLDER, file).replace("\\", "/"), "-o", os.path.join(HDR_FOLDER, file[:-4] + ".tx").replace("\\", "/")] for file in chunk]
+            cmd_list = [[mtoa_maketx, "-v",  "-u",  "--oiio", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", os.path.join(HDR_FOLDER, file).replace("\\", "/"), "-o", os.path.join(HDR_FOLDER, file[:-4] + ".tx").replace("\\", "/")] for file in chunk]
             proc_list = [subprocess.Popen(cmd, shell=True) for cmd in cmd_list]
             for proc in proc_list:
                 proc.wait()
@@ -2039,8 +2038,7 @@ def buildUI():
     view_width = int(viewport_resolution()[0]) * 1.01
     view_heigth = int(viewport_resolution()[1]) * 0.3
 
-    w = cmds.window(win_id, title=title, resizeToFitChildren=True,
-                    topLeftCorner=[view_heigth, view_width])
+    w = cmds.window(win_id, title=title, resizeToFitChildren=True, width = win_width, topLeftCorner=[view_heigth, view_width])
 
     # Main layout refs
     mainCL = cmds.columnLayout()
