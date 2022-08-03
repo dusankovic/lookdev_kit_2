@@ -24,7 +24,7 @@ MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "mini").repla
 TEX_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages").replace("\\", "/")
 HDR_FOLDER = os.path.join(TEX_FOLDER, "hdr").replace("\\", "/")
 OIIO_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "oiio", "bin").replace("\\", "/")
-LDV_VER = "2.3"
+LDV_VER = "2.4"
 
 # COMMANDS
 
@@ -127,10 +127,10 @@ def createLDV(*args):
     hdrtx = hdr_list()[0]
     hdrskynum = len(hdrtx)
     cmds.addAttr(skydome_shape[0], longName="hdrsl", min=1,max=hdrskynum, defaultValue=1, attributeType="long")
-    cmds.setAttr('dk_Ldv:aiSkydomeShape.aiSamples', 3)
+    cmds.setAttr(skydome_shape[0] + ".aiSamples", 3)
     # read exposure slider
     value = cmds.floatSliderGrp('exp', query=True, value=True)
-    cmds.setAttr('dk_Ldv:aiSkydomeShape.exposure', value)
+    cmds.setAttr(skydome_shape[0] + ".exposure", value)
     cmds.undoInfo(swf=True)
 
     if scale_factor <= 1:
@@ -138,10 +138,10 @@ def createLDV(*args):
     if scale_factor > 1:
         obj_factor = scale_factor
 
-    cmds.setAttr('dk_Ldv:aiSkydomeShape.skyRadius', 5000 * obj_factor)
-    cmds.setAttr('dk_Ldv:aiSkydomeShape.resolution', 2048)
-    cmds.setAttr('dk_Ldv:aiSkydome.overrideEnabled', 1)
-    cmds.setAttr('dk_Ldv:aiSkydome.overrideDisplayType', 2)
+    cmds.setAttr(skydome_shape[0] + ".skyRadius", 5000 * obj_factor)
+    cmds.setAttr(skydome_shape[0] + ".resolution", 2048)
+    cmds.setAttr(skydome_shape[0] + ".overrideEnabled", 1)
+    cmds.setAttr(skydome_shape[0] + ".overrideDisplayType", 2)
 
     cmds.parent(sky_name, LDVctrlgroup)
     imageNode = cmds.shadingNode("file", asTexture=True, n="hdrTextures")
@@ -1422,8 +1422,7 @@ def setTurntable(objects):
     objLoc = cmds.spaceLocator(name="obj_tt_loc", position=[0, 0, 0])
     objOffLoc = cmds.spaceLocator(name="obj_tt_Offloc", position=[0, 0, 0])
     skyLoc = cmds.spaceLocator(name="sky_tt_loc", position=[0, 0, 0])
-    cmds.addAttr(objOffLoc[0], longName="objOffset", min=0,
-                 max=360, defaultValue=0, attributeType="double")
+    cmds.addAttr(objOffLoc[0], longName="objOffset", min=0, max=360, defaultValue=0, attributeType="double")
     cmds.parent(objOffLoc, turnGrp)
     cmds.parent(objLoc, turnGrp)
     cmds.parent(skyLoc, turnGrp)
@@ -1435,14 +1434,12 @@ def setTurntable(objects):
     objRotMax = timeMin + FrRange / 2 + timeAdd
     skyRotMin = timeMin + FrRange / 2 + timeAdd
     skyRotMax = cmds.playbackOptions(maxTime=True, query=True)
-    cmds.setKeyframe(objLoc[0], attribute='rotateY', inTangentType="linear",
-                     outTangentType="linear", time=objRotMin, value=0)
-    cmds.setKeyframe(objLoc[0], attribute='rotateY', inTangentType="linear",
-                     outTangentType="linear", time=objRotMax, value=360)
-    cmds.setKeyframe(skyLoc[0], attribute='rotateY', inTangentType="linear",
-                     outTangentType="linear", time=skyRotMin, value=0)
-    cmds.setKeyframe(skyLoc[0], attribute='rotateY', inTangentType="linear",
-                     outTangentType="linear", time=skyRotMax, value=360)
+    
+    cmds.setKeyframe(objLoc[0], attribute='rotateY', inTangentType="linear", outTangentType="linear", time=objRotMin, value=0)
+    cmds.setKeyframe(objLoc[0], attribute='rotateY', inTangentType="linear", outTangentType="linear", time=objRotMax, value=360)
+    cmds.setKeyframe(skyLoc[0], attribute='rotateY', inTangentType="linear", outTangentType="linear", time=skyRotMin, value=0)
+    cmds.setKeyframe(skyLoc[0], attribute='rotateY', inTangentType="linear", outTangentType="linear", time=skyRotMax, value=360)
+
     cmds.parentConstraint(skyLoc, "dk_Ldv:aiSkydome", maintainOffset=True, weight=1)
     cmds.parentConstraint(objLoc, objOffLoc, maintainOffset=True, weight=1)
 
@@ -1711,8 +1708,7 @@ def batch(*args):
             batch_hdr.append(each[:-4])
 
     if len(batch_hdr) == 0:
-        cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, first select at least one HDR.",
-                           messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
+        cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, first select at least one HDR.", messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
         return
     else:
         for each in batch_hdr:
@@ -1721,10 +1717,8 @@ def batch(*args):
             hdr_path = os.path.join(HDR_FOLDER, hdr_ext).replace("\\", "/")
             cmds.setAttr("dk_Ldv:hdrTextures" + ".fileTextureName", hdr_path, type="string")
 
-            ass_exp = os.path.join(ass_path, scene_name + "_" +
-                                   hdr_name + ".ass").replace("\\", "/")
-            cmds.arnoldExportAss(filename=ass_exp, camera="dk_Ldv:cameraShape1",
-                                 lightLinks=True, shadowLinks=True, boundingBox=True, startFrame=timeMin, endFrame=timeMax, mask=6399)
+            ass_exp = os.path.join(ass_path, scene_name + "_" + hdr_name + ".ass").replace("\\", "/")
+            cmds.arnoldExportAss(filename=ass_exp, camera="dk_Ldv:cameraShape1", lightLinks=True, shadowLinks=True, boundingBox=True, startFrame=timeMin, endFrame=timeMax, mask=6399)
 
         asses = cmds.getFileList(folder=ass_path, filespec="*.ass")
 
