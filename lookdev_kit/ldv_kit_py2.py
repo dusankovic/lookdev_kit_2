@@ -1,4 +1,4 @@
-# Lookdev kit 2.5 by Dusan Kovic - www.dusankovic.com
+# Lookdev kit 2.3 by Dusan Kovic - www.dusankovic.com
 # Special thanks to Aleksandar Kocic - www.aleksandarkocic.com - for being great advisor on this project
 # Also, thanks to Arvid Schneider - arvidschneider.com - for reporting a lot of stuff and making Lookdev Kit a better tool
 
@@ -17,18 +17,14 @@ import math
 import time
 import glob
 import webbrowser
-from lookdev_kit import dk_shd
-from datetime import datetime
-import importlib
+import dk_shd
 
 LOOKDEV_KIT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 MINI_HDR_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "mini").replace("\\", "/")
 TEX_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages").replace("\\", "/")
 HDR_FOLDER = os.path.join(TEX_FOLDER, "hdr").replace("\\", "/")
-HDR_BLURRED_FOLDER = os.path.join(TEX_FOLDER, "hdr_blurred").replace("\\", "/")
-MINI_BLURRED_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "sourceimages", "mini_blurred").replace("\\", "/")
 OIIO_FOLDER = os.path.join(LOOKDEV_KIT_FOLDER, "oiio", "bin").replace("\\", "/")
-LDV_VER = "2.8"
+LDV_VER = "2.4"
 
 # COMMANDS
 
@@ -53,10 +49,6 @@ def LDVbutton(*args):
         cmds.parent("dk_turn:turntable_grp", "dk_Ldv:lookdevkit_grp")
         cmds.select(clear=True)
     else:
-        try:
-            cmds.deleteUI("batchUI")
-        except:
-            pass
         createLDV()
 
 
@@ -82,20 +74,7 @@ def createLDV(*args):
     cmds.namespace(add='dk_Ldv')
     cmds.namespace(set=':dk_Ldv')
 
-    # camera locators
-    distTool = cmds.distanceDimension(startPoint=[0, 0, 550], endPoint=[0, 0, 1])
-    locator_names = []
-
-    for i in range(10):
-        try:
-            name = "dk_Ldv:locator" + str(i)
-            cmds.rename(name, "dk_Ldv:locator_cam_" + str(i))
-            new_name = "dk_Ldv:locator_cam_" + str(i)
-            if cmds.objExists(new_name):
-                locator_names.append(new_name)
-        except:
-            pass
-    cmds.setAttr(locator_names[1] + ".translateZ", 0)
+    distTool = cmds.distanceDimension(startPoint=[0, 0, 550], endPoint=[0, 0, 0])
 
     LDVgroup = cmds.group(name='lookdevkit_grp', empty=True)
     cmds.setAttr(LDVgroup + ".useOutlinerColor", 1)
@@ -145,22 +124,13 @@ def createLDV(*args):
     cmds.setAttr(skydome_shape[0] + ".rotOffset", rotOff)
     cmds.undoInfo(swf=True)
 
-    # hdr stuff
-    blur_stat = cmds.checkBox("blurredHdr", value = True, query = True)
     hdrtx = hdr_list()[0]
     hdrskynum = len(hdrtx)
     cmds.addAttr(skydome_shape[0], longName="hdrsl", min=1,max=hdrskynum, defaultValue=1, attributeType="long")
     cmds.setAttr(skydome_shape[0] + ".aiSamples", 3)
-
-    cmds.addAttr(skydome_shape[0], longName="blurred", attributeType="bool")
-    cmds.setAttr(skydome_shape[0] + ".blurred", blur_stat)
-
     # read exposure slider
     value = cmds.floatSliderGrp('exp', query=True, value=True)
-    try:
-        cmds.setAttr(skydome_shape[0] + ".exposure", value)
-    except:
-        cmds.setAttr(skydome_shape[0] + ".aiExposure", value)
+    cmds.setAttr(skydome_shape[0] + ".exposure", value)
     cmds.undoInfo(swf=True)
 
     if scale_factor <= 1:
@@ -169,7 +139,7 @@ def createLDV(*args):
         obj_factor = scale_factor
 
     cmds.setAttr(skydome_shape[0] + ".skyRadius", 5000 * obj_factor)
-    cmds.setAttr(skydome_shape[0] + ".resolution", 4096)
+    cmds.setAttr(skydome_shape[0] + ".resolution", 2048)
     cmds.setAttr(skydome_shape[0] + ".overrideEnabled", 1)
     cmds.setAttr(skydome_shape[0] + ".overrideDisplayType", 2)
 
@@ -186,12 +156,11 @@ def createLDV(*args):
 
     cmds.setAttr("dk_Ldv:hdrTextures.fileTextureName", new_hdr, type="string")
     cmds.setAttr(imageNode + '.aiAutoTx', 0)
-    cmds.setAttr(imageNode + '.ignoreColorSpaceFileRules', 1)
 
-    if new_hdr.endswith(".hdr"):
-            cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", "scene-linear Rec.709-sRGB", type="string")
-    if new_hdr.endswith(".exr"):
-        cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", "ACEScg", type="string")
+    if check_cm_config() == True:
+        cmds.setAttr(imageNode + '.colorSpace', 'Utility - Linear - sRGB', type='string')
+    if check_cm_config() == False:
+        cmds.setAttr(imageNode + '.colorSpace', 'scene-linear Rec 709/sRGB', type='string')
 
     cmds.connectAttr(imageNode + '.outColor', skydome_shape[0] + '.color', force=True)
 
@@ -259,13 +228,9 @@ def createLDV(*args):
     cmds.addAttr(cam[0], longName="FstopCam", attributeType="long", min=1, max=fstopCount)
 
     # focus plane
-    if cmds.pluginInfo("fbxmaya.mll", query = True, loaded = True) == False:
-        cmds.loadPlugin("fbxmaya.mll")
-
     focus_text_import = os.path.join(TEX_FOLDER, "ldv_fcs_font.fbx").replace("\\", "/")
     fcsPlane = cmds.curve(name="focusPlane_ctrl", degree=1, point=[(-198, -111.5, 0), (-198, 111.5, 0), (198, 111.5, 0), (198, -111.5, 0), (-198, -111.5, 0)])
-    # fcsText = cmds.file( focus_text_import, i=True )
-    fcsText = mel.eval("FBXImport -f \"{0}\"".format(focus_text_import))
+    fcsText = cmds.file( focus_text_import, i=True )
     fcsGrp = cmds.ls("dk_Ldv:focusPlane_txtShape", long=True)
 
     # text position
@@ -301,8 +266,8 @@ def createLDV(*args):
     for each in distLoc:
         cmds.setAttr(each + ".visibility", 0)
 
-    cmds.parent(locator_names[1], crvGrp)
-    cmds.parent(locator_names[0], cam[0])
+    cmds.parent("dk_Ldv:locator2", crvGrp)
+    cmds.parent("dk_Ldv:locator1", cam[0])
 
     cmds.connectAttr(distShape + ".distance", camShape + ".aiFocusDistance", force=True)
 
@@ -369,7 +334,7 @@ def createLDV(*args):
         turntableButton()
     except:
         pass
-    cmds.namespace(set=':')
+
     cmds.select(clear=True)
 
 
@@ -876,57 +841,36 @@ def removeMAC(*args):
 
 def hdrSw(*args):
     hdr_num = cmds.intSliderGrp("hdrSw", query=True, value=True)
-    blur_stat = cmds.checkBox("blurredHdr", value = True, query = True)
     tx_file = hdr_list()[0]
     hdr_file = hdr_list()[2]
     mini_file = hdr_list()[1]
-    hdr_blurred = hdr_list()[4]
-    mini_blurred = hdr_list()[5]
 
     if cmds.namespace(exists="dk_Ldv") == True and len(tx_file) != 0:
-        if blur_stat == False:
-            new_hdr = os.path.join(HDR_FOLDER, hdr_file[hdr_num-1]).replace("\\", "/")
-            mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[hdr_num-1]).replace("\\", "/")
-
-            cmds.image("hdrSym", edit=True, image=mini_int_file)
-            cmds.setAttr("dk_Ldv:hdrTextures.fileTextureName", new_hdr, type="string")
-            if new_hdr.endswith(".hdr"):
-                cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", "scene-linear Rec.709-sRGB", type="string")
-            if new_hdr.endswith(".exr"):
-                cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", "ACEScg", type="string")
-        else:
-            new_hdr = os.path.join(HDR_BLURRED_FOLDER, hdr_blurred[hdr_num-1]).replace("\\", "/")
-            mini_int_file = os.path.join(MINI_BLURRED_FOLDER, mini_blurred[hdr_num-1]).replace("\\", "/")
-
-            cmds.image("hdrSym", edit=True, image=mini_int_file)
-            cmds.setAttr("dk_Ldv:hdrTextures.fileTextureName", new_hdr, type="string")
-            if new_hdr.endswith(".hdr"):
-                cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", "scene-linear Rec.709-sRGB", type="string")
-            if new_hdr.endswith(".exr"):
-                cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", "ACEScg", type="string")
-
+        new_hdr = os.path.join(HDR_FOLDER, hdr_file[hdr_num-1]).replace("\\", "/")
+        mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[hdr_num-1]).replace("\\", "/")
+        cmds.image("hdrSym", edit=True, image=mini_int_file)
+        cmds.setAttr("dk_Ldv:hdrTextures.fileTextureName", new_hdr, type="string")
         cmds.setAttr("dk_Ldv:aiSkydomeShape.hdrsl", hdr_num)
-
+        cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", "Raw", type="string")
     if len(tx_file) != 0:
-        if blur_stat == False:
-            mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[hdr_num-1]).replace("\\", "/")
-            cmds.image("hdrSym", edit=True, image=mini_int_file)
-        else:
-            mini_int_file = os.path.join(MINI_BLURRED_FOLDER, mini_file[hdr_num-1]).replace("\\", "/")
-            cmds.image("hdrSym", edit=True, image=mini_int_file)
+        mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[hdr_num-1]).replace("\\", "/")
+        cmds.image("hdrSym", edit=True, image=mini_int_file)
+        try:
+            if check_cm_config() == True:
+                cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", 'Utility - Raw', type='string')
+            if check_cm_config() == False:
+                cmds.setAttr("dk_Ldv:hdrTextures.colorSpace", 'Raw', type='string')
+        except:
+            pass
     else:
         cmds.warning("Refresh HDRs")
-
 
 
 def exposure_slider(*args):
     if cmds.namespace(exists='dk_Ldv') == True:
         cmds.undoInfo(swf=False)
         value = cmds.floatSliderGrp('exp', query=True, value=True)
-        try:
-            cmds.setAttr('dk_Ldv:aiSkydomeShape.exposure', value)
-        except:
-            cmds.setAttr('dk_Ldv:aiSkydomeShape.aiExposure', value)
+        cmds.setAttr('dk_Ldv:aiSkydomeShape.exposure', value)
         cmds.undoInfo(swf=True)
 
 
@@ -1132,43 +1076,13 @@ def DoFOff(*args):
         pass
 
 
-def blurOn(*args):
-    try:
-        batch_win = "batchUI"
-        hdrSw()
-        cmds.setAttr("dk_Ldv:aiSkydomeShape.blurred", 1)
-        if cmds.window(batch_win, exists = True):
-            cmds.deleteUI(batch_win)
-            batch_choose()
-    except:
-        pass
-
-def blurOff(*args):
-    try:
-        batch_win = "batchUI"
-        hdrSw()
-        cmds.setAttr("dk_Ldv:aiSkydomeShape.blurred", 0)
-        if cmds.window(batch_win, exists = True):
-            cmds.deleteUI(batch_win)
-            batch_choose()
-    except:
-        pass
-        
-
 def refHDR(*args):
     hdrtx = hdr_list()[0]
     hdrList = hdr_list()[2]
-    miniList = hdr_list()[1]
-    blurred_list = hdr_list()[4]
-    blurred_mini = hdr_list()[5]
-    tx_blurred = hdr_list()[7]
 
+    miniList = hdr_list()[1]
     oiio = os.path.join(OIIO_FOLDER, "oiiotool.exe").replace("\\", "/")
     prog = 0
-
-    cmds.checkBox("blurredHdr", edit = True, value = False)
-    blurOff()
-
 
     dialog = cmds.confirmDialog(title=("Lookdev Kit {} - Refresh HDRs").format(LDV_VER), message="This will update all HDR preview images and .tx files. Please wait.",button=["Yes", "No"], cancelButton="No", dismissString="No")
     if len(miniList) == 0 and len(hdrList) == 0:
@@ -1190,62 +1104,29 @@ def refHDR(*args):
             cmds.namespace(removeNamespace='dk_bake', deleteNamespaceContent=True)
 
         # delete mini hdrs
-        try:
-            for each in miniList:
-                delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
-                delPathDesel = os.path.join(MINI_HDR_FOLDER, "mini_desel", each).replace("\\", "/")
-                os.remove(delPath)
-                os.remove(delPathDesel)
-        except:
-            pass
-        # delete tx files
-        try:
-            for each in hdrtx:
-                deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
-                os.remove(deltx)
-        except:
-            pass
+        for each in miniList:
+            delPath = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
+            delPathDesel = os.path.join(MINI_HDR_FOLDER, "mini_desel", each).replace("\\", "/")
+            os.remove(delPath)
+            os.remove(delPathDesel)
+        for each in hdrtx:
+            deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
+            os.remove(deltx)
 
-        try:
-            for each in tx_blurred:
-                deltx = os.path.join(HDR_BLURRED_FOLDER, each).replace("\\", "/")
-                os.remove(deltx)
-        except:
-            pass
-
-        # delete blurred hdrs and mini hdrs
-        try:
-            for each in blurred_mini:
-                delPath = os.path.join(MINI_BLURRED_FOLDER, each).replace("\\", "/")
-                delPathDesel = os.path.join(MINI_BLURRED_FOLDER, "mini_desel_blurred", each).replace("\\", "/")
-                os.remove(delPath)
-                os.remove(delPathDesel)
-        except:
-            pass
-        try:
-            for each in blurred_list:
-                delPath = os.path.join(HDR_BLURRED_FOLDER, each).replace("\\", "/")
-                os.remove(delPath)
-        except:
-            pass
-
-        #prog window
         cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,status='Baking HDR preview images, please wait.')
 
-        n = cmds.threadCount(n=True, query=True)-2
+        n = cmds.threadCount(n=True, query=True)-1
 
-        hdr_chunks = [hdrList[i:i + n] for i in range(0, len(hdrList), n)]
+        hdr_chunks = [hdrList[i:i + n] for i in xrange(0, len(hdrList), n)]
         maxNumBake = 100/float(len(hdr_chunks))
-        prog = 0
 
         # JPG CONVERSION
         for chunk in hdr_chunks:
             cmd_list_jpg = [[oiio, os.path.join(HDR_FOLDER, file).replace("\\", "/"), "--resize", "300x150", "--cpow", "0.454,0.454,0.454,1.0", "-o", os.path.join(MINI_HDR_FOLDER, file[:-4] + ".jpg").replace("\\", "/")] for file in chunk]
             cmd_list_desel = [[oiio, os.path.join(HDR_FOLDER, file), "--resize", "300x150", "--cpow", "0.454,0.454,0.454,1.0", "--cmul", "0.3", "-o", os.path.join(MINI_HDR_FOLDER, "mini_desel", file[:-4] + ".jpg").replace("\\", "/")] for file in chunk]
-
+            
             proc_list_jpg = [subprocess.Popen(cmd, shell=True) for cmd in cmd_list_jpg]
             proc_list_desel = [subprocess.Popen(cmd, shell=True) for cmd in cmd_list_desel]
-            
             for proc in proc_list_jpg:
                 proc.wait()
             for proc in proc_list_desel:
@@ -1263,59 +1144,6 @@ def refHDR(*args):
                 cmds.progressWindow(endProgress=1)
                 break
 
-        # BLURRED CONVERSION
-        cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,status='Baking blurred preview images, please wait.')
-        for chunk in hdr_chunks:
-            cmd_list_mini_blur = [[oiio, os.path.join(HDR_FOLDER, file).replace("\\", "/"), "--resize", "300x150", "--blur", "12x12","--cpow", "0.454,0.454,0.454,1.0", "-o", os.path.join(MINI_BLURRED_FOLDER, file[:-4] + ".jpg").replace("\\", "/")] for file in chunk]
-            cmd_list_blur_desel = [[oiio, os.path.join(HDR_FOLDER, file), "--resize", "300x150", "--blur", "12x12", "--cpow", "0.454,0.454,0.454,1.0", "--cmul", "0.3", "-o", os.path.join(MINI_BLURRED_FOLDER, "mini_desel_blurred", file[:-4] + ".jpg").replace("\\", "/")] for file in chunk]
-            proc_list_mini_blur = [subprocess.Popen(cmd, shell=True) for cmd in cmd_list_mini_blur]
-            proc_list_blur_desel = [subprocess.Popen(cmd, shell=True) for cmd in cmd_list_blur_desel]
-
-            for proc in proc_list_mini_blur:
-                proc.wait()
-            for proc in proc_list_blur_desel:
-                proc.wait()
-
-            prog += float(maxNumBake)
-            cmds.progressWindow(edit=True, progress=prog,status='Baking blurred preview images, please wait. ')
-            cmds.pause(seconds=0.5)
-
-            progCeil2 = cmds.progressWindow(query=True, progress=True)
-
-            if math.ceil(progCeil2) >= 98:
-                cmds.pause(seconds=0.5)
-                prog = 0
-                cmds.progressWindow(endProgress=1)
-                break
-
-
-        prog = 0
-
-        cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,status='Bluring main HDRs, please wait.')
-        # HDR BLUR
-        for chunk in hdr_chunks:
-            cmd_blur_hdr = [[oiio, os.path.join(HDR_FOLDER, file).replace("\\", "/"), "--resize", "4096x2048", "--blur", "30x30", "-o", os.path.join(HDR_BLURRED_FOLDER, file).replace("\\", "/")] for file in chunk]
-            proc_blur_hdr = [subprocess.Popen(cmd, shell=True) for cmd in cmd_blur_hdr]
-
-            for proc in proc_blur_hdr:
-                proc.wait()
-
-
-            prog += float(maxNumBake)
-            cmds.progressWindow(edit=True, progress=prog,status='Bluring main HDRs, please wait. ')
-            cmds.pause(seconds=0.5)
-
-            progCeil1 = cmds.progressWindow(query=True, progress=True)
-
-            if math.ceil(progCeil1) >= 98:
-                cmds.pause(seconds=0.5)
-                prog = 0
-                cmds.progressWindow(endProgress=1)
-                break
-
-
-
-        prog = 0
         #TX CONVERSION
         cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,status='Converting textures to TX, please wait.')
 
@@ -1340,27 +1168,6 @@ def refHDR(*args):
                 cmds.progressWindow(endProgress=1)
                 break
 
-        #TX CONVERSION BLURRED
-        cmds.progressWindow(title=("Lookdev Kit {}").format(LDV_VER), progress=prog,status='Converting blurred textures to TX, please wait.')
-
-        for chunk in hdr_chunks:
-            cmd_list = [[mtoa_maketx, "-v",  "-u",  "--oiio", "--monochrome-detect", "--constant-color-detect", "--opaque-detect", "--filter", "lanczos3", os.path.join(HDR_BLURRED_FOLDER, file).replace("\\", "/"), "-o", os.path.join(HDR_BLURRED_FOLDER, file[:-4] + ".tx").replace("\\", "/")] for file in chunk]
-            proc_list = [subprocess.Popen(cmd, shell=True) for cmd in cmd_list]
-            for proc in proc_list:
-                proc.wait()
-
-            prog += float(maxNumBake)
-
-            cmds.progressWindow(edit=True, progress=prog,status='Converting blurred textures to TX, please wait. ')
-
-            progCeil2 = cmds.progressWindow(query=True, progress=True)
-            if math.ceil(progCeil2) >= 98:
-                time.sleep(0.5)
-                prog = 0
-                cmds.progressWindow(endProgress=1)
-                break
-
-        time.sleep(2)
         buildUI()
 
     else:
@@ -1368,15 +1175,8 @@ def refHDR(*args):
 
 
 def deletePrevTx(*args):
-    # 0 tx_list, 1 mini_list, 2 hdrs_list, 3 desel_list, 4 blurred_list, 5 mini_blur_list, 6 mini_blur_desel, 7 tx_blurred
-
     hdrtx = hdr_list()[0]
     miniList = hdr_list()[1]
-    blurred_list = hdr_list()[4]
-    blurred_mini = hdr_list()[5]
-    tx_blurred = hdr_list()[7]
-
-    print (hdrtx)
 
     dialog = cmds.confirmDialog(title=("Lookdev Kit {} - Delete").format(LDV_VER), message="This will delete all HDR preview images and .tx files.",button=["Yes", "No"], cancelButton="No", dismissString="No")
 
@@ -1406,26 +1206,6 @@ def deletePrevTx(*args):
         for each in hdrtx:
             deltx = os.path.join(HDR_FOLDER, each).replace("\\", "/")
             os.remove(deltx)
-
-        for each in tx_blurred:
-            deltx = os.path.join(HDR_BLURRED_FOLDER, each).replace("\\", "/")
-            os.remove(deltx)
-
-        # delete blurred hdrs and mini hdrs
-        try:
-            for each in blurred_mini:
-                delPath = os.path.join(MINI_BLURRED_FOLDER, each).replace("\\", "/")
-                delPathDesel = os.path.join(MINI_BLURRED_FOLDER, "mini_desel_blurred", each).replace("\\", "/")
-                os.remove(delPath)
-                os.remove(delPathDesel)
-        except:
-            pass
-        try:
-            for each in blurred_list:
-                delPath = os.path.join(HDR_BLURRED_FOLDER, each).replace("\\", "/")
-                os.remove(delPath)
-        except:
-            pass
 
         time.sleep(2)
         buildUI()
@@ -1834,13 +1614,6 @@ def hdr_list(*args):
     hdrs_list = []
     mini_list = []
     desel_list = []
-
-    blurred_list = []
-    mini_blur_list = []
-    mini_blur_desel = []
-    tx_blurred = []
-
-
     files = glob.glob(("{}/*").format(HDR_FOLDER))
     for hdr in files:
         if hdr.endswith(".hdr") or hdr.endswith(".exr"):
@@ -1848,34 +1621,22 @@ def hdr_list(*args):
         if hdr.endswith(".tx"):
             tx_list.append(os.path.split(hdr)[1])
 
-    files_blur = glob.glob(("{}/*").format(HDR_BLURRED_FOLDER))
-    for hdr in files_blur:
-        if hdr.endswith(".hdr") or hdr.endswith(".exr"):
-            blurred_list.append(os.path.split(hdr)[1])
-        if hdr.endswith(".tx"):
-            tx_blurred.append(os.path.split(hdr)[1])
-
     mini_path = glob.glob(("{}/*.jpg").format(MINI_HDR_FOLDER))
     for each in mini_path:
         mini_list.append(os.path.split(each)[1])
 
-    mini_blur_path = glob.glob(("{}/*.jpg").format(MINI_BLURRED_FOLDER))
-    for each in mini_blur_path:
-        mini_blur_list.append(os.path.split(each)[1])
-
-    desel_path = glob.glob(("{}/*.jpg").format(os.path.join(MINI_HDR_FOLDER, "mini_desel").replace("\\", "/")))
+    desel_path = glob.glob(
+        ("{}/*.jpg").format(os.path.join(MINI_HDR_FOLDER, "mini_desel").replace("\\", "/")))
     for each in desel_path:
         desel_list.append(os.path.split(each)[1])
 
-    desel_blur_path = glob.glob(("{}/*.jpg").format(os.path.join(MINI_BLURRED_FOLDER, "mini_desel_blurred").replace("\\", "/")))
-    for each in desel_path:
-        mini_blur_desel.append(os.path.split(each)[1])
+    return (tx_list, mini_list, hdrs_list, desel_list)
 
-    return (tx_list, mini_list, hdrs_list, desel_list, blurred_list, mini_blur_list, mini_blur_desel, tx_blurred)
 
 def find_project(*args):
     proj_path = cmds.workspace(q=True, rootDirectory=True)
     return proj_path
+
 
 def browse_batch(*args):
     proj = find_project()
@@ -1885,88 +1646,29 @@ def browse_batch(*args):
     except:
         pass
 
+
 def create_folders(paths):
     if not os.path.exists(paths):
         os.makedirs(paths)
 
-def custom_range(*args):
-    item = cmds.optionMenu("batch_mode", query = True, value = True)
-    # Multi scene render enable/disable ui
-    if cmds.optionMenu("batch_mode", query=True, value=True) == "Multi Scene Render":
-        cmds.checkBox("exp_only", edit = True, value = False, enable = False)
-        cmds.optionMenu("cam_sel", edit = True, enable = False)
-        cmds.scrollLayout("scroll_hdrs", edit = True, enable = False)
-        cmds.checkBox("sel_all_hdr", edit = True, enable = False)
-        cmds.checkBox("shut", edit = True, enable = False)
-        cmds.textFieldGrp("rdr_path", edit = True, label = "Scenes", annotation="Choose path to the scene folders for multi scene rendering")
-        cmds.checkBox("shut",edit = True, value = False, enable = True)
-    else:
-        cmds.textFieldGrp("rdr_path", edit = True, enable = True)
-        cmds.checkBox("exp_only", edit = True, enable = True)
-        cmds.optionMenu("cam_sel", edit = True, enable = True)
-        cmds.scrollLayout("scroll_hdrs", edit = True, enable = True)
-        cmds.checkBox("sel_all_hdr", edit = True, enable = True)
-        cmds.checkBox("shut", edit = True, enable = True)
-        cmds.textFieldGrp("rdr_path", edit = True,  label = "Output", annotation="Choose render output path. NOTE: By default it will choose images folder in your project path")
-        cmds.checkBox("shut",edit = True, value = False, enable = True)
-
-    if cmds.checkBox("exp_only", query = True, value = True) == True:
-        cmds.checkBox("shut",edit = True, value = False, enable = False)
-    else:
-        cmds.checkBox("shut",edit = True, value = False, enable = True)
-
-    # Custom range enable/disable ui
-    if item == "Custom Range":
-        cmds.textField("minimumTime", enable = True, edit=True)
-        cmds.textField("maximumTime", enable = True, edit=True)
-    else:
-        cmds.textField("minimumTime", enable = False, edit=True)
-        cmds.textField("maximumTime", enable = False, edit=True)
-
-
-def export_only_chk(*args):
-    if cmds.checkBox("exp_only", query = True, value = True) == True:
-        cmds.button("rdr_btn", label="EXPORT ONLY", annotation="Export batch render without starting render", edit = True)
-        cmds.checkBox("shut",edit = True, value = False, enable = False)
-    else:
-        cmds.button("rdr_btn", label="RENDER", annotation="Batch render current scene with selected HDRs", edit = True)
-        cmds.checkBox("shut",edit = True, value = False, enable = True)
-
 
 def batch(*args):
-    out_path = cmds.textFieldGrp("rdr_path", query=True, text=True).replace("\\", "/")
-    blur_stat = cmds.checkBox("blurredHdr", value = True, query = True)
+    out_path = cmds.textFieldGrp("rdr_path", query=True, text=True)
     if len(out_path) == 0:
         cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, choose an output path.",messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
         return
-
-    cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
-    cmds.setAttr("defaultRenderGlobals.animation", 1)
-    cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
-    cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
-    cmds.setAttr("defaultRenderGlobals.periodInExt", 1)
-    cmds.setAttr("defaultArnoldDriver.mergeAOVs", 1)
-
-    maya_path = os.path.join(os.environ["MAYA_LOCATION"], "bin").replace("\\", "/")
-    mayapy_path = os.path.join(maya_path, "mayapy.exe").replace("\\", "/")
-    renderexe_path = os.path.join(maya_path, "Render.exe").replace("\\", "/")
-
+    out_rdr = os.path.join(out_path, "rdr_temp").replace("\\", "/")
+    ass_path = os.path.join(out_path, "ass_temp").replace("\\", "/")
+    py_path = os.path.join(out_path, "py_temp").replace("\\", "/")
     scene_query = cmds.file(query=True, sceneName=True, shortName=True)
     scene_n, ext = os.path.splitext(scene_query)
+    batch_mode = cmds.optionMenu("batch_mode", query=True, value=True)
 
     if len(scene_n) == 0:
         scene_name = "lookdev_test"
     if len(scene_n) != 0:
         scene_name = scene_n
 
-    main_folder = os.path.join(out_path, scene_name).replace("\\", "/")
-    scene_path = os.path.join(main_folder, "scene_temp").replace("\\", "/")
-    output_folder = os.path.join(main_folder, "out").replace("\\", "/")
-    py_path = os.path.join(main_folder, "py_temp").replace("\\", "/")
-    py_scr = os.path.join(py_path, "rdr.py").replace("\\", "/")
-    batch_mode = cmds.optionMenu("batch_mode", query=True, value=True)
-
-    # set first and last frame
     if batch_mode == "Single Frame":
         timeMin = 1
         timeMax = 1
@@ -1979,420 +1681,212 @@ def batch(*args):
             timeMin = cmds.playbackOptions(minTime=True, query=True)
             timeMax = cmds.playbackOptions(maxTime=True, query=True)
 
-    if batch_mode == "Custom Range":
-        timeMin = cmds.textField("minimumTime", query = True, text = True)
-        timeMax = cmds.textField("maximumTime", query = True, text = True)
+    path = [ass_path, py_path]
 
-    if batch_mode != "Multi Scene Render":
-        # create folders
-        path = [main_folder, output_folder, scene_path, py_path]
-        for each in path:
-            create_folders(each)
+    maya_path = os.path.join(os.environ["MAYA_LOCATION"], "bin")
+    mayapy_path = os.path.join(maya_path, "mayapy.exe").replace("\\", "/")
+    py_scr = os.path.join(py_path, "rdr.py").replace("\\", "/")
 
-        selected_cam = cmds.optionMenu("cam_sel", query = True, value=True)
+    try:
+        ass_del = cmds.getFileList(folder=ass_path, filespec="*.ass")
+        for each in ass_del:
+            delpath = os.path.join(ass_path, each).replace("\\", "/")
+            os.remove(delpath)
+    except:
+        pass
 
-        hdrs = hdr_list()[1]
-        batch_hdr = []
-        render_scene = []
+    for each in path:
+        create_folders(each)
 
-        for idx, each in enumerate(hdrs):
-            value = cmds.symbolCheckBox("chck_" + str(idx).zfill(2), query=True, value=True)
-            if value is True:
-                batch_hdr.append(each[:-4])
+    hdrs = hdr_list()[1]
 
-        if len(batch_hdr) == 0:
-            cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, first select at least one HDR.", messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
-            return
-        else:
-            for each in batch_hdr:
-                hdr_name = each
-                hdr_ext = each + ".tx"
-                if blur_stat == False:
-                    hdr_path = os.path.join(HDR_FOLDER, hdr_ext).replace("\\", "/")
-                else:
-                    hdr_path = os.path.join(HDR_BLURRED_FOLDER, hdr_ext).replace("\\", "/")
-                cmds.setAttr("dk_Ldv:hdrTextures" + ".fileTextureName", hdr_path, type="string")
+    batch_hdr = []
 
-                #SCENE EXPORT
-                scene_loc = os.path.join(scene_path, scene_name + "_" + hdr_name + ".ma").replace("\\", "/")
-                cmds.file(rename = scene_loc)
-                cmds.file(save=True, type='mayaAscii')
+    for idx, each in enumerate(hdrs):
+        value = cmds.symbolCheckBox("chck_" + str(idx).zfill(2), query=True, value=True)
+        if value is True:
+            batch_hdr.append(each[:-4])
 
-                scene_render_name = scene_name + "_" + hdr_name + ".ma"
-                render_scene.append(scene_render_name)
-
-            txt_write_rdr(render_scene, renderexe_path, timeMin, timeMax, maya_path, selected_cam, main_folder)
-
-            if cmds.checkBox("exp_only", query = True, value = True) == False:
-                env = os.environ.copy()
-                subprocess.Popen([mayapy_path, py_scr], shell=False, env=env)
-
-                try:
-                    cmds.deleteUI("batchUI")
-                except:
-                    pass
-
-                cmds.confirmDialog(title="Material Library - Batch", message="You can now close maya and wait for render to finish.", messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
-
-                cmds.file(new=True, force=True)
-            else:
-                cmds.confirmDialog(title="Material Library - Batch", message="Scene has been exported, you can now prepare another scene for export or rendering", messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
-                try:
-                    cmds.deleteUI("batchUI")
-                except:
-                    pass
-                cmds.file(new=True, force=True)
-
+    if len(batch_hdr) == 0:
+        cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, first select at least one HDR.", messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
+        return
     else:
-        # multi scene render stuff
-        # find scenes:
-        all_folders = [name for name in os.listdir(out_path) if os.path.isdir(os.path.join(out_path, name))]
-        render_sets = []
+        for each in batch_hdr:
+            hdr_name = each
+            hdr_ext = each + ".tx"
+            hdr_path = os.path.join(HDR_FOLDER, hdr_ext).replace("\\", "/")
+            cmds.setAttr("dk_Ldv:hdrTextures" + ".fileTextureName", hdr_path, type="string")
 
-        # check for folders
-        for folder in all_folders:
-            main_folder_path = os.path.join(out_path, folder).replace("\\", "/")
-            check = os.listdir(main_folder_path)
-            for each in check:
-                if os.path.exists(os.path.join(main_folder_path, "py_temp").replace("\\", "/")) != True:
-                    print(main_folder)
-                    cmds.warning("Export was not done correctly, missing py_temp")
-                    return
-                if os.path.exists(os.path.join(main_folder_path, "scene_temp").replace("\\", "/")) != True:
-                    print(main_folder)
-                    cmds.warning("Export was not done correctly, missing scene_temp")
-                    return
-            for each in check:
-                if each == "py_temp":
-                    py_script_path = os.path.join(main_folder_path, each, "rdr.py").replace("\\", "/")
-                    print(py_script_path)
-                    if os.path.exists(py_script_path) != True:
-                        cmds.warning("Export was not done correctly, missing render script file")
-                        return
+            ass_exp = os.path.join(ass_path, scene_name + "_" + hdr_name + ".ass").replace("\\", "/")
+            cmds.arnoldExportAss(filename=ass_exp, camera="dk_Ldv:cameraShape1", lightLinks=True, shadowLinks=True, boundingBox=True, startFrame=timeMin, endFrame=timeMax, mask=6399)
 
-        # create paths
-        for folder in all_folders:
-            # path to the main folder
-            main_folder_path = os.path.join(out_path, folder).replace("\\", "/")
-            render_sets.append(main_folder_path)
+        asses = cmds.getFileList(folder=ass_path, filespec="*.ass")
 
-        multi_rdr_script = os.path.join(out_path, "multi_render.py").replace("\\", "/")
-
-        txt_write_multi(render_sets, out_path, mayapy_path)
-
+        txt_write(asses)
 
         env = os.environ.copy()
-        subprocess.Popen([mayapy_path, multi_rdr_script], shell=False, env=env)
+        subprocess.Popen([mayapy_path, py_scr], shell=False, env=env)
 
         try:
             cmds.deleteUI("batchUI")
         except:
             pass
 
-        cmds.confirmDialog(title="Material Library - Batch", message="You can now close maya and wait for render to finish.", messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
+        cmds.confirmDialog(title="Material Library - Batch", message="You can now close maya and wait for render to finish.",
+                           messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
 
-        cmds.file(new=True, force=True)
-        
 
-#MAYA MULTI RENDER TXT WRITE
-def txt_write_multi(main_folders, out_path, mayapy):
-    all_renders = os.path.join(out_path, "multi_render.py").replace("\\", "/")
+def txt_write(assets):
+    rdr_assets = assets
     shut_checkbox = cmds.checkBox("shut",query=True, value=True)
 
-    with open(all_renders, "w") as the_file:
-        the_file.write("import maya.standalone\n")
-    with open(all_renders, "a") as the_file:
-        the_file.write("import os\n")
-        the_file.write("import subprocess\n")
-        the_file.write("import shutil\n\n")
-
-        the_file.write(("shut_chck= \'{}\'\n\n").format(shut_checkbox))
-
-        the_file.write(("render_folders = {}\n").format(main_folders))
-        the_file.write("for each in render_folders:\n")
-        the_file.write("    py_script = os.path.join(each, 'py_temp', 'rdr.py').replace('\\\\', '/')\n")
-        the_file.write(("    multi_run = subprocess.Popen([\'{}\', py_script], shell=False)\n").format(mayapy))
-        the_file.write("    multi_run.wait()\n\n")
-
-        the_file.write("try:\n")
-        the_file.write(("    shutil.rmtree(\'{}\')\n").format(all_renders))
-        the_file.write("except:\n")
-        the_file.write("    pass\n\n")
-        the_file.write("if shut_chck == 'True':\n")
-        the_file.write("    os.system('shutdown -s -t 0')\n\n")
-
-
-#MAYA RENDER TXT WRITE
-def txt_write_rdr(assets, maya_render, start_frame, end_frame, maya_bin, camera, main_folder):
-    shut_checkbox = cmds.checkBox("shut",query=True, value=True)
-
-    scene_loc = os.path.join(main_folder, "scene_temp").replace("\\", "/")
-    py_path = os.path.join(main_folder, "py_temp").replace("\\", "/")
+    out_path = cmds.textFieldGrp("rdr_path", query=True, text=True)
+    out_rdr = os.path.join(out_path, "rdr_temp").replace("\\", "/")
+    py_path = os.path.join(out_path, "py_temp").replace("\\", "/")
     py_file = os.path.join(py_path, "rdr.py").replace("\\", "/")
-
-    # now = datetime.now()
-    # dt_string = now.strftime("%H:%M:%S")
-    # secs = sum(int(x) * 60 ** i for i, x in enumerate(reversed(dt_string.split(':'))))
-
-    mel_postFrame = (
-        'int $render_start_sec = {{}};\
-        string $asset_name = \\\"{{}}\\\";\
-        $cur_time = `date -time`;\
-        string $secs = endString($cur_time, 2);\
-        string $min_sec = endString($cur_time, 5);\
-        string $oduzmi = endString($cur_time, 3);\
-        string $minuti = substituteAllString($min_sec, $oduzmi, "");\
-        string $oduzmi_sati = endString($cur_time, 6);\
-        string $sati = substituteAllString($cur_time, $oduzmi_sati, "");\
-        int $seconds = (int)$sati*3600 + (int)$minuti*60 + (int)$secs ;\
-        int $cur_frame = `currentTime -q`;\
-        int $first_frame = {};\
-        int $end_frame = {};\
-        int $rendered_frames = $cur_frame - $first_frame + 1;\
-        int $total_frames = $end_frame - $first_frame + 1;\
-        $percent = $rendered_frames*100/$total_frames;\
-        string $per = $percent;\
-        $total_render_time = $seconds - $render_start_sec - 5;\
-        $avg_frame_time_sec = $total_render_time/$rendered_frames;\
-        int $avg_frame_hours = $avg_frame_time_sec/3600;\
-        int $avg_frame_mins = $avg_frame_time_sec/60 - $avg_frame_hours*60;\
-        $avg_frame_secs = $avg_frame_time_sec - ($avg_frame_hours*3600) - ($avg_frame_mins*60);\
-        int $elapsed_render_hours = $total_render_time/3600;\
-        int $elapsed_render_mins = $total_render_time/60 - $elapsed_render_hours*60;\
-        $elapsed_render_secs = $total_render_time - ($elapsed_render_hours*3600) - ($elapsed_render_mins*60);\
-        int $left_frames = $total_frames - $rendered_frames;\
-        int $left_seconds = $avg_frame_time_sec * $left_frames;\
-        int $left_frame_hours = $left_seconds/3600;\
-        int $left_frame_mins = $left_seconds/60 - $left_frame_hours*60;\
-        $left_frame_secs = $left_seconds - ($left_frame_hours*3600) - ($left_frame_mins*60);\
-        $totalFrameTime = `timerX -startTime $startTime`;\
-        int $frame_hours = $totalFrameTime/3600;\
-        int $frame_mins = $totalFrameTime/60 - $frame_hours*60;\
-        $frame_secs = $totalFrameTime - ($frame_hours*3600) - ($frame_mins*60);\
-        string $text0 = "Rendering stats for "+ $asset_name;\
-        string $text1 = "Finished frame "+ $cur_frame +"/"+ $end_frame;\
-        string $text1a = "Frames rendered "+ $rendered_frames +"/"+ $total_frames +" - "+ $per +"%";\
-        string $text2 = "Current frame render time - "+ $frame_hours + "h  " + $frame_mins + "min  " + $frame_secs + "sec";\
-        string $text3 = "Average frame render time - "+ $avg_frame_hours + "h  " + $avg_frame_mins + "min  " + $avg_frame_secs + "sec";\
-        string $text4 = "Approximate time left - "+ $left_frame_hours + "h  " + $left_frame_mins + "min  " + $left_frame_secs + "sec";\
-        string $text5 = "Elapsed render time - "+ $elapsed_render_hours + "h  " + $elapsed_render_mins + "min  " + $elapsed_render_secs + "sec";\
-        string $text6 = "Rendered using Lookdev Kit by Dusan Kovic - dusankovic.com";\
-        string $text7 = "---------------------------------------------------------------------------------------------------";\
-        print("\\\\n");print($text7);print("\\\\n");print($text7);print("\\\\n");print($text0);print("\\\\n");print("\\\\n");print($text1);print("\\\\n");print($text1a);print("\\\\n");print("\\\\n");print($text2);print("\\\\n");print($text3);print("\\\\n");print("\\\\n");print($text5);print("\\\\n");print($text4);print("\\\\n");print("\\\\n");print($text6);print("\\\\n");print($text7);print("\\\\n");print($text7);\
-        string $text_output[];\
-        $text_output[size($text_output)] = ($text0 + "\\\\n");\
-        $text_output[size($text_output)] = $text1;\
-        $text_output[size($text_output)] = ($text1a + "\\\\n");\
-        $text_output[size($text_output)] = $text2;\
-        $text_output[size($text_output)] = ($text3 + "\\\\n");\
-        $text_output[size($text_output)] = $text5;\
-        $text_output[size($text_output)] = ($text4 + "\\\\n");\
-        $text_output[size($text_output)] = $text6;\
-        string $text_file = \\\"{{}}\\\";\
-        $text_id = `fopen $text_file "w"`;\
-        for($line in $text_output)  \
-        fprint $text_id ($line + "\\\\n");\
-        fclose $text_id;').format(start_frame, end_frame)
-    
-    mel_preFrame = (
-        '$startTime = `timerX`;\
-        string $asset_name = \\\"{}\\\";\
-        int $cur_frame_start = `currentTime -q`;\
-        string $text = "Rendering scene - " + $asset_name + " - frame "+ $cur_frame_start;\
-        print("\\\\n");print("\\\\n");print($text);print("\\\\n");print("\\\\n");print("\\\\n");')
+    ass_path = os.path.join(out_path, "ass_temp").replace("\\", "/")
+    mtoa_plugin = cmds.pluginInfo("mtoa", query=True, path=True)
+    mtoa_root = os.path.dirname(os.path.dirname(mtoa_plugin))
+    mtoa_bin = os.path.join(mtoa_root, "bin").replace("\\", "/")
+    mtoa_kick = os.path.join(mtoa_bin, "kick.exe").replace("\\", "/")
 
     with open(py_file, "w") as the_file:
         the_file.write("import maya.standalone\n")
     with open(py_file, "a") as the_file:
-        the_file.write("maya.standalone.initialize(name='python')\n\n")
+        the_file.write("maya.standalone.initialize(name='python')\n")
         the_file.write("import os\n")
-        the_file.write("import time\n")
         the_file.write("import subprocess\n")
-        the_file.write("from subprocess import check_output\n")
-        the_file.write("from datetime import datetime\n")
         the_file.write("import shutil\n")
         the_file.write("import maya.cmds as cmds\n\n")
 
-        the_file.write(("LDV_VER= \'{}\'\n").format(LDV_VER))
+        the_file.write(("KICK_PATH = \'{}\'\n").format(mtoa_kick))
+        the_file.write(("ASS_PATH= \'{}\'\n").format(ass_path))
         the_file.write(("PY_PATH= \'{}\'\n").format(py_path))
-        the_file.write(("SCN_PATH= \'{}\'\n").format(scene_loc))
-        the_file.write(("RDR_PATH= \'{}\'\n\n").format(main_folder))
+        the_file.write(("LDV_VER= \'{}\'\n").format(LDV_VER))
+        the_file.write(("RDR_PATH= \'{}\'\n\n").format(out_path))
 
-        the_file.write(("rdr_names = {}\n").format(assets))
+        the_file.write(("rdr_names = {}\n\n").format(rdr_assets))
+
         the_file.write(("shut_chck= \'{}\'\n\n").format(shut_checkbox))
 
-        the_file.write("cur_frame = 0\n\n")
+        the_file.write("cur_frame = 0\n")
 
         the_file.write("for each in rdr_names:\n")
-        #the_file.write(("    num_fr = {}\n\n").format(end_frame))
 
-        #the_file.write("    percent = cur_frame*100/num_fr\n")
-        the_file.write("    os.system(('title Lookdev Kit {} Rendering - {}').format(LDV_VER, each))\n\n")
+        the_file.write("    num_fr = len(rdr_names)\n")
+        the_file.write("    percent = cur_frame*100/num_fr\n")
 
-        the_file.write("    now = datetime.now()\n")
-        the_file.write("    dt_string = now.strftime('%H:%M:%S')\n")
-        the_file.write("    secs = sum(int(x) * 60 ** i for i, x in enumerate(reversed(dt_string.split(':'))))\n\n")
+        the_file.write(
+            "    os.system(('title Lookdev Kit {} Rendering - Progress: {}/{} - {}%').format(LDV_VER, cur_frame+1,num_fr, percent))\n")
+        the_file.write("    ass_path = os.path.join(ASS_PATH, each).replace('\\\\', '/')\n")
+        the_file.write(
+            "    outPath = os.path.join(RDR_PATH, each[:-4] + '.exr').replace('\\\\', '/')\n\n")
 
-        the_file.write("    render_log_path = os.path.join(RDR_PATH, each[:-3] + '_log.txt').replace('\\\\', '/')\n")
-        the_file.write(("    mel_pre_frame = (\'{}\').format(each[:-3])\n\n").format(mel_preFrame))
-        the_file.write(("    mel_post_frame = (\'{}\').format(secs, each[:-3], render_log_path)\n\n").format(mel_postFrame))
+        the_file.write(
+            ("    kick_run = subprocess.Popen([\'{}\', '-i', ass_path, '-dp', '-dw', '-v', '2', '-o', outPath], shell=False, cwd = \'{}\')\n").format(mtoa_kick, mtoa_bin))
+        the_file.write("    kick_run.wait()\n\n")
 
-        the_file.write("    scene_path = os.path.join(SCN_PATH, each).replace('\\\\', '/')\n")
-        the_file.write("    img_path = os.path.join(RDR_PATH, 'out').replace('\\\\', '/')\n")
-        the_file.write("    img_name = os.path.join(each[:-3]).replace('\\\\', '/')\n\n")
+        the_file.write("    cur_frame = cur_frame+1\n")
 
-        the_file.write(("    render_run = subprocess.Popen([\'{}\','-r','arnold','-cam',\'{}\','-ai:lve','1','-preFrame', mel_pre_frame,'-postFrame', mel_post_frame,'-s', '{}','-e', '{}', '-rd', img_path, '-im', img_name, scene_path], shell=False, cwd = \'{}\')\n").format(maya_render, camera, start_frame, end_frame, maya_bin))
-        the_file.write("    render_run.wait()\n\n")
-
-        the_file.write("    cur_frame = cur_frame+1\n\n")
+        the_file.write("    try:\n")
+        the_file.write("        os.remove(ass_path)\n")
+        the_file.write("    except:\n")
+        the_file.write("        pass\n")
 
         the_file.write("try:\n")
         the_file.write("    shutil.rmtree(PY_PATH)\n")
-        the_file.write("    shutil.rmtree(SCN_PATH)\n")
+        the_file.write("    shutil.rmtree(ASS_PATH)\n")
         the_file.write("except:\n")
-        the_file.write("    pass\n\n")
-
+        the_file.write("    pass\n")
         the_file.write("path = os.path.realpath(RDR_PATH)\n")
-        the_file.write("os.startfile(path)\n\n")
+        the_file.write("os.startfile(path)\n")
 
-        the_file.write("maya.standalone.uninitialize()\n\n")
+        the_file.write("maya.standalone.uninitialize()\n")
 
         the_file.write("if shut_chck == 'True':\n")
         the_file.write("    os.system('shutdown -s -t 0')\n\n")
 
+
 def batch_choose(*args):
     if cmds.namespace(exists='dk_Ldv') == False:
-        cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Only multi scene render will be enabled", messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
-        ldv_kit_loaded = False
+        cmds.confirmDialog(title=("Lookdev Kit {} - Batch").format(LDV_VER), message="Please, load Lookdev Kit.",
+                           messageAlign="center", button="Ok", defaultButton="Ok", icon="warning")
+        return
     else:
-        ldv_kit_loaded = True
-    win_id = "batchUI"
-    win_width = 300
-    win_height = 600
-    row_height = 30
-    win_title = ("Lookdev kit {} - Batch").format(LDV_VER)
 
-    blur_stat = cmds.checkBox("blurredHdr", value = True, query = True)
-    hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
-    hdrs = hdr_list()[0]
-    mini_file = hdr_list()[1]
-    hdr_blurred = hdr_list()[4]
-    mini_blurred = hdr_list()[5]
+        win_id = "batchUI"
+        win_width = 300
+        win_height = 600
+        row_height = 30
+        win_title = ("Lookdev kit {} - Batch").format(LDV_VER)
 
-    if cmds.window(win_id, exists=True):
-        cmds.deleteUI(win_id)
+        hdr_num = cmds.intSliderGrp('hdrSw', query=True, value=True)
+        hdrs = hdr_list()[0]
+        mini_file = hdr_list()[1]
 
-    if cmds.windowPref(win_id, exists=True):
-        cmds.windowPref(win_id, remove=True)
+        if cmds.window(win_id, exists=True):
+            cmds.deleteUI(win_id)
 
-    view_width = int(viewport_resolution()[0]) * 0.75
-    view_heigth = int(viewport_resolution()[1]) * 0.3
+        if cmds.windowPref(win_id, exists=True):
+            cmds.windowPref(win_id, remove=True)
 
-    b = cmds.window(win_id, title=win_title, resizeToFitChildren=True, topLeftCorner=[view_heigth, view_width])
+        view_width = int(viewport_resolution()[0]) * 0.75
+        view_heigth = int(viewport_resolution()[1]) * 0.3
 
-    main_cl = cmds.rowColumnLayout(numberOfColumns=1, columnWidth=[ (1, win_width*1.1), (2, win_width*0.75)], columnOffset=[1, "left", 30])
+        b = cmds.window(win_id, title=win_title, resizeToFitChildren=True,
+                        topLeftCorner=[view_heigth, view_width])
 
-    cmds.text(label="Select HDRs:", height=row_height)
-    cmds.setParent(main_cl)
+        main_cl = cmds.rowColumnLayout(numberOfColumns=1, columnWidth=[
+                                       (1, win_width*1.1), (2, win_width*0.75)], columnOffset=[1, "left", 30])
 
-    cmds.scrollLayout("scroll_hdrs", height=win_height*0.9, width=win_width*1)
-    index_list = []
-    if blur_stat == False:
+        cmds.text(label="Select HDRs:", height=row_height)
+        cmds.setParent(main_cl)
+
+        cmds.scrollLayout("scroll_hdrs", height=win_height*0.9, width=win_width*1)
+        index_list = []
         for idx, each in enumerate(mini_file):
             index_list.append(idx)
             mini_path = os.path.join(MINI_HDR_FOLDER, each).replace("\\", "/")
             mini_desel = os.path.join(MINI_HDR_FOLDER, "mini_desel", each).replace("\\", "/")
 
             cmds.symbolCheckBox("chck_" + str(idx).zfill(2), value=0, onImage=mini_path, offImage=mini_desel,width=250, height=125, parent="scroll_hdrs")
-    else:
-        for idx, each in enumerate(mini_blurred):
-            index_list.append(idx)
-            mini_path = os.path.join(MINI_BLURRED_FOLDER, each).replace("\\", "/")
-            mini_desel = os.path.join(MINI_BLURRED_FOLDER, "mini_desel_blurred", each).replace("\\", "/")
+        cmds.symbolCheckBox("chck_" + str(index_list[hdr_num-1]).zfill(2), edit=True, value=1)
 
-            cmds.symbolCheckBox("chck_" + str(idx).zfill(2), value=0, onImage=mini_path, offImage=mini_desel,width=250, height=125, parent="scroll_hdrs")
+        cmds.setParent(main_cl)
 
-    cmds.symbolCheckBox("chck_" + str(index_list[hdr_num-1]).zfill(2), edit=True, value=1)
+        cmds.text(label="", height=row_height*0.5)
 
-    cmds.setParent(main_cl)
+        proj = find_project()
+        img_path = os.path.join(proj, "images").replace("\\", "/")
 
-    cmds.text(label="", height=row_height*0.5)
+        cmds.rowLayout(numberOfColumns=2, columnWidth=[
+                       (1, win_width*0.7), (2, win_width*0.1)], columnAttach=[(1, "left", -90), (2, "right", 0)])
+        cmds.textFieldGrp("rdr_path", label="Output", text=img_path)
+        cmds.button(label="...", width=win_width*0.1,
+                    annotation="Choose render output path. NOTE: By default it will choose images folder in your project path", command=browse_batch)
 
-    proj = find_project()
-    img_path = os.path.join(proj, "images").replace("\\", "/")
+        cmds.setParent(main_cl)
 
-    cmds.rowLayout(numberOfColumns=1, columnWidth=[(1, win_width*0.8)], columnAttach=[(1, "left", 20)])
-    cmds.optionMenu("batch_mode", label="Render mode", annotation="Choose rendering mode", changeCommand = custom_range)
-    if ldv_kit_loaded == True:
+        cmds.text(label="", height=row_height*0.5)
+
+        cmds.rowLayout(numberOfColumns=1, columnWidth=[
+                       (1, win_width*0.8)], columnAttach=[(1, "left", 35)])
+        cmds.optionMenu("batch_mode", label="Render mode", annotation="Choose rendering mode")
         cmds.menuItem(label="Single Frame", parent="batch_mode")
         cmds.menuItem(label="Turntable", parent="batch_mode")
-        cmds.menuItem(label="Custom Range", parent="batch_mode")
-        cmds.menuItem(label="Multi Scene Render", parent="batch_mode")
-    else:
-        cmds.menuItem(label="Multi Scene Render", parent="batch_mode")
-    cmds.setParent(main_cl)
+        cmds.setParent(main_cl)
 
-    # normal render output field
-    cmds.rowLayout(numberOfColumns=2, columnWidth=[(1, win_width*0.7), (2, win_width*0.1)], columnAttach=[(1, "left", -90), (2, "right", 0)])
-    cmds.textFieldGrp("rdr_path", label="Output", text=img_path)
-    cmds.button("rdn_btn",label="...", width=win_width*0.1, annotation="Choose render output path. NOTE: By default it will choose images folder in your project path", command=browse_batch)
-    cmds.setParent(main_cl)
+        cmds.text(label="", height=row_height*0.5)
 
-    # # Multi scene render scene field
-    # cmds.rowLayout(numberOfColumns=2, columnWidth=[(1, win_width*0.7), (2, win_width*0.1)], columnAttach=[(1, "left", -90), (2, "right", 0)])
-    # cmds.textFieldGrp("scn_path", label="Scenes", enable = False, text=img_path)
-    # cmds.button("scn_btn", label="...", width=win_width*0.1, annotation="Choose scene location for multi scene rendering", enable = False, command=browse_batch)
-    # cmds.setParent(main_cl)
+        cmds.rowLayout(numberOfColumns=3, columnWidth=[(1, win_width*0.4), (2, win_width*0.3), (3, win_width*0.3)], columnAttach=[(1, "left", -15), (2, "left", -23), (3, "left", -10)])
+        cmds.button(label="RENDER", width=win_width*0.33,annotation="Batch render current scene with selected HDRs", command=batch)
+        cmds.checkBox("sel_all_hdr", label="Select all HDRs", recomputeSize=True, onCommand=select_all_hdrs, offCommand=deselect_all_hdrs)
+        cmds.checkBox("shut", label="Shutdown", recomputeSize=True, value = 0)
+        cmds.setParent(main_cl)
 
+        cmds.text(label="", height=row_height*0.5)
 
-    cmds.rowLayout(numberOfColumns=4, columnWidth=[(1, win_width*0.25), (2, win_width*0.25),(3, win_width*0.25),(4, win_width*0.25)], columnAttach=[(1, "right", 0), (2, "right", 0),(3, "right", 0),(4, "right", 0)])
-    cmds.text(label="", height=row_height*0.25)
-    cmds.textField("minimumTime", text = "1", enable = False)
-    cmds.textField("maximumTime", text = "100", enable = False)
-    cmds.text(label="", height=row_height*0.25)
-    cmds.setParent(main_cl)
-
-
-    #RENDER CAMERAS
-    # Get all cameras 
-    cameras = cmds.ls(type=('camera'), l=True)
-    startup_cameras = [camera for camera in cameras if cmds.camera(cmds.listRelatives(camera, parent=True)[0], startupCamera=True, q=True)]
-    non_startup_cameras = list(set(cameras) - set(startup_cameras))
-    non_startup_cameras_transforms = map(lambda x: cmds.listRelatives(x, parent=True)[0], non_startup_cameras)
-
-    cmds.rowLayout(numberOfColumns=2, columnWidth=[(1, win_width*0.7)], columnAttach=[(2, "left", -15)])
-    cmds.optionMenu("cam_sel", label="Camera", annotation="Choose rendering camera")
-    for camera in non_startup_cameras_transforms:
-        cmds.menuItem(label=camera, parent="cam_sel")
-    cmds.checkBox("exp_only", label="Export Only", recomputeSize=True, value = 0, onCommand = export_only_chk, offCommand = export_only_chk)
-    cmds.setParent(main_cl)
-
-
-    # #TIMED DELAY
-    # cmds.rowLayout(numberOfColumns=1, columnWidth=[(1, win_width*0.1), (2, win_width*0.1)], columnAttach=[(1, "left", -70), (2, "right", 0)])
-    # cmds.textFieldGrp("time_delay", label =" Timed Delay", text = "0")
-
-    # cmds.setParent(main_cl)
-
-    cmds.text(label="", height=row_height*0.5)
-
-    cmds.rowLayout(numberOfColumns=3, columnWidth=[(1, win_width*0.4), (2, win_width*0.3), (3, win_width*0.3)], columnAttach=[(1, "left", -15), (2, "left", -23), (3, "left", -10)])
-    cmds.button("rdr_btn", label="RENDER", width=win_width*0.35,annotation="Batch render current scene with selected HDRs", command=batch)
-    cmds.checkBox("sel_all_hdr", label="Select all HDRs", recomputeSize=True, onCommand=select_all_hdrs, offCommand=deselect_all_hdrs)
-    cmds.checkBox("shut", label="Shutdown", recomputeSize=True, value = 0)
-    cmds.setParent(main_cl)
-
-    cmds.text(label="", height=row_height*0.5)
-
-    if ldv_kit_loaded == False:
-        cmds.checkBox("exp_only", edit = True, value = False, enable = False)
-        cmds.optionMenu("cam_sel", edit = True, enable = False)
-        cmds.scrollLayout("scroll_hdrs", edit = True, enable = False)
-        cmds.checkBox("sel_all_hdr", edit = True, enable = False)
-        cmds.checkBox("shut", edit = True, enable = True)
-        cmds.textFieldGrp("rdr_path", edit = True, label = "Scenes", annotation="Choose path to the scene folders for multi scene rendering")
-
-    cmds.showWindow(b)
+        cmds.showWindow(b)
 
 
 def viewport_resolution(*args):
@@ -2402,7 +1896,7 @@ def viewport_resolution(*args):
     return (viewport_width, viewport_height)
 
 def shd_gen(*args):
-    importlib.reload(dk_shd)
+    reload(dk_shd)
     dk_shd.buildUI()
 
 
@@ -2412,28 +1906,23 @@ def buildUI():
     except:
         pass
 
-
-
     if cmds.namespace(exists='dk_Ldv') == True:
         ldv_vr = []
         try:
             ldv_vr = cmds.getAttr("dk_Ldv:aiSkydomeShape.ldv_ver")
         except:
             pass
-        # try:
-        #     if len(ldv_vr) == 0:
-        #         removeLDV()
+        try:
+            if len(ldv_vr) == 0:
+                removeLDV()
 
-        #     elif float(ldv_vr) < float(LDV_VER):
-        #         removeLDV()
-        # except:
-        #     pass
+            elif float(ldv_vr) < float(LDV_VER):
+                removeLDV()
+        except:
+            pass
 
     try:
-        try:
-            skyExpo = cmds.getAttr('dk_Ldv:aiSkydome.exposure')
-        except:
-            skyExpo = cmds.getAttr('dk_Ldv:aiSkydome.aiExposure')
+        skyExpo = cmds.getAttr('dk_Ldv:aiSkydome.exposure')
     except:
         skyExpo = 0
 
@@ -2446,11 +1935,6 @@ def buildUI():
         skyOff = cmds.getAttr('dk_Ldv:aiSkydomeShape.rotOffset')
     except:
         skyOff = 0
-
-    try:
-        blurred = cmds.getAttr('dk_Ldv:aiSkydomeShape.blurred')
-    except:
-        blurred = False
 
     try:
         sensorSelect = cmds.getAttr("dk_Ldv:camera1.SensorCam")
@@ -2498,10 +1982,7 @@ def buildUI():
 
     if cmds.namespace(exists='dk_Ldv') == True and len(mini_file) != 0:
         hdrswitch = int(cmds.getAttr('dk_Ldv:aiSkydomeShape.hdrsl'))-1
-        if blurred == False:
-            mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[hdrswitch]).replace("\\", "/")
-        else:
-            mini_int_file = os.path.join(MINI_BLURRED_FOLDER, mini_file[hdrswitch]).replace("\\", "/")
+        mini_int_file = os.path.join(MINI_HDR_FOLDER, mini_file[hdrswitch]).replace("\\", "/")
 
     try:
         objOff = cmds.getAttr('dk_turn:obj_tt_Offloc.objOffset')
@@ -2646,9 +2127,8 @@ def buildUI():
     cmds.setParent(mainCL)
 
     # Checkboxes
-    cmds.rowColumnLayout(numberOfColumns=3, columnOffset=[(1, "both", 20), (2, "both", 20), (3, "both", 20)])
+    cmds.rowColumnLayout(numberOfColumns=2, columnOffset=[1, "both", 70])
     cmds.checkBox("shMatte", label="Shadow Matte", value=checkBoxVal, recomputeSize=True, onCommand=shadowChckOn, offCommand=shadowChckOff)
-    cmds.checkBox("blurredHdr", label="Blurred HDRI", value=blurred, recomputeSize=True, onCommand=blurOn, offCommand=blurOff)
     cmds.checkBox("camDoF", label="DoF", value=checkBoxDoF, recomputeSize=True, onCommand=DoFOn, offCommand=DoFOff)
     cmds.setParent(mainCL)
 

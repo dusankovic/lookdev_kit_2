@@ -107,3 +107,13 @@ venv.bak/
 
 # win
 desktop.ini
+
+# images
+/lookdev_kit/sourceimages/**/*.exr
+/lookdev_kit/sourceimages/**/*.hdr
+/lookdev_kit/sourceimages/**/*.jpg
+/lookdev_kit/sourceimages/**/*.jpeg
+/lookdev_kit/sourceimages/**/*.png
+/lookdev_kit/sourceimages/**/*.tif
+/lookdev_kit/sourceimages/**/*.tiff
+/lookdev_kit/sourceimages/**/*.tx

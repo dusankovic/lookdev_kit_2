@@ -31,7 +31,7 @@ def buildUI(*args):
 
     cmds.rowLayout(numberOfColumns=1,columnAttach=[(1, "left", 40)])
     if float(cmds.about(version=True)) >= 2020:
-        md = ["aiStandardSurface", "standardSurface"]
+        md = ["standardSurface"]
     if float(cmds.about(version=True)) < 2020:
         md = ["aiStandardSurface"]
     cmds.optionMenu("shd_type", label="Shader", changeCommand = del_ss)
